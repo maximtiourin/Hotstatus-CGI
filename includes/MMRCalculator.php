@@ -2,8 +2,6 @@
 
 namespace Fizzik;
 
-use Fizzik\Utility\OS;
-
 class MMRCalculator {
     /*
      * Executes the MMRCalculator process and returns the output as a json assoc array
@@ -13,8 +11,8 @@ class MMRCalculator {
      * If the process encountered an error, the result array will only contain one field:
      * ['error'] => 'DESCRIPTION OF ERROR'
      */
-    public static function Calculate($callingDirectory, $team0rank, $team1rank, $playermmrs) {
-        $linuxmono = (OS::getOS() == OS::OS_LINUX) ? ("mono ") : ("");
+    public static function Calculate($callingDirectory, $team0rank, $team1rank, $playermmrs, $isLinux = false) {
+        $linuxmono = ($isLinux) ? ("mono ") : ("");
 
         $team0size = count($playermmrs['team0']);
         $team1size = count($playermmrs['team1']);

@@ -14,6 +14,7 @@ use Fizzik\Database\MySqlDatabase;
 use Fizzik\Database\MongoDBDatabase;
 use Fizzik\Utility\Console;
 use Fizzik\Utility\FileHandling;
+use Fizzik\Utility\OS;
 use Fizzik\Utility\SleepHandler;
 use MongoDB\BulkWriteResult;
 use MongoDB\Collection;
@@ -44,6 +45,7 @@ const UNLOCK_PARSING_DURATION = 120; //Must be unlocked for atleast 2 minutes wh
 const E = PHP_EOL;
 $sleep = new SleepHandler();
 $console = new Console();
+$linux = OS::getOS() == OS::OS_LINUX;
 
 //Prepare statements
 $db->prepare("UpdateReplayStatus",
@@ -1083,7 +1085,7 @@ while (true) {
             $r_filepath = $row['file'];
             $r_fingerprint = $row['fingerprint'];
 
-            $parse = ReplayParser::ParseReplay(__DIR__, $r_filepath);
+            $parse = ReplayParser::ParseReplay(__DIR__, $r_filepath, $linux);
 
             $createReplayCopy = FALSE;
 
@@ -1142,7 +1144,7 @@ while (true) {
 
                 //Calculate new mmrs
                 echo 'Calculating MMR...'.E;
-                $calc = MMRCalculator::Calculate(__DIR__, $team0rank, $team1rank, $player_old_mmrs);
+                $calc = MMRCalculator::Calculate(__DIR__, $team0rank, $team1rank, $player_old_mmrs, $linux);
 
                 //Check if mmr calculation was a success
                 if (!key_exists('error', $calc)) {
