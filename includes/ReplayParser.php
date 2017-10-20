@@ -2,6 +2,8 @@
 
 namespace Fizzik;
 
+use Fizzik\Utility\OS;
+
 class ReplayParser {
     /*
      * Executes the ReplayParser process and returns the output as a json assoc array
@@ -12,7 +14,9 @@ class ReplayParser {
      * ['error'] => 'DESCRIPTION OF ERROR'
      */
     public static function ParseReplay($callingDirectory, $replayfilepath) {
-        $output = shell_exec($callingDirectory . HotstatusPipeline::REPLAY_EXECUTABLE_DIRECTORY . HotstatusPipeline::REPLAY_EXECUTABLE_ID_REPLAYPARSER . " " . $replayfilepath);
+        $linuxmono = (OS::getOS() == OS::OS_LINUX) ? ("mono ") : ("");
+
+        $output = shell_exec($linuxmono . $callingDirectory . HotstatusPipeline::REPLAY_EXECUTABLE_DIRECTORY . HotstatusPipeline::REPLAY_EXECUTABLE_ID_REPLAYPARSER . " " . $replayfilepath);
 
         $json = json_decode($output, true);
 

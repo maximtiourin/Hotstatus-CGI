@@ -2,6 +2,8 @@
 
 namespace Fizzik;
 
+use Fizzik\Utility\OS;
+
 class MMRCalculator {
     /*
      * Executes the MMRCalculator process and returns the output as a json assoc array
@@ -12,6 +14,8 @@ class MMRCalculator {
      * ['error'] => 'DESCRIPTION OF ERROR'
      */
     public static function Calculate($callingDirectory, $team0rank, $team1rank, $playermmrs) {
+        $linuxmono = (OS::getOS() == OS::OS_LINUX) ? ("mono ") : ("");
+
         $team0size = count($playermmrs['team0']);
         $team1size = count($playermmrs['team1']);
 
@@ -51,7 +55,7 @@ class MMRCalculator {
         }
 
         //Execute
-        $output = shell_exec($callingDirectory . HotstatusPipeline::REPLAY_EXECUTABLE_DIRECTORY . HotstatusPipeline::REPLAY_EXECUTABLE_ID_MMRCALCULATOR . " " . $str);
+        $output = shell_exec($linuxmono . $callingDirectory . HotstatusPipeline::REPLAY_EXECUTABLE_DIRECTORY . HotstatusPipeline::REPLAY_EXECUTABLE_ID_MMRCALCULATOR . " " . $str);
 
         $json = json_decode($output, true);
 
