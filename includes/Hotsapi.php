@@ -49,10 +49,11 @@ class Hotsapi {
     /*
      * Attempts to download a replay at the amazon s3 bucket url using the given s3 client
      * Assumes the bucket uses request pays download model.
-     * Returns assoc array with relevant information about the operation (keys contingent on success are labeled with ?):
+     * Returns assoc array with relevant information about the operation (keys contingent on success are labeled with ?, ?? for failure):
      * ['success'] = true if file was downloaded without a hitch, false otherwise
      * ['bytes_downloaded'] = ? the size of the file downloaded in bytes
      * ['request_charged'] = ? string output from amazon describing if the request was charged to the requester
+     * ['error'] = ?? describes nature of the error if there was one
      */
     public static function DownloadS3Replay($urlOfReplay, $fileSaveLocation, \Aws\S3\S3Client $s3Client) {
         $ret = [];
@@ -75,9 +76,10 @@ class Hotsapi {
             $success = true;
         }
         catch (\Aws\Exception\AwsException $e) {
-            echo $e->getAwsRequestId() . "\n";
-            echo $e->getAwsErrorType() . "\n";
-            echo $e->getAwsErrorCode() . "\n";
+            $ret['error'] = $e->getAwsErrorCode() . "[". $e->getStatusCode() ."]";
+            //echo $e->getAwsRequestId() . "\n";
+            //echo $e->getAwsErrorType() . "\n";
+            //echo $e->getAwsErrorCode() . "\n";
         }
 
         $ret['success'] = $success;

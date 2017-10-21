@@ -132,7 +132,14 @@ while (true) {
                 }
                 else {
                     //Error with downloading the replay
-                    echo 'Failed to download replay #' . $r_id . ', HTTP Code : ' . $api['code'] . '...'.E.E;
+                    echo 'Failed to download replay #' . $r_id . ', Reason: ' . $api['error'] . '...'.E.E;
+
+                    //Set status to download_error
+                    $r_id = $row['id'];
+                    $r_status = HotstatusPipeline::REPLAY_STATUS_DOWNLOAD_ERROR;
+                    $r_timestamp = time();
+
+                    $db->execute("UpdateReplayStatus");
 
                     $sleep->add(MINI_SLEEP_DURATION);
                 }

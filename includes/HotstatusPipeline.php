@@ -17,6 +17,7 @@ class HotstatusPipeline {
     const REPLAY_STATUS_QUEUED = "queued"; //status value for when a replay is queued to be downloaded
     const REPLAY_STATUS_DOWNLOADING = "downloading"; //status value for when a replay is in the process of being downloaded
     const REPLAY_STATUS_DOWNLOADED = "downloaded"; //status value for when a replay has been downloaded
+    const REPLAY_STATUS_DOWNLOAD_ERROR = "download_error"; //status value for when a replay could not be downloaded due to an error
     const REPLAY_STATUS_PARSING = "parsing"; //status value for when a replay is being parsed
     const REPLAY_STATUS_PARSED = "parsed"; //status value for when a replay is done being parsed
     const REPLAY_STATUS_PARSE_MMR_ERROR = "parse_mmr_error"; //status value for when a replay had an unknown error during mmr parsing
