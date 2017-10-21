@@ -16,6 +16,11 @@ class ReplayParser {
 
         $output = shell_exec($linuxmono . $callingDirectory . HotstatusPipeline::REPLAY_EXECUTABLE_DIRECTORY . HotstatusPipeline::REPLAY_EXECUTABLE_ID_REPLAYPARSER . " " . $replayfilepath);
 
+        //If linux, remove potential UTF8 BOM
+        if ($isLinux) {
+            $output = self::remove_utf8_bom($output);
+        }
+
         $json = json_decode($output, true);
 
         if ($json != null) {
@@ -24,5 +29,11 @@ class ReplayParser {
         else {
             return array('error' => 'Could not parse JSON from output');
         }
+    }
+
+    private static function remove_utf8_bom($text) {
+        $bom = pack('H*','EFBBBF');
+        $text = preg_replace("/^$bom/", '', $text);
+        return $text;
     }
 }
