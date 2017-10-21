@@ -50,6 +50,12 @@ function setPageIndex($amount) {
     }
 }
 
+function timestamp() {
+    $datetime = new \DateTime("now");
+    $datestr = $datetime->format(HotstatusPipeline::FORMAT_DATETIME);
+    return "[$datestr] ";
+}
+
 //Begin main script
 echo '--------------------------------------'.E
     .'Replay process <<FIND>> has started'.E
@@ -107,17 +113,17 @@ while (true) {
         }
         else {
             //No more replay pages to process! Long sleep
-            echo 'Out of replays to process! Waiting for new hotsapi replay at page index #' . $pageindex . '...'.E;
+            echo timestamp() . 'Out of replays to process! Waiting for new hotsapi replay at page index #' . $pageindex . '...'.E;
             $sleep->add(OUT_OF_REPLAYS_SLEEP_DURATION);
         }
     }
     else if ($api['code'] == Hotsapi::HTTP_RATELIMITED) {
         //Error too many requests, wait awhile before trying again
-        echo 'Error: HTTP Code ' . $api['code'] . '. Rate limited.'.E.E;
+        echo timestamp() . 'Error: HTTP Code ' . $api['code'] . '. Rate limited.'.E.E;
         $sleep->add(TOO_MANY_REQUEST_SLEEP_DURATION);
     }
     else {
-        echo 'Error: HTTP Code ' . $api['code'].'.'.E.E;
+        echo timestamp() . 'Error: HTTP Code ' . $api['code'].'.'.E.E;
         $sleep->add(UNKNOWN_ERROR_CODE);
     }
 
