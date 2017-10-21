@@ -81,11 +81,11 @@ $db->prepare("GetMapNameSortFromMapName",
 $db->bind("GetMapNameSortFromMapName", "s", $r_name);
 
 $db->prepare("GetHeroNameFromHeroNameTranslation",
-    "SELECT name FROM herodata_heroes_translation WHERE name_translation = ?");
+    "SELECT name FROM herodata_heroes_translations WHERE name_translation = ?");
 $db->bind("GetHeroNameFromHeroNameTranslation", "s", $r_name_translation);
 
 $db->prepare("GetMapNameFromMapNameTranslation",
-    "SELECT name FROM herodata_maps_translation WHERE name_translation = ?");
+    "SELECT name FROM herodata_maps_translations WHERE name_translation = ?");
 $db->bind("GetMapNameFromMapNameTranslation", "s", $r_name_translation);
 
 //Helper functions
