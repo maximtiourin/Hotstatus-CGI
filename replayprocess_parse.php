@@ -1228,7 +1228,7 @@ while (true) {
                         if ($resrows3 > 0) {
                             $row2 = $db->fetchArray($result3);
 
-                            $heroNameMappings[$r_name] = $row2['name_sort'];
+                            $heroNameMappings[$player['hero']] = $row2['name_sort'];
                         }
                         else {
                             //Hero name is not valid
