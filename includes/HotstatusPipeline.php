@@ -29,7 +29,7 @@ class HotstatusPipeline {
     const DATABASE_CHARSET = "utf8mb4";
 
     //Enums
-    public static $ENUM_REGIONS = ['PTR', 'US', 'EU']; //Regen indexes for use with converting replay data
+    public static $ENUM_REGIONS = ['PTR', 'US', 'EU', 'KR', '??', 'CN']; //Regen indexes for use with converting replay data
 
     /*
      * Season information
