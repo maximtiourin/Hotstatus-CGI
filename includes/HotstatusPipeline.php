@@ -29,6 +29,7 @@ class HotstatusPipeline {
     const DATABASE_CHARSET = "utf8mb4";
 
     //Enums
+    public static $ENUM_REGIONS_VALID = [false, true, true, true, false, true]; //Flags for whether or not regions at that index are currently tracked
     public static $ENUM_REGIONS = ['PTR', 'US', 'EU', 'KR', '??', 'CN']; //Regen indexes for use with converting replay data
 
     /*
