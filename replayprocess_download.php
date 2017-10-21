@@ -48,11 +48,18 @@ $console = new Console();
 $db->prepare("UpdateReplayStatus",
 "UPDATE replays SET status = ?, lastused = ? WHERE id = ?");
 $db->bind("UpdateReplayStatus", "sii", $r_status, $r_timestamp, $r_id);
+
+$db->prepare("UpdateReplayStatusError",
+    "UPDATE replays SET error = ?, status = ?, lastused = ? WHERE id = ?");
+$db->bind("UpdateReplayStatusError", "ssii", $r_error, $r_status, $r_timestamp, $r_id);
+
 $db->prepare("UpdateReplayDownloaded",
 "UPDATE replays SET file = ?, status = ?, lastused = ? WHERE id = ?");
 $db->bind("UpdateReplayDownloaded", "ssii", $r_filepath, $r_status, $r_timestamp, $r_id);
+
 $db->prepare("SelectDownloadedReplays",
 "SELECT * FROM replays WHERE status = '" . HotstatusPipeline::REPLAY_STATUS_DOWNLOADED . "'");
+
 $db->prepare("SelectNextReplayWithStatus-Unlocked",
     "SELECT * FROM replays WHERE status = ? AND lastused <= ? ORDER BY id ASC LIMIT 1");
 $db->bind("SelectNextReplayWithStatus-Unlocked", "si", $r_status, $r_timestamp);
@@ -138,8 +145,9 @@ while (true) {
                     $r_id = $row['id'];
                     $r_status = HotstatusPipeline::REPLAY_STATUS_DOWNLOAD_ERROR;
                     $r_timestamp = time();
+                    $r_error = $api['error'];
 
-                    $db->execute("UpdateReplayStatus");
+                    $db->execute("UpdateReplayStatusError");
 
                     $sleep->add(MINI_SLEEP_DURATION);
                 }

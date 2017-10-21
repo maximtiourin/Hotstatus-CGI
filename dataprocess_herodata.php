@@ -17,13 +17,6 @@ $dataparsed = FALSE;
 
 //Database credentials for use with --dbout command line argument
 $creds = Credentials::getReplayProcessCredentials();
-$database_credentials = [
-    "hostname" => $creds[Credentials::KEY_DB_HOSTNAME],
-    "user" => $creds[Credentials::KEY_DB_USER],
-    "password" => $creds[Credentials::KEY_DB_PASSWORD],
-    "database" => $creds[Credentials::KEY_DB_DATABASE],
-    "redis" => $creds[Credentials::KEY_REDIS_URI]
-];
 
 //The json array that holds all of the heroes
 $global_json = [];
@@ -48,8 +41,9 @@ const IDX = "index";
 const PATH_DATA = "/data/heroesdata/";
 //Buildata
 const FILE_BUILDDATA = "mods/core.stormmod/base.stormdata/BuildId.txt";
-//Mapdata
-const FILE_MAPDATA = "/data/maps.json";
+//TranslationFiles
+const FILE_TRANSLATION_HERODATA = "/data/heroes.json";
+const FILE_TRANSLATION_MAPDATA = "/data/maps.json";
 //Stormdata
 const PATH_STORMDATA = "mods/heroesdata.stormmod/base.stormdata/GameData/";
 const PATH_STORMDATA_STRINGS = "mods/heroesdata.stormmod/enus.stormdata/LocalizedData/";
@@ -1509,7 +1503,7 @@ $validargs = [
             . "[clean] : --mode=clean : Clears all herodata in the database before updating it with newly parsed data. Should really only be used for development.\n"
             . "[upsert] : --mode=upsert : Attempts to insert newly parsed data to the database, if unique keys already exist for that data, only non-unique fields are updated.\n",
         "exec" => function (...$args) {
-            global $validargs, $database_credentials, $global_json, $awardMappings;
+            global $validargs, $creds, $global_json, $awardMappings;
 
             if (count($args) == 1) {
                 //Init logging info
@@ -1534,7 +1528,7 @@ $validargs = [
 
                 //Setup and connext to database
                 $db = new MysqlDatabase();
-                $db->connect($database_credentials['hostname'], $database_credentials['user'], $database_credentials['password'], $database_credentials['database']);
+                $db->connect($creds[Credentials::KEY_DB_HOSTNAME], $creds[Credentials::KEY_DB_USER], $creds[Credentials::KEY_DB_PASSWORD], $creds[Credentials::KEY_DB_DATABASE]);
                 $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
                 /*
@@ -1596,6 +1590,26 @@ $validargs = [
                 $db->bind("UpsertAward",
                     "sss",
                     $r_id, $r_name, $r_desc_simple);
+                // UpsertMapTranslation
+                $db->prepare("UpsertMapTranslation",
+                    "INSERT INTO herodata_maps_translations "
+                    . "(name, name_translation) "
+                    . "VALUES (?, ?) "
+                    . "ON DUPLICATE KEY UPDATE "
+                    . "name_translation = VALUES(name_translation)");
+                $db->bind("UpsertMapTranslation",
+                    "ss",
+                    $r_name, $r_name_translation);
+                // UpsertHeroTranslation
+                $db->prepare("UpsertHeroTranslation",
+                    "INSERT INTO herodata_heroes_translations "
+                    . "(name, name_translation) "
+                    . "VALUES (?, ?) "
+                    . "ON DUPLICATE KEY UPDATE "
+                    . "name_translation = VALUES(name_translation)");
+                $db->bind("UpsertHeroTranslation",
+                    "ss",
+                    $r_name, $r_name_translation);
 
                 /*
                  * Empty tables if specified
@@ -1664,18 +1678,48 @@ $validargs = [
                     }
                 }
 
-                //Upsert Maps
-                $filepath = __DIR__ . FILE_MAPDATA;
+                //Upsert Maps & Map Translations
+                $filepath = __DIR__ . FILE_TRANSLATION_MAPDATA;
                 if (file_exists($filepath)) {
                     $json = json_decode(file_get_contents($filepath), true);
                     foreach ($json as $map) {
                         $r_name = $map['PrimaryName'];
                         $r_name_sort = $map['ImageURL'];
                         $db->execute("UpsertMap");
+
+                        $translationbulk = $map['Translations'];
+                        $translations = explode(",", $translationbulk);
+
+                        foreach ($translations as $translation) {
+                            $r_name_translation = $translation;
+
+                            $db->execute("UpsertMapTranslation");
+                        }
                     }
                 }
                 else {
                     $log("[--dbout $mode] Could not find map data file (" . $filepath . ")...".E);
+                }
+
+                //Upsert Hero Translations
+                $filepath = __DIR__ . FILE_TRANSLATION_HERODATA;
+                if (file_exists($filepath)) {
+                    $json = json_decode(file_get_contents($filepath), true);
+                    foreach ($json as $hero) {
+                        $r_name = $hero['PrimaryName'];
+
+                        $translationbulk = $hero['Translations'];
+                        $translations = explode(",", $translationbulk);
+
+                        foreach ($translations as $translation) {
+                            $r_name_translation = $translation;
+
+                            $db->execute("UpsertHeroTranslation");
+                        }
+                    }
+                }
+                else {
+                    $log("[--dbout $mode] Could not find hero data file (" . $filepath . ")...".E);
                 }
 
                 //Upsert Awards
@@ -1693,7 +1737,7 @@ $validargs = [
 
                 //Invalidate any cached requests that made use of data generated from this operation
                 $redis = new RedisDatabase();
-                $redis->connect($database_credentials['redis']);
+                $redis->connect($creds[Credentials::KEY_REDIS_URI]);
 
                 //Go through the cache requests to expire
                 $redis->expire(HotstatusPipeline::CACHE_REQUEST_DATATABLE_HEROES_STATSLIST);
