@@ -53,7 +53,7 @@ $db->prepare("UpdateReplayStatus",
 $db->bind("UpdateReplayStatus", "sii", $r_status, $r_timestamp, $r_id);
 
 $db->prepare("UpdateReplayStatusError",
-    "UPDATE replays SET error = ?, status = ?, lastused = ? WHERE id = ?");
+    "UPDATE replays SET file = NULL, error = ?, status = ?, lastused = ? WHERE id = ?");
 $db->bind("UpdateReplayStatusError", "ssii", $r_error, $r_status, $r_timestamp, $r_id);
 
 $db->prepare("UpdateReplayParsed",
