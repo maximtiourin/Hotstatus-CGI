@@ -25,7 +25,8 @@ const OUT_OF_REPLAYS_COUNT_LIMIT = 5; //5 occurence limit
 const OUT_OF_REPLAYS_COUNT_DURATION = 60; //seconds
 const OUT_OF_REPLAYS_SLEEP_DURATION = 1800; //seconds
 const UNKNOWN_ERROR_CODE = 300; //seconds
-const TOO_MANY_REQUEST_SLEEP_DURATION = 5; //seconds
+const TOO_MANY_REQUEST_SLEEP_DURATION = 30; //seconds
+const REQUEST_SPREADOUT_SLEEP_DURATION = 1; //seconds
 const SLEEP_DURATION = 5; //seconds
 const MINI_SLEEP_DURATION = 1; //seconds
 const E = PHP_EOL;
@@ -107,11 +108,13 @@ while (true) {
                 }
                 addToPageIndex($replaylen); //Finished with page, rollover page index
                 echo 'Page #' . $prevpage . ' processed (' . count($relevant_replays) . ' relevant replays).'.E.E;
+                $sleep->add(REQUEST_SPREADOUT_SLEEP_DURATION);
             }
             else {
                 //No relevant replays found here, set next replayid to be greater than the highest id in the replayset
                 addToPageIndex($replaylen); //Finished with page, rollover page index
                 echo 'Page #' . $prevpage . ' had no more relevant replays.'.E.E;
+                $sleep->add(REQUEST_SPREADOUT_SLEEP_DURATION);
             }
         }
         else {
