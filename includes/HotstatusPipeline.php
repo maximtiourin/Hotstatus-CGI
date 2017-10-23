@@ -87,6 +87,45 @@ class HotstatusPipeline {
     }
 
     /*
+     * Returns a size $n array or smaller containing unique objects of type :
+     * {
+     *      'year' => ISO_YEAR
+     *      'week' => ISO_WEEK
+     * }
+     * which describe the last $n ISO weeks from the given $datetime, offset by $o weeks inclusively.
+     */
+    public static function getLastISOWeeksInclusive($n, $datetimestring, $o = 0) {
+        date_default_timezone_set(self::REPLAY_TIMEZONE);
+
+        $i = 0;
+
+        $datetime = new \DateTime($datetimestring);
+
+        $isoweeks = [];
+
+        while ($i < $n) {
+            $interval = new \DateInterval("P". ($i + $o) ."W");
+
+            /** @var \DateTime $datetime */
+            $datetime->sub($interval);
+
+            $week = intval($datetime->format("W"));
+            $year = intval($datetime->format("o"));
+
+            $isoweeks['Y' . $year . 'W' . $week] = [
+                "year" => $year,
+                "week" => $week
+            ];
+
+            $datetime->add($interval); //Add back interval for next operation
+
+            $i++;
+        }
+
+        return $isoweeks;
+    }
+
+    /*
      * Returns the region string associated with the given region id
      */
     public static function getRegionString($regionid) {
