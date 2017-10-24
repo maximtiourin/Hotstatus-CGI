@@ -131,7 +131,7 @@ while (true) {
             }
             else {
                //Potentially no more replay pages to process, try a few more times after a minute to make sure it's not just the API bugging out.
-               echo timestamp() . 'Received empty replays result...'.E;
+               echo timestamp() . 'Received empty replays result...'.E.E;
                $sleep->add(OUT_OF_REPLAYS_COUNT_DURATION);
             }
         }
