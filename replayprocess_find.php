@@ -36,7 +36,7 @@ $sleep = new SleepHandler();
 //Prepare statements
 $db->prepare("SelectNewestReplay", "SELECT * FROM replays ORDER BY hotsapi_page DESC, hotsapi_idinpage DESC LIMIT 1");
 $db->prepare("InsertNewReplay", "INSERT INTO replays (hotsapi_id, hotsapi_page, hotsapi_idinpage, match_date, fingerprint, hotsapi_url, status, lastused) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-$db->bind("InsertNewReplay", "iiisssi", $r_id, $r_page, $r_idinpage, $r_match_date, $r_fingerprint, $r_s3url, $r_status, $r_timestamp);
+$db->bind("InsertNewReplay", "iiiisssi", $r_id, $r_page, $r_idinpage, $r_match_date, $r_fingerprint, $r_s3url, $r_status, $r_timestamp);
 
 //Helper functions
 function addToPageIndex($amount) {
