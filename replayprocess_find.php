@@ -23,7 +23,7 @@ $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 //Constants and qol
 const OUT_OF_REPLAYS_COUNT_LIMIT = 5; //5 occurence limit
 const OUT_OF_REPLAYS_COUNT_DURATION = 60; //seconds
-const OUT_OF_REPLAYS_SLEEP_DURATION = 1800; //seconds
+const OUT_OF_REPLAYS_SLEEP_DURATION = 900; //seconds
 const UNKNOWN_ERROR_CODE = 300; //seconds
 const TOO_MANY_REQUEST_SLEEP_DURATION = 30; //seconds
 const REQUEST_SPREADOUT_SLEEP_DURATION = 1; //seconds
@@ -93,6 +93,8 @@ while (true) {
         $replays = $api['json']['replays'];
         $replaylen = count($replays);
         if ($replaylen > 0) {
+            $out_of_replays_count = 0;
+
             $relevant_replays = Hotsapi::getReplaysGreaterThanEqualToId($replays, $pageindex, true, HotstatusPipeline::REPLAY_AGE_LIMIT);
             if (count($relevant_replays) > 0) {
                 foreach ($relevant_replays as $replay) {
