@@ -11,18 +11,10 @@ require_once 'includes/ReplayParser.php';
 require_once 'includes/MMRCalculator.php';
 
 use Fizzik\Database\MySqlDatabase;
-use Fizzik\Database\MongoDBDatabase;
 use Fizzik\Utility\Console;
 use Fizzik\Utility\FileHandling;
 use Fizzik\Utility\OS;
 use Fizzik\Utility\SleepHandler;
-use MongoDB\BulkWriteResult;
-use MongoDB\Collection;
-use MongoDB\DeleteResult;
-use MongoDB\Driver\Exception\BulkWriteException;
-use MongoDB\InsertManyResult;
-use MongoDB\InsertOneResult;
-use MongoDB\UpdateResult;
 
 set_time_limit(0);
 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
@@ -61,7 +53,7 @@ $db->prepare("UpdateReplayParsedError",
 $db->bind("UpdateReplayParsedError", "issii", $r_match_id, $r_error, $r_status, $r_timestamp, $r_id);
 
 $db->prepare("SelectNextReplayWithStatus-Unlocked",
-    "SELECT * FROM replays WHERE status = ? AND lastused <= ? ORDER BY id ASC LIMIT 1");
+    "SELECT * FROM replays WHERE status = ? AND lastused <= ? ORDER BY match_date ASC, id ASC LIMIT 1");
 $db->bind("SelectNextReplayWithStatus-Unlocked", "si", $r_status, $r_timestamp);
 
 $db->prepare("DoesHeroNameExist",
@@ -84,59 +76,25 @@ $db->prepare("GetMapNameFromMapNameTranslation",
     "SELECT name FROM herodata_maps_translations WHERE name_translation = ?");
 $db->bind("GetMapNameFromMapNameTranslation", "s", $r_name_translation);
 
+$db->prepare("GetMMRForPlayer",
+    "SELECT rating, mu, sigma FROM players_mmr WHERE id = ?, season = ?, gameType = ?");
+$db->bind("GetMMRForPlayer", "idd", $r_player_id, $r_season, $r_gameType);
+
+$db->prepare("InsertMatch",
+    "INSERT INTO matches (id, type, map, date, match_length, version, region, winner, players, bans, team_level, mmr) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$db->bind("InsertMatch", "isssisiissss", $r_id, $r_type, $r_map, $r_date, $r_match_length, $r_version, $r_region, $r_winner, $r_players, $r_bans, $r_team_level, $r_mmr);
+
+$db->prepare("+=:players",
+    "INSERT INTO players "
+    . "(id, name, tag, region, account_level) "
+    . "VALUES (?, ?, ?, ?, ?) "
+    . "ON DUPLICATE KEY UPDATE "
+    . "name = VALUES(name), tag = VALUES(tag), region = VALUES(region), account_level = GREATEST(account_level, VALUES(account_level))");
+$db->bind("+=:players",
+    "isiii",
+    $r_player_id, $r_name, $r_tag, $r_region, $r_account_level);
+
 //Helper functions
-
-/*
- * Handles the outputting of information about a bulkwrite exception
- */
-//TODO
-function BulkWriteExceptionHandler(BulkWriteException $e) {
-    $res = $e->getWriteResult();
-
-    echo "MongoDB Bulk Write errors:".E.E;
-    foreach ($res->getWriteErrors() as $error) {
-        $index = $error->getIndex();
-        $msg = $error->getMessage();
-
-        echo "$index: $msg".E.E;
-    }
-
-    return $res;
-}
-
-//TODO
-function BulkWriteHandler(\MongoDB\Collection $collection, $res) {
-    $collectionName = $collection->getCollectionName();
-
-    if ($res instanceof BulkWriteResult) {
-        $upsertedCount = $res->getUpsertedCount();
-        $modifiedCount = $res->getModifiedCount();
-        $insertedCount = $res->getInsertedCount();
-        $matchedCount = $res->getMatchedCount();
-        $deletedCount = $res->getDeletedCount();
-
-        echo "Matched $matchedCount: Inserted $insertedCount, Upserted $upsertedCount, Modified $modifiedCount, Deleted $deletedCount documents in '$collectionName' collection".E;
-    }
-    else if ($res instanceof DeleteResult) {
-        $deletedCount = $res->getDeletedCount();
-
-        echo "Deleted $deletedCount documents in '$collectionName' collection".E;
-    }
-    else if ($res instanceof InsertManyResult) {
-        $insertedCount = $res->getInsertedCount();
-        echo "Inserted $insertedCount documents in '$collectionName' collection".E;
-    }
-    else if ($res instanceof InsertOneResult) {
-        $insertedCount = $res->getInsertedCount();
-        echo "Inserted $insertedCount documents in '$collectionName' collection".E;
-    }
-    else if ($res instanceof UpdateResult) {
-        $upsertedCount = $res->getUpsertedCount();
-        $modifiedCount = $res->getModifiedCount();
-        $matchedCount = $res->getMatchedCount();
-        echo "Matched $matchedCount: Upserted $upsertedCount, Modified $modifiedCount documents in '$collectionName' collection".E;
-    }
-}
 
 /*
  * Inserts match into 'matches' collection
@@ -147,16 +105,10 @@ function BulkWriteHandler(\MongoDB\Collection $collection, $res) {
  *
  * Otherwise, returns FALSE
  */
-//TODO
 function insertMatch(&$parse, $mapMapping, $heroNameMappings, &$mmrcalc, &$old_mmrs, &$new_mmrs) {
-    global $mongo, $r_id;
-
-    $parse['_id'] = $r_id; //Set document id to be the match id
+    global $db, $r_id, $r_type, $r_map, $r_date, $r_match_length, $r_version, $r_region, $r_winner, $r_players, $r_bans, $r_team_level, $r_mmr;
 
     /* Update document with additional relevant data */
-    //Week Data
-    $parse['week_info'] = HotstatusPipeline::getWeekDataOfReplay($parse['date']);
-
     //Team MMR
     $parse['mmr'] = [
         '0' => [
@@ -199,25 +151,32 @@ function insertMatch(&$parse, $mapMapping, $heroNameMappings, &$mmrcalc, &$old_m
         ];
     }
 
-    //Begin inserting 'match' document
-    /** @var Collection $clc */
-    $clc = $mongo->selectCollection('matches');
-
+    //Begin inserting match
     try {
-        $res = $clc->insertOne($parse);
+        $r_type = $parse['type'];
+        $r_map = $parse['map'];
+        $r_date = $parse['date'];
+        $r_match_length = $parse['match_length'];
+        $r_version = $parse['version'];
+        $r_region = $parse['region'];
+        $r_winner = $parse['winner'];
+        $r_players = json_encode($parse['players']);
+        $r_bans = json_encode($parse['bans']);
+        $r_team_level = json_encode($parse['team_level']);
+        $r_mmr = json_encode($parse['mmr']);
+
+        $db->execute("InsertMatch");
+
+        echo "Inserted Match #" . $r_id . " into 'matches'...".E;
 
         $ret = true;
     }
-    catch (BulkWriteException $e) {
-        $res = BulkWriteExceptionHandler($e);
-
+    catch (\Exception $e) {
         $ret = false;
     }
 
-    BulkWriteHandler($clc, $res);
-
     if ($ret) {
-        return ['match' => $parse, 'match_id' => $res->getInsertedId()];
+        return ['match' => $parse, $r_id];
     }
     else {
         return FALSE;
@@ -228,16 +187,40 @@ function insertMatch(&$parse, $mapMapping, $heroNameMappings, &$mmrcalc, &$old_m
  * Updates the 'players' collection with all relevant player data
  * Returns TRUE on complete success, FALSE if any errors occurred
  */
-//TODO
+//TODO Fully implement updatePlayers
 function updatePlayers(&$match, $seasonid, &$new_mmrs) {
+    global $db, $r_player_id, $r_name, $r_tag, $r_region, $r_account_level;
 
+    try {
+        foreach ($match['players'] as $player) {
+            //+=:players
+            $r_player_id = $player['id'];
+            $r_name = $player['name'];
+            $r_tag = $player['tag'];
+            $r_region = $match['region'];
+            $r_account_level = $player['account_level'];
+
+            $db->execute("+=:players");
+
+            //TODO Continue implementation of +=: players_* tables, check the schema document for what tables are left
+        }
+
+        echo "Upserted ".count($match['players'])." players into various player tables...".E;
+
+        $ret = true;
+    }
+    catch (\Exception $e) {
+        $ret = false;
+    }
+
+    return $ret;
 }
 
 /*
  * Updates the 'heroes' collection with all relevant hero data
  * Returns TRUE on complete success, FALSE if any errors occurred
  */
-//TODO
+//TODO fully implement updateHeroes
 function updateHeroes(&$match, &$bannedHeroes) {
 
 }
@@ -308,24 +291,15 @@ while (true) {
                     "team1" => []
                 ];
                 foreach ($parse['players'] as $player) {
-                    /** @var Collection $clc_players */
-                    //TODO
-                    $clc_players = $mongo->selectCollection('players');
-                    $res = $clc_players->findOne(
-                        [               //Filter Array
-                            '_id' => $player['id'],
-                            "summary_data.mmr.granular.$seasonid.$matchtype" => ['$exists' => true]
-                        ],
-                        [               //Options Array
-                            'projection' => [
-                                '_id' => 0,
-                                "summary_data.mmr.granular.$seasonid.$matchtype" => 1
-                            ]
-                        ]
-                    );
-                    if ($res !== null) {
+                    $r_player_id = $player['id'];
+                    $r_season = $seasonid;
+                    $r_gameType = $matchtype;
+
+                    $mmr_result = $db->execute("GetMMRForPlayer");
+                    $mmr_result_rows = $db->countResultRows($mmr_result);
+                    if ($mmr_result_rows > 0) {
                         //Found player mmr
-                        $obj = $res['summary_data']['mmr']['granular'][$seasonid][$matchtype];
+                        $obj = $db->fetchArray($mmr_result);
 
                         $mmr = [
                             'rating' => $obj['rating'],
@@ -505,7 +479,7 @@ while (true) {
                                 //Copy local file into replay error directory for debugging purposes
                                 $createReplayCopy = TRUE;
 
-                                //Flag replay as partially parsed with mongodb_matchdata_write_error
+                                //Flag replay as partially parsed with mysql_matchdata_write_error
                                 $r_id = $row['id'];
                                 $r_match_id = $insertResult['match_id'];
                                 $r_status = HotstatusPipeline::REPLAY_STATUS_MYSQL_MATCHDATA_WRITE_ERROR;
