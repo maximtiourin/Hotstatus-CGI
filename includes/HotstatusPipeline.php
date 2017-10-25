@@ -25,6 +25,8 @@ class HotstatusPipeline {
     const REPLAY_STATUS_PARSE_TRANSLATE_ERROR = "parse_translate_error"; //status value for when a replay had hero or map names that couldnt be translated
     const REPLAY_STATUS_MONGODB_MATCH_WRITE_ERROR = "mongodb_match_write_error"; //status value for when a repaly had an unknown mongodb bulkwrite error during match insertion
     const REPLAY_STATUS_MONGODB_MATCHDATA_WRITE_ERROR = "mongodb_matchdata_write_error"; //status value for when a repaly had an unknown mongodb bulkwrite error during match data insertion
+    const REPLAY_STATUS_MYSQL_MATCH_WRITE_ERROR = "mysql_match_write_error"; //status value for when a repaly had an unknown mysql write error during match insertion
+    const REPLAY_STATUS_MYSQL_MATCHDATA_WRITE_ERROR = "mysql_matchdata_write_error"; //status value for when a repaly had an unknown mysql write error during match data insertion
     const FORMAT_DATETIME = "Y:m:d H:i:s"; //The format of the datatime strings
     const DATABASE_CHARSET = "utf8mb4";
 
