@@ -319,6 +319,7 @@ while (true) {
 
                         $player_old_mmrs['team'.$player['team']][$player['id'].""] = $mmr;
                     }
+                    $db->freeResult($mmr_result);
                 }
 
                 //Calculate new mmrs
