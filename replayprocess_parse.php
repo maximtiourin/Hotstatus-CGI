@@ -501,6 +501,7 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
             $db->freeResult($h_res);
 
             //Set main params
+            $r_hero = $player['hero'];
             $r_banned = 0;
 
             $db->execute("+=:heroes_matches_recent_granular");
