@@ -525,9 +525,9 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
             $r_map = $match['map'];
             $r_gameType = $match['type'];
             $r_banned = 1;
-            $r_medals = "{}";
-            $r_talents = "{}";
-            $r_builds = "{}";
+            $r_medals = "[]";
+            $r_talents = "[]";
+            $r_builds = "[]";
 
             $db->execute("trackHeroBan");
 
