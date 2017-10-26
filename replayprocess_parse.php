@@ -90,7 +90,7 @@ $db->prepare("+=:players",
     . "(id, name, tag, region, account_level) "
     . "VALUES (?, ?, ?, ?, ?) "
     . "ON DUPLICATE KEY UPDATE "
-    . "name = VALUES(name), tag = VALUES(tag), region = VALUES(region), account_level = GREATEST(account_level, VALUES(account_level))");
+    . "account_level = GREATEST(account_level, VALUES(account_level))");
 $db->bind("+=:players",
     "isiii",
     $r_player_id, $r_name, $r_tag, $r_region, $r_account_level);
