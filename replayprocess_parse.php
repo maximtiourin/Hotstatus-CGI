@@ -78,7 +78,7 @@ $db->prepare("GetMapNameFromMapNameTranslation",
 $db->bind("GetMapNameFromMapNameTranslation", "s", $r_name_translation);
 
 $db->prepare("GetMMRForPlayer",
-    "SELECT rating, mu, sigma FROM players_mmr WHERE id = ? AND season = ? AND gameType = ?");
+    "SELECT rating, mu, sigma FROM players_mmr WHERE id = ? AND season = ? AND gameType = ? FOR UPDATE");
 $db->bind("GetMMRForPlayer", "iss", $r_player_id, $r_season, $r_gameType);
 
 $db->prepare("InsertMatch",
@@ -316,9 +316,6 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
             $mmr = $new_mmrs['team'.$player['team']][$player['id'].""]; //The player's new mmr object
             $talents = $player['talents'];
 
-            //Begin transaction
-            $db->transaction_begin();
-
             /*
              * +=:players
              */
@@ -512,18 +509,12 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
             $r_banned = 0;
 
             $db->execute("+=:heroes_matches_recent_granular");
-
-            //Commit transaction
-            $db->transaction_commit();
         }
 
         echo "Processed ".count($match['players'])." Players and Heroes...".E;
 
         //Handle Bans
         foreach ($bannedHeroes as $heroban) {
-            //Begin transaction
-            $db->transaction_begin();
-
             $r_hero = $heroban;
             $r_year = $isodate['year'];
             $r_week = $isodate['week'];
@@ -537,9 +528,6 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
             $r_builds = "[]";
 
             $db->execute("trackHeroBan");
-
-            //Commit transaction
-            $db->transaction_commit();
         }
 
         echo "Processed ".count($bannedHeroes)." Herobans...".E;
@@ -547,7 +535,6 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
         $ret = true;
     }
     catch (\Exception $e) {
-        $db->transaction_rollback();
         $ret = false;
     }
 
@@ -605,6 +592,9 @@ while (true) {
 
             //Check if parse was a success
             if (!key_exists('error', $parse)) {
+                //Begin Transaction
+                $db->transaction_begin();
+
                 /* Collect player mmrs and calculate new mmr for match season */
                 $seasonid = HotstatusPipeline::getSeasonStringForDateTime($parse['date']);
                 $matchtype = $parse['type'];
@@ -798,26 +788,34 @@ while (true) {
 
                                 $db->execute("UpdateReplayParsed");
 
+                                //Commit Transaction
+                                $db->transaction_commit();
+
                                 echo 'Successfully parsed replay #' . $r_id . '...' . E . E;
                             }
                             else {
+                                //Rollback Transaction
+                                $db->transaction_rollback();
+
                                 //Copy local file into replay error directory for debugging purposes
                                 $createReplayCopy = TRUE;
 
                                 //Flag replay as partially parsed with mysql_matchdata_write_error
                                 $r_id = $row['id'];
-                                $r_match_id = $insertResult['match_id'];
                                 $r_status = HotstatusPipeline::REPLAY_STATUS_MYSQL_MATCHDATA_WRITE_ERROR;
                                 $r_timestamp = time();
                                 $r_error = "Semi-Parsed, Missed: " . $errorstr;
 
-                                $db->execute("UpdateReplayParsedError");
+                                $db->execute("UpdateReplayStatusError");
 
-                                echo 'Semi-Successfully parsed replay #' . $r_id . '. Mysql had trouble with portions of : ' . $errorstr . '...' . E . E;
+                                echo 'Could not successfully parsed replay #' . $r_id . '. Mysql had trouble with portions of : ' . $errorstr . '...' . E . E;
                             }
                         }
                     }
                     else {
+                        //Rollback Transaction
+                        $db->transaction_rollback();
+
                         //Map or Hero names could not be translated, set error status and describe error
                         //Copy local file into replay error directory for debugging purposes
                         $createReplayCopy = TRUE;
@@ -857,6 +855,9 @@ while (true) {
                     }
                 }
                 else {
+                    //Rollback Transaction
+                    $db->transaction_rollback();
+
                     //Copy local file into replay error directory for debugging purposes
                     $createReplayCopy = TRUE;
 
