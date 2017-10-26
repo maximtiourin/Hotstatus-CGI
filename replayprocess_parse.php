@@ -310,7 +310,7 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
 
     try {
         foreach ($match['players'] as $player) {
-            echo E.E.'DEBUG: Player ('.$player['name'].')'.E.E;
+            echo E.E.'DEBUG: Player ('.$player['name'].')'.E; //TODO
 
             //Qol
             $winInc = ($player['team'] === $match['winner']) ? (1) : (0);
@@ -329,6 +329,8 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
 
             $db->execute("+=:players");
 
+            echo 'DEBUG: +=players ('.$player['name'].')'.E; //TODO
+
             /*
              * +=:players_heroes
              */
@@ -337,6 +339,8 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
 
             $db->execute("+=:players_heroes");
 
+            echo 'DEBUG: +=players_heroes ('.$player['name'].')'.E; //TODO
+
             /*
              * +=:players_matches
              */
@@ -344,6 +348,8 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
             $r_date = $match['date'];
 
             $db->execute("+=:players_matches");
+
+            echo 'DEBUG: +=players_matches ('.$player['name'].')'.E; //TODO
 
             /*
              * ??:players_matches_recent_granular
@@ -372,6 +378,8 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
 
                 $db->execute("ensureTalentBuild");
 
+                echo 'DEBUG: ensureTalentBuild ('.$player['name'].')'.E; //TODO
+
                 $g_builds[$r_build] = [
                     "played" => 1,
                     "won" => $winInc
@@ -384,6 +392,8 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
                 $r_players = json_encode(HotstatusPipeline::getPlayerIdArrayFromPlayerPartyRelationArray($match['players'], $player['party']));
 
                 $db->execute("ensurePlayerParty");
+
+                echo 'DEBUG: ensurePlayerParty ('.$player['name'].')'.E; //TODO
 
                 $g_parties[$r_party] = [
                     "played" => 1,
@@ -401,6 +411,9 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
 
             //Check if row exists to increment json
             $p_res = $db->execute("??:players_matches_recent_granular");
+
+            echo 'DEBUG: ??:players_matches_recent_granular ('.$player['name'].')'.E; //TODO
+
             $p_res_rows = $db->countResultRows($p_res);
             if ($p_res_rows > 0) {
                 //Row exists, use its json values to increment constructed json
@@ -455,12 +468,16 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
 
             $db->execute("+=:players_matches_recent_granular");
 
+            echo 'DEBUG: +=:players_matches_recent_granular ('.$player['name'].')'.E; //TODO
+
             /*
              * +=:players_matches_total
              */
             $r_time_played_silenced = $timeSilenced;
 
             $db->execute("+=:players_matches_total");
+
+            echo 'DEBUG: +=:players_matches_total ('.$player['name'].')'.E; //TODO
 
             /*
              * +=:players_mmr
@@ -472,12 +489,17 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
 
             $db->execute("+=:players_mmr");
 
+            echo 'DEBUG: +=:players_mmr ('.$player['name'].')'.E; //TODO
+
             /*
              * ??:heroes_matches_recent_granular
              * +=:heroes_matches_recent_granular
              */
             //Check if row exists to increment json
             $h_res = $db->execute("??:heroes_matches_recent_granular");
+
+            echo 'DEBUG: ??:heroes_matches_recent_granular ('.$player['name'].')'.E; //TODO
+
             $h_res_rows = $db->countResultRows($h_res);
             if ($h_res_rows > 0) {
                 //Row exists, use its json values to increment constructed json
@@ -511,6 +533,8 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
             $r_banned = 0;
 
             $db->execute("+=:heroes_matches_recent_granular");
+
+            echo 'DEBUG: +=:heroes_matches_recent_granular ('.$player['name'].')'.E; //TODO
         }
 
         echo "Processed ".count($match['players'])." Players and Heroes...".E;
