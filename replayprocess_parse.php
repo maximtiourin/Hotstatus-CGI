@@ -298,7 +298,6 @@ function insertMatch(&$parse, $mapMapping, $heroNameMappings, &$mmrcalc, &$old_m
  * All Per Player/Hero updates are done as transactions, to prevent partial updates.
  * Returns TRUE on complete success, FALSE if any errors occurred
  */
-//TODO Fully implement updatePlayers
 function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) {
     global $db, $r_player_id, $r_name, $r_tag, $r_region, $r_account_level, $r_hero, $r_hero_level, $r_match_id, $r_date,
            $r_year, $r_week, $r_day, $r_date_end, $r_hero, $r_gameType, $r_map, $r_played, $r_won, $r_time_played,
@@ -370,7 +369,7 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
                 }
 
                 $r_build = HotstatusPipeline::getTalentBuildHash($talents);
-                $r_build_talents = $talents;
+                $r_build_talents = json_encode($talents);
 
                 $db->execute("ensureTalentBuild");
 
@@ -383,7 +382,7 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
             $g_parties = [];
             if (count($player['party']) > 0) {
                 $r_party = HotstatusPipeline::getPerPlayerPartyHash($player['party']);
-                $r_players = HotstatusPipeline::getPlayerIdArrayFromPlayerPartyRelationArray($match['players'], $player['party']);
+                $r_players = json_encode(HotstatusPipeline::getPlayerIdArrayFromPlayerPartyRelationArray($match['players'], $player['party']));
 
                 $db->execute("ensurePlayerParty");
 
@@ -411,25 +410,25 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
                 //Aggregate Sum
                 $aggr_medals = [];
                 AssocArray::aggregate($aggr_medals, $g_medals, json_decode($row['medals'], true), AssocArray::AGGREGATE_SUM);
-                $r_medals = $aggr_medals;
+                $r_medals = json_encode($aggr_medals);
 
                 $aggr_talents = [];
                 AssocArray::aggregate($aggr_talents, $g_talents, json_decode($row['talents'], true), AssocArray::AGGREGATE_SUM);
-                $r_talents = $aggr_talents;
+                $r_talents = json_encode($aggr_talents);
 
                 $aggr_builds = [];
                 AssocArray::aggregate($aggr_builds, $g_builds, json_decode($row['builds'], true), AssocArray::AGGREGATE_SUM);
-                $r_builds = $aggr_builds;
+                $r_builds = json_encode($aggr_builds);
 
                 $aggr_parties = [];
                 AssocArray::aggregate($aggr_parties, $g_parties, json_decode($row['parties'], true), AssocArray::AGGREGATE_SUM);
-                $r_parties = $aggr_parties;
+                $r_parties = json_encode($aggr_parties);
             }
             else {
-                $r_medals = $g_medals;
-                $r_talents = $g_talents;
-                $r_builds = $g_builds;
-                $r_parties = $g_parties;
+                $r_medals = json_encode($g_medals);
+                $r_talents = json_encode($g_talents);
+                $r_builds = json_encode($g_builds);
+                $r_parties = json_encode($g_parties);
             }
             $db->freeResult($p_res);
 
@@ -484,20 +483,20 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
                 //Aggregate Sum
                 $aggr_medals = [];
                 AssocArray::aggregate($aggr_medals, $g_medals, json_decode($row['medals'], true), AssocArray::AGGREGATE_SUM);
-                $r_medals = $aggr_medals;
+                $r_medals = json_encode($aggr_medals);
 
                 $aggr_talents = [];
                 AssocArray::aggregate($aggr_talents, $g_talents, json_decode($row['talents'], true), AssocArray::AGGREGATE_SUM);
-                $r_talents = $aggr_talents;
+                $r_talents = json_encode($aggr_talents);
 
                 $aggr_builds = [];
                 AssocArray::aggregate($aggr_builds, $g_builds, json_decode($row['builds'], true), AssocArray::AGGREGATE_SUM);
-                $r_builds = $aggr_builds;
+                $r_builds = json_encode($aggr_builds);
             }
             else {
-                $r_medals = $g_medals;
-                $r_talents = $g_talents;
-                $r_builds = $g_builds;
+                $r_medals = json_encode($g_medals);
+                $r_talents = json_encode($g_talents);
+                $r_builds = json_encode($g_builds);
             }
             $db->freeResult($h_res);
 
