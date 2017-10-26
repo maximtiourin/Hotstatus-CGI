@@ -78,7 +78,7 @@ $db->prepare("GetMapNameFromMapNameTranslation",
 $db->bind("GetMapNameFromMapNameTranslation", "s", $r_name_translation);
 
 $db->prepare("GetMMRForPlayer",
-    "SELECT rating, mu, sigma FROM players_mmr WHERE id = ?, season = ?, gameType = ?");
+    "SELECT rating, mu, sigma FROM players_mmr WHERE id = ? AND season = ? AND gameType = ?");
 $db->bind("GetMMRForPlayer", "iss", $r_player_id, $r_season, $r_gameType);
 
 $db->prepare("InsertMatch",
