@@ -753,6 +753,9 @@ while (true) {
                         $insertResult = insertMatch($parse, $mapMapping, $heroNameMappings, $calc, $player_old_mmrs, $player_new_mmrs);
 
                         if ($insertResult === FALSE) {
+                            //Rollback Transaction
+                            $db->transaction_rollback();
+
                             //Error parsing match and inserting into 'matches', cancel parsing
                             //Copy local file into replay error directory for debugging purposes
                             $createReplayCopy = TRUE;
