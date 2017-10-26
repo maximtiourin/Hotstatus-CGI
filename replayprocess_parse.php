@@ -139,6 +139,61 @@ $db->bind("+=:players_matches_recent_granular",
     $r_stats_siege_damage, $r_stats_hero_damage, $r_stats_structure_damage, $r_stats_healing, $r_stats_damage_taken, $r_stats_merc_camps, $r_stats_exp_contrib,
     $r_stats_best_killstreak, $r_stats_time_spent_dead, $r_medals, $r_talents, $r_builds, $r_parties);
 
+$db->prepare("+=:players_matches_total",
+    "INSERT INTO players_matches_total "
+    . "(id, hero, gameType, map, played, won, time_played, time_played_silenced, medals) "
+    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) "
+    . "ON DUPLICATE KEY UPDATE "
+    . "played = played + VALUES(played), won = won + VALUES(won), time_played = time_played + VALUES(time_played), 
+    time_played_silenced = time_played_silenced + VALUES(time_played_silenced), medals = VALUES(medals)");
+$db->bind("+=:players_matches_total",
+    "isssiiiis",
+    $r_player_id, $r_hero, $r_gameType, $r_map, $r_played, $r_won, $r_time_played, $r_time_played_silenced, $r_medals);
+
+$db->prepare("+=:players_mmr",
+    "INSERT INTO players_mmr "
+    . "(id, season, gameType, rating, mu, sigma) "
+    . "VALUES (?, ?, ?, ?, ?, ?) "
+    . "ON DUPLICATE KEY UPDATE "
+    . "rating = VALUES(rating), mu = VALUES(mu), sigma = VALUES(sigma)");
+$db->bind("+=:players_mmr",
+    "issidd",
+    $r_player_id, $r_season, $r_gameType, $r_rating, $r_mu, $r_sigma);
+
+$db->prepare("??:heroes_matches_recent_granular",
+    "SELECT * FROM heroes_matches_recent_granular WHERE hero = ? AND year = ? AND week = ? AND day = ? AND map = ? AND gameType = ? FOR UPDATE");
+$db->bind("??:heroes_matches_recent_granular",
+    "siiiss", $r_hero, $r_year, $r_week, $r_day, $r_map, $r_gameType);
+
+$db->prepare("+=:heroes_matches_recent_granular",
+    "INSERT INTO heroes_matches_recent_granular "
+    . "(hero, year, week, day, date_end, gameType, map, played, won, banned, time_played, stats_kills, stats_assists, stats_deaths, stats_siege_damage, stats_hero_damage, 
+    stats_structure_damage, stats_healing, stats_damage_taken, stats_merc_camps, stats_exp_contrib, stats_best_killstreak, stats_time_spent_dead, medals, talents, builds) "
+    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+    . "ON DUPLICATE KEY UPDATE "
+    . "date_end = VALUES(date_end), played = played + VALUES(played), won = won + VALUES(won), banned = banned + VALUES(banned), time_played = time_played + VALUES(time_played), 
+    stats_kills = stats_kills + VALUES(stats_kills), stats_assists = stats_assists + VALUES(stats_assists), stats_deaths = stats_deaths + VALUES(stats_deaths), 
+    stats_siege_damage = stats_siege_damage + VALUES(stats_siege_damage), stats_hero_damage = stats_hero_damage + VALUES(stats_hero_damage), 
+    stats_structure_damage = stats_structure_damage + VALUES(stats_structure_damage), stats_healing = stats_healing + VALUES(stats_healing), 
+    stats_damage_taken = stats_damage_taken + VALUES(stats_damage_taken), stats_merc_camps = stats_merc_camps + VALUES(stats_merc_camps), 
+    stats_exp_contrib = stats_exp_contrib + VALUES(stats_exp_contrib), stats_best_killstreak = GREATEST(stats_best_killstreak, VALUES(stats_best_killstreak)), 
+    stats_time_spent_dead = stats_time_spent_dead + VALUES(stats_time_spent_dead), medals = VALUES(medals), talents = VALUES(talents), builds = VALUES(builds)");
+$db->bind("+=:heroes_matches_recent_granular",
+    "siiisssiiiiiiiiiiiiiiiisss",
+    $r_hero, $r_year, $r_week, $r_day, $r_date_end, $r_gameType, $r_map, $r_played, $r_won, $r_banned, $r_time_played, $r_stats_kills, $r_stats_assists, $r_stats_deaths,
+    $r_stats_siege_damage, $r_stats_hero_damage, $r_stats_structure_damage, $r_stats_healing, $r_stats_damage_taken, $r_stats_merc_camps, $r_stats_exp_contrib,
+    $r_stats_best_killstreak, $r_stats_time_spent_dead, $r_medals, $r_talents, $r_builds);
+
+$db->prepare("trackHeroBan",
+    "INSERT INTO heroes_matches_recent_granular "
+    . "(hero, year, week, day, date_end, gameType, map, banned, medals, talents, builds) "
+    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+    . "ON DUPLICATE KEY UPDATE "
+    . "banned = banned + VALUES(banned)");
+$db->bind("trackHeroBan",
+    "siiisssisss",
+    $r_hero, $r_year, $r_week, $r_day, $r_date_end, $r_gameType, $r_map, $r_banned, $r_medals, $r_talents, $r_builds);
+
 $db->prepare("ensureTalentBuild",
     "INSERT INTO heroes_builds (hero, build, talents) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE hero = hero");
 $db->bind("ensureTalentBuild", "sss", $r_hero, $r_build, $r_build_talents);
@@ -239,7 +294,8 @@ function insertMatch(&$parse, $mapMapping, $heroNameMappings, &$mmrcalc, &$old_m
 }
 
 /*
- * Updates the 'players' collection with all relevant player data
+ * Updates the all relevant player and hero tables and rows with data from the match
+ * All Per Player/Hero updates are done as transactions, to prevent partial updates.
  * Returns TRUE on complete success, FALSE if any errors occurred
  */
 //TODO Fully implement updatePlayers
@@ -248,12 +304,16 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
            $r_year, $r_week, $r_day, $r_date_end, $r_hero, $r_gameType, $r_map, $r_played, $r_won, $r_time_played,
            $r_stats_kills, $r_stats_assists, $r_stats_deaths, $r_stats_siege_damage, $r_stats_hero_damage, $r_stats_structure_damage,
            $r_stats_healing, $r_stats_damage_taken, $r_stats_merc_camps, $r_stats_exp_contrib, $r_stats_best_killstreak,
-           $r_stats_time_spent_dead, $r_medals, $r_talents, $r_builds, $r_parties, $r_build, $r_build_talents, $r_party, $r_players;
+           $r_stats_time_spent_dead, $r_medals, $r_talents, $r_builds, $r_parties, $r_build, $r_build_talents, $r_party, $r_players, $r_time_played_silenced,
+           $r_season, $r_rating, $r_mu, $r_sigma, $r_banned;
+
+    $isodate = HotstatusPipeline::getISOYearWeekDayForDateTime($match['date']);
 
     try {
         foreach ($match['players'] as $player) {
             //Qol
             $winInc = ($player['team'] === $match['winner']) ? (1) : (0);
+            $timeSilenced = ($player['silenced'] === 1) ? ($match['match_length']) : (0);
             $mmr = $new_mmrs['team'.$player['team']][$player['id'].""]; //The player's new mmr object
             $talents = $player['talents'];
 
@@ -289,6 +349,7 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
 
             /*
              * ??:players_matches_recent_granular
+             * +=:players_matches_recent_granular
              */
             //Construct initial json and ensure hash rows
             $g_medals = [];
@@ -334,7 +395,6 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
 
 
             //Set key params
-            $isodate = HotstatusPipeline::getISOYearWeekDayForDateTime($match['date']);
             $r_year = $isodate['year'];
             $r_week = $isodate['week'];
             $r_day = $isodate['day'];
@@ -393,15 +453,94 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
 
             $db->execute("+=:players_matches_recent_granular");
 
+            /*
+             * +=:players_matches_total
+             */
+            $r_time_played_silenced = $timeSilenced;
+
+            $db->execute("+=:players_matches_total");
+
+            /*
+             * +=:players_mmr
+             */
+            $r_season = $seasonid;
+            $r_rating = $mmr['rating'];
+            $r_mu = $mmr['mu'];
+            $r_sigma = $mmr['sigma'];
+
+            $db->execute("+=:players_mmr");
+
+            /*
+             * ??:heroes_matches_recent_granular
+             * +=:heroes_matches_recent_granular
+             */
+            //Check if row exists to increment json
+            $h_res = $db->execute("??:heroes_matches_recent_granular");
+            $h_res_rows = $db->countResultRows($h_res);
+            if ($h_res_rows > 0) {
+                //Row exists, use its json values to increment constructed json
+                $row = $db->fetchArray($h_res);
+
+                //Aggregate Sum
+                $aggr_medals = [];
+                AssocArray::aggregate($aggr_medals, $g_medals, json_decode($row['medals'], true), AssocArray::AGGREGATE_SUM);
+                $r_medals = $aggr_medals;
+
+                $aggr_talents = [];
+                AssocArray::aggregate($aggr_talents, $g_talents, json_decode($row['talents'], true), AssocArray::AGGREGATE_SUM);
+                $r_talents = $aggr_talents;
+
+                $aggr_builds = [];
+                AssocArray::aggregate($aggr_builds, $g_builds, json_decode($row['builds'], true), AssocArray::AGGREGATE_SUM);
+                $r_builds = $aggr_builds;
+            }
+            else {
+                $r_medals = $g_medals;
+                $r_talents = $g_talents;
+                $r_builds = $g_builds;
+            }
+            $db->freeResult($h_res);
+
+            //Set main params
+            $r_banned = 0;
+
+            $db->execute("+=:heroes_matches_recent_granular");
+
             //Commit transaction
             $db->transaction_commit();
         }
 
-        echo "Upserted ".count($match['players'])." players into various player tables...".E;
+        echo "Processed ".count($match['players'])." Players and Heroes...".E;
+
+        //Handle Bans
+        foreach ($bannedHeroes as $heroban) {
+            //Begin transaction
+            $db->transaction_begin();
+
+            $r_hero = $heroban;
+            $r_year = $isodate['year'];
+            $r_week = $isodate['week'];
+            $r_day = $isodate['day'];
+            $r_date_end = $isodate['date_end'];
+            $r_map = $match['map'];
+            $r_gameType = $match['type'];
+            $r_banned = 1;
+            $r_medals = "{}";
+            $r_talents = "{}";
+            $r_builds = "{}";
+
+            $db->execute("trackHeroBan");
+
+            //Commit transaction
+            $db->transaction_commit();
+        }
+
+        echo "Processed ".count($bannedHeroes)." Herobans...".E;
 
         $ret = true;
     }
     catch (\Exception $e) {
+        $db->transaction_rollback();
         $ret = false;
     }
 
