@@ -87,10 +87,10 @@ $db->bind("InsertMatch", "isssisiissss", $r_id, $r_type, $r_map, $r_date, $r_mat
 
 $db->prepare("+=:players",
     "INSERT INTO players "
-    . "(id, `name`, tag, region, account_level) "
+    . "(`id`, `name`, `tag`, `region`, `account_level`) "
     . "VALUES (?, ?, ?, ?, ?) "
     . "ON DUPLICATE KEY UPDATE "
-    . "`name` = VALUES(`name`), tag = VALUES(tag), region = VALUES(region), account_level = GREATEST(account_level, VALUES(account_level))");
+    . "`name` = VALUES(`name`), `tag` = VALUES(`tag`), `region` = VALUES(`region`), `account_level` = GREATEST(`account_level`, VALUES(`account_level`))");
 $db->bind("+=:players",
     "isiii",
     $r_player_id, $r_name, $r_tag, $r_region, $r_account_level);
