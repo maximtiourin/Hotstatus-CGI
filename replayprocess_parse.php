@@ -409,19 +409,23 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
 
                 //Aggregate Sum
                 $aggr_medals = [];
-                AssocArray::aggregate($aggr_medals, $g_medals, json_decode($row['medals'], true), AssocArray::AGGREGATE_SUM);
+                $row_medals = json_decode($row['medals'], true);
+                AssocArray::aggregate($aggr_medals, $g_medals, $row_medals, AssocArray::AGGREGATE_SUM);
                 $r_medals = json_encode($aggr_medals);
 
                 $aggr_talents = [];
-                AssocArray::aggregate($aggr_talents, $g_talents, json_decode($row['talents'], true), AssocArray::AGGREGATE_SUM);
+                $row_talents = json_decode($row['talents'], true);
+                AssocArray::aggregate($aggr_talents, $g_talents, $row_talents, AssocArray::AGGREGATE_SUM);
                 $r_talents = json_encode($aggr_talents);
 
                 $aggr_builds = [];
-                AssocArray::aggregate($aggr_builds, $g_builds, json_decode($row['builds'], true), AssocArray::AGGREGATE_SUM);
+                $row_builds = json_decode($row['builds'], true);
+                AssocArray::aggregate($aggr_builds, $g_builds, $row_builds, AssocArray::AGGREGATE_SUM);
                 $r_builds = json_encode($aggr_builds);
 
                 $aggr_parties = [];
-                AssocArray::aggregate($aggr_parties, $g_parties, json_decode($row['parties'], true), AssocArray::AGGREGATE_SUM);
+                $row_parties = json_decode($row['parties'], true);
+                AssocArray::aggregate($aggr_parties, $g_parties, $row_parties, AssocArray::AGGREGATE_SUM);
                 $r_parties = json_encode($aggr_parties);
             }
             else {
@@ -482,15 +486,18 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
 
                 //Aggregate Sum
                 $aggr_medals = [];
-                AssocArray::aggregate($aggr_medals, $g_medals, json_decode($row['medals'], true), AssocArray::AGGREGATE_SUM);
+                $row_medals = json_decode($row['medals'], true);
+                AssocArray::aggregate($aggr_medals, $g_medals, $row_medals, AssocArray::AGGREGATE_SUM);
                 $r_medals = json_encode($aggr_medals);
 
                 $aggr_talents = [];
-                AssocArray::aggregate($aggr_talents, $g_talents, json_decode($row['talents'], true), AssocArray::AGGREGATE_SUM);
+                $row_talents = json_decode($row['talents'], true);
+                AssocArray::aggregate($aggr_talents, $g_talents, $row_talents, AssocArray::AGGREGATE_SUM);
                 $r_talents = json_encode($aggr_talents);
 
                 $aggr_builds = [];
-                AssocArray::aggregate($aggr_builds, $g_builds, json_decode($row['builds'], true), AssocArray::AGGREGATE_SUM);
+                $row_builds = json_decode($row['builds'], true);
+                AssocArray::aggregate($aggr_builds, $g_builds, $row_builds, AssocArray::AGGREGATE_SUM);
                 $r_builds = json_encode($aggr_builds);
             }
             else {
