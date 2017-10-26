@@ -79,7 +79,7 @@ $db->bind("GetMapNameFromMapNameTranslation", "s", $r_name_translation);
 
 $db->prepare("GetMMRForPlayer",
     "SELECT rating, mu, sigma FROM players_mmr WHERE id = ?, season = ?, gameType = ?");
-$db->bind("GetMMRForPlayer", "idd", $r_player_id, $r_season, $r_gameType);
+$db->bind("GetMMRForPlayer", "iss", $r_player_id, $r_season, $r_gameType);
 
 $db->prepare("InsertMatch",
     "INSERT INTO matches (id, type, map, date, match_length, version, region, winner, players, bans, team_level, mmr) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
