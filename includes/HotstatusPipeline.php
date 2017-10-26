@@ -56,10 +56,12 @@ class HotstatusPipeline {
     const CACHE_REQUEST_DATATABLE_HEROES_STATSLIST = "Cache_Request_DataTable_Heroes_Statslist";
 
     /*
+     * @DEPRECATED
      * Takes a date time string, converts it to a date time, and returns an assoc array
      * that contains the following fields:
      * ['week'] = week # of the year
      * ['year'] = year #
+     * ['day] = day #
      * ['date_start'] = datetime string of when the week starts
      * ['date_end'] = datetime string of when the week ends
      */
@@ -84,6 +86,35 @@ class HotstatusPipeline {
         $ret['year'] = $yearOfWeek;
         $ret['date_start'] = $weekstartdate->format(self::FORMAT_DATETIME);
         $ret['date_end'] = $weekenddate->format(self::FORMAT_DATETIME);
+
+        return $ret;
+    }
+
+    /*
+     * Takes a date time string, converts it to date time, returns an assoc array:
+     * ['year] = ISO Year
+     * ['week] = ISO Week of the Year (Weeks start on monday)
+     * ['day'] = ISO Day of the Week (1 = Mon -> 7 = Sun)
+     * ['date_end] = datetime of when the day ends for the day that the datetimestr falls into
+     */
+    public static function getISOYearWeekDayForDateTime($datetimestr) {
+        date_default_timezone_set(self::REPLAY_TIMEZONE);
+
+        $date = new \DateTime($datetimestr);
+
+        $yearOfWeek = intval($date->format("o"));
+        $weekOfYear = intval($date->format("W"));
+        $dayOfWeek = intval($date->format("N"));
+
+        $dayEndDate = new \DateTime();
+        $dayEndDate->setISODate($yearOfWeek, $weekOfYear, $dayOfWeek);
+        $dayEndDate->setTime(23, 59, 59);
+
+        $ret = [];
+        $ret['year'] = $yearOfWeek;
+        $ret['week'] = $weekOfYear;
+        $ret['day'] = $dayOfWeek;
+        $ret['date_end'] = $dayEndDate->format(self::FORMAT_DATETIME);
 
         return $ret;
     }

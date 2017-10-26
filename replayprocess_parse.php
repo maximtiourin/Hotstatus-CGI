@@ -15,6 +15,7 @@ use Fizzik\Utility\Console;
 use Fizzik\Utility\FileHandling;
 use Fizzik\Utility\OS;
 use Fizzik\Utility\SleepHandler;
+use Fizzik\Utility\AssocArray;
 
 set_time_limit(0);
 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
@@ -94,6 +95,58 @@ $db->bind("+=:players",
     "isiii",
     $r_player_id, $r_name, $r_tag, $r_region, $r_account_level);
 
+$db->prepare("+=:players_heroes",
+    "INSERT INTO players_heroes "
+    . "(id, hero, hero_level) "
+    . "VALUES (?, ?, ?) "
+    . "ON DUPLICATE KEY UPDATE "
+    . "hero_level = GREATEST(hero_level, VALUES(hero_level))");
+$db->bind("+=:players_heroes",
+    "isi",
+    $r_player_id, $r_hero, $r_hero_level);
+
+$db->prepare("+=:players_matches",
+    "INSERT INTO players_matches "
+    . "(id, match_id, date) "
+    . "VALUES (?, ?, ?)");
+$db->bind("+=:players_matches",
+    "iis",
+    $r_player_id, $r_match_id, $r_date);
+
+$db->prepare("??:players_matches_recent_granular",
+    "SELECT * FROM players_matches_recent_granular WHERE id = ? AND year = ? AND week = ? AND day = ? AND hero = ? AND map = ? AND gameType = ? FOR UPDATE");
+$db->bind("??:players_matches_recent_granular",
+    "iiiisss", $r_player_id, $r_year, $r_week, $r_day, $r_hero, $r_map, $r_gameType);
+
+$db->prepare("+=:players_matches_recent_granular",
+    "INSERT INTO players_matches_recent_granular "
+    . "(id, year, week, day, date_end, hero, gameType, map, played, won, time_played, stats_kills, stats_assists, stats_deaths, stats_siege_damage, stats_hero_damage, 
+    stats_structure_damage, stats_healing, stats_damage_taken, stats_merc_camps, stats_exp_contrib, stats_best_killstreak, stats_time_spent_dead, medals, talents, 
+    builds, parties) "
+    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+    . "ON DUPLICATE KEY UPDATE "
+    . "date_end = VALUES(date_end), played = played + VALUES(played), won = won + VALUES(won), time_played = time_played + VALUES(time_played), 
+    stats_kills = stats_kills + VALUES(stats_kills), stats_assists = stats_assists + VALUES(stats_assists), stats_deaths = stats_deaths + VALUES(stats_deaths), 
+    stats_siege_damage = stats_siege_damage + VALUES(stats_siege_damage), stats_hero_damage = stats_hero_damage + VALUES(stats_hero_damage), 
+    stats_structure_damage = stats_structure_damage + VALUES(stats_structure_damage), stats_healing = stats_healing + VALUES(stats_healing), 
+    stats_damage_taken = stats_damage_taken + VALUES(stats_damage_taken), stats_merc_camps = stats_merc_camps + VALUES(stats_merc_camps), 
+    stats_exp_contrib = stats_exp_contrib + VALUES(stats_exp_contrib), stats_best_killstreak = GREATEST(stats_best_killstreak, VALUES(stats_best_killstreak)), 
+    stats_time_spent_dead = stats_time_spent_dead + VALUES(stats_time_spent_dead), medals = VALUES(medals), talents = VALUES(talents), builds = VALUES(builds), 
+    parties = VALUES(parties)");
+$db->bind("+=:players_matches_recent_granular",
+    "iiiissssiiiiiiiiiiiiiiissss",
+    $r_player_id, $r_year, $r_week, $r_day, $r_date_end, $r_hero, $r_gameType, $r_map, $r_played, $r_won, $r_time_played, $r_stats_kills, $r_stats_assists, $r_stats_deaths,
+    $r_stats_siege_damage, $r_stats_hero_damage, $r_stats_structure_damage, $r_stats_healing, $r_stats_damage_taken, $r_stats_merc_camps, $r_stats_exp_contrib,
+    $r_stats_best_killstreak, $r_stats_time_spent_dead, $r_medals, $r_talents, $r_builds, $r_parties);
+
+$db->prepare("ensureTalentBuild",
+    "INSERT INTO heroes_builds (hero, build, talents) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE hero = hero");
+$db->bind("ensureTalentBuild", "sss", $r_hero, $r_build, $r_build_talents);
+
+$db->prepare("ensurePlayerParty",
+    "INSERT INTO players_parties (id, party, players) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE id = id");
+$db->bind("ensurePlayerParty", "iss", $r_player_id, $r_party, $r_players);
+
 //Helper functions
 
 /*
@@ -109,6 +162,8 @@ function insertMatch(&$parse, $mapMapping, $heroNameMappings, &$mmrcalc, &$old_m
     global $db, $r_id, $r_type, $r_map, $r_date, $r_match_length, $r_version, $r_region, $r_winner, $r_players, $r_bans, $r_team_level, $r_mmr;
 
     /* Update document with additional relevant data */
+    $parse['id'] = $r_id;
+
     //Team MMR
     $parse['mmr'] = [
         '0' => [
@@ -176,7 +231,7 @@ function insertMatch(&$parse, $mapMapping, $heroNameMappings, &$mmrcalc, &$old_m
     }
 
     if ($ret) {
-        return ['match' => $parse, $r_id];
+        return ['match' => $parse, 'match_id' => $r_id];
     }
     else {
         return FALSE;
@@ -188,12 +243,26 @@ function insertMatch(&$parse, $mapMapping, $heroNameMappings, &$mmrcalc, &$old_m
  * Returns TRUE on complete success, FALSE if any errors occurred
  */
 //TODO Fully implement updatePlayers
-function updatePlayers(&$match, $seasonid, &$new_mmrs) {
-    global $db, $r_player_id, $r_name, $r_tag, $r_region, $r_account_level;
+function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) {
+    global $db, $r_player_id, $r_name, $r_tag, $r_region, $r_account_level, $r_hero, $r_hero_level, $r_match_id, $r_date,
+           $r_year, $r_week, $r_day, $r_date_end, $r_hero, $r_gameType, $r_map, $r_played, $r_won, $r_time_played,
+           $r_stats_kills, $r_stats_assists, $r_stats_deaths, $r_stats_siege_damage, $r_stats_hero_damage, $r_stats_structure_damage,
+           $r_stats_healing, $r_stats_damage_taken, $r_stats_merc_camps, $r_stats_exp_contrib, $r_stats_best_killstreak,
+           $r_stats_time_spent_dead, $r_medals, $r_talents, $r_builds, $r_parties, $r_build, $r_build_talents, $r_party, $r_players;
 
     try {
         foreach ($match['players'] as $player) {
-            //+=:players
+            //Qol
+            $winInc = ($player['team'] === $match['winner']) ? (1) : (0);
+            $mmr = $new_mmrs['team'.$player['team']][$player['id'].""]; //The player's new mmr object
+            $talents = $player['talents'];
+
+            //Begin transaction
+            $db->transaction_begin();
+
+            /*
+             * +=:players
+             */
             $r_player_id = $player['id'];
             $r_name = $player['name'];
             $r_tag = $player['tag'];
@@ -202,7 +271,130 @@ function updatePlayers(&$match, $seasonid, &$new_mmrs) {
 
             $db->execute("+=:players");
 
-            //TODO Continue implementation of +=: players_* tables, check the schema document for what tables are left
+            /*
+             * +=:players_heroes
+             */
+            $r_hero = $player['hero'];
+            $r_hero_level = $player['hero_level'];
+
+            $db->execute("+=:players_heroes");
+
+            /*
+             * +=:players_matches
+             */
+            $r_match_id = $match['id'];
+            $r_date = $match['date'];
+
+            $db->execute("+=:players_matches");
+
+            /*
+             * ??:players_matches_recent_granular
+             */
+            //Construct initial json and ensure hash rows
+            $g_medals = [];
+            foreach ($player['stats']['medals'] as $medal) {
+                $g_medals[$medal] = [
+                    "count" => 1
+                ];
+            }
+
+            $g_talents = [];
+            $g_builds = [];
+            if (count($talents) > 0) {
+                foreach ($talents as $talent) {
+                    $g_talents[$talent] = [
+                        "played" => 1,
+                        "won" => $winInc
+                    ];
+                }
+
+                $r_build = HotstatusPipeline::getTalentBuildHash($talents);
+                $r_build_talents = $talents;
+
+                $db->execute("ensureTalentBuild");
+
+                $g_builds[$r_build] = [
+                    "played" => 1,
+                    "won" => $winInc
+                ];
+            }
+
+            $g_parties = [];
+            if (count($player['party']) > 0) {
+                $r_party = HotstatusPipeline::getPerPlayerPartyHash($player['party']);
+                $r_players = HotstatusPipeline::getPlayerIdArrayFromPlayerPartyRelationArray($match['players'], $player['party']);
+
+                $db->execute("ensurePlayerParty");
+
+                $g_parties[$r_party] = [
+                    "played" => 1,
+                    "won" => $winInc
+                ];
+            }
+
+
+            //Set key params
+            $isodate = HotstatusPipeline::getISOYearWeekDayForDateTime($match['date']);
+            $r_year = $isodate['year'];
+            $r_week = $isodate['week'];
+            $r_day = $isodate['day'];
+            $r_map = $match['map'];
+            $r_gameType = $match['type'];
+
+            //Check if row exists to increment json
+            $p_res = $db->execute("??:players_matches_recent_granular");
+            $p_res_rows = $db->countResultRows($p_res);
+            if ($p_res_rows > 0) {
+                //Row exists, use its json values to increment constructed json
+                $row = $db->fetchArray($p_res);
+
+                //Aggregate Sum
+                $aggr_medals = [];
+                AssocArray::aggregate($aggr_medals, $g_medals, json_decode($row['medals'], true), AssocArray::AGGREGATE_SUM);
+                $r_medals = $aggr_medals;
+
+                $aggr_talents = [];
+                AssocArray::aggregate($aggr_talents, $g_talents, json_decode($row['talents'], true), AssocArray::AGGREGATE_SUM);
+                $r_talents = $aggr_talents;
+
+                $aggr_builds = [];
+                AssocArray::aggregate($aggr_builds, $g_builds, json_decode($row['builds'], true), AssocArray::AGGREGATE_SUM);
+                $r_builds = $aggr_builds;
+
+                $aggr_parties = [];
+                AssocArray::aggregate($aggr_parties, $g_parties, json_decode($row['parties'], true), AssocArray::AGGREGATE_SUM);
+                $r_parties = $aggr_parties;
+            }
+            else {
+                $r_medals = $g_medals;
+                $r_talents = $g_talents;
+                $r_builds = $g_builds;
+                $r_parties = $g_parties;
+            }
+            $db->freeResult($p_res);
+
+            //Set main params
+            $r_date_end = $isodate['date_end'];
+            $r_played = 1;
+            $r_won = $winInc;
+            $r_time_played = $match['match_length'];
+            $r_stats_kills = $player['stats']['kills'];
+            $r_stats_assists = $player['stats']['assists'];
+            $r_stats_deaths = $player['stats']['deaths'];
+            $r_stats_siege_damage = $player['stats']['siege_damage'];
+            $r_stats_hero_damage = $player['stats']['hero_damage'];
+            $r_stats_structure_damage = $player['stats']['structure_damage'];
+            $r_stats_healing = $player['stats']['healing'];
+            $r_stats_damage_taken = $player['stats']['damage_taken'];
+            $r_stats_merc_camps = $player['stats']['merc_camps'];
+            $r_stats_exp_contrib = $player['stats']['exp_contrib'];
+            $r_stats_best_killstreak = $player['stats']['best_killstreak'];
+            $r_stats_time_spent_dead = $player['stats']['time_spent_dead'];
+
+            $db->execute("+=:players_matches_recent_granular");
+
+            //Commit transaction
+            $db->transaction_commit();
         }
 
         echo "Upserted ".count($match['players'])." players into various player tables...".E;
@@ -215,17 +407,6 @@ function updatePlayers(&$match, $seasonid, &$new_mmrs) {
 
     return $ret;
 }
-
-/*
- * Updates the 'heroes' collection with all relevant hero data
- * Returns TRUE on complete success, FALSE if any errors occurred
- */
-//TODO fully implement updateHeroes
-function updateHeroes(&$match, &$bannedHeroes) {
-
-}
-
-
 
 //Begin main script
 echo '--------------------------------------'.E
@@ -455,15 +636,12 @@ while (true) {
                             $success_heroes = false;
 
                             //Players
-                            $success_players = updatePlayers($insertResult['match'], $seasonid, $player_new_mmrs);
-                            //Heroes
-                            $success_heroes = updateHeroes($insertResult['match'], $bannedHeroes);
+                            $success_playersAndHeroes = updatePlayersAndHeroes($insertResult['match'], $seasonid, $player_new_mmrs, $bannedHeroes);
 
-                            $hadError = !$success_players || !$success_heroes;
+                            $hadError = !$success_playersAndHeroes;
 
                             $errorstr = "";
-                            if (!$success_players) $errorstr .= "players";
-                            if (!$success_heroes) $errorstr .= ", heroes";
+                            if (!$success_playersAndHeroes) $errorstr .= "Players, Heroes";
 
                             if (!$hadError) {
                                 //Flag replay as fully parsed
