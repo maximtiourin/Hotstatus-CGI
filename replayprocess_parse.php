@@ -310,6 +310,8 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
 
     try {
         foreach ($match['players'] as $player) {
+            echo E.E.'DEBUG: Player ('.$player['name'].')'.E.E;
+
             //Qol
             $winInc = ($player['team'] === $match['winner']) ? (1) : (0);
             $timeSilenced = ($player['silenced'] === 1) ? ($match['match_length']) : (0);
