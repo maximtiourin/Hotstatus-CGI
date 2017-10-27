@@ -56,45 +56,11 @@ class HotstatusPipeline {
     const CACHE_REQUEST_DATATABLE_HEROES_STATSLIST = "Cache_Request_DataTable_Heroes_Statslist";
 
     /*
-     * @DEPRECATED
-     * Takes a date time string, converts it to a date time, and returns an assoc array
-     * that contains the following fields:
-     * ['week'] = week # of the year
-     * ['year'] = year #
-     * ['day] = day #
-     * ['date_start'] = datetime string of when the week starts
-     * ['date_end'] = datetime string of when the week ends
-     */
-    public static function getWeekDataOfReplay($datetimestring) {
-        date_default_timezone_set(self::REPLAY_TIMEZONE);
-
-        $replaydate = new \DateTime($datetimestring);
-
-        $weekOfYear = intval($replaydate->format("W"));
-        $yearOfWeek = intval($replaydate->format("o"));
-
-        $weekstartdate = new \DateTime();
-        $weekstartdate->setISODate($yearOfWeek, $weekOfYear);
-        $weekstartdate->setTime(0, 0, 0);
-
-        $weekenddate = new \DateTime();
-        $weekenddate->setISODate($yearOfWeek, $weekOfYear, 7);
-        $weekenddate->setTime(23, 59, 59);
-
-        $ret = [];
-        $ret['week'] = $weekOfYear;
-        $ret['year'] = $yearOfWeek;
-        $ret['date_start'] = $weekstartdate->format(self::FORMAT_DATETIME);
-        $ret['date_end'] = $weekenddate->format(self::FORMAT_DATETIME);
-
-        return $ret;
-    }
-
-    /*
      * Takes a date time string, converts it to date time, returns an assoc array:
      * ['year] = ISO Year
      * ['week] = ISO Week of the Year (Weeks start on monday)
      * ['day'] = ISO Day of the Week (1 = Mon -> 7 = Sun)
+     * ['date_begin] = datetime of when the day begins for the day that the datetimestr falls into
      * ['date_end] = datetime of when the day ends for the day that the datetimestr falls into
      */
     public static function getISOYearWeekDayForDateTime($datetimestr) {
@@ -106,6 +72,10 @@ class HotstatusPipeline {
         $weekOfYear = intval($date->format("W"));
         $dayOfWeek = intval($date->format("N"));
 
+        $dayBeginDate = new \DateTime();
+        $dayBeginDate->setISODate($yearOfWeek, $weekOfYear, $dayOfWeek);
+        $dayBeginDate->setTime(0, 0, 0);
+
         $dayEndDate = new \DateTime();
         $dayEndDate->setISODate($yearOfWeek, $weekOfYear, $dayOfWeek);
         $dayEndDate->setTime(23, 59, 59);
@@ -114,9 +84,95 @@ class HotstatusPipeline {
         $ret['year'] = $yearOfWeek;
         $ret['week'] = $weekOfYear;
         $ret['day'] = $dayOfWeek;
+        $ret['date_begin'] = $dayBeginDate->format(self::FORMAT_DATETIME);
         $ret['date_end'] = $dayEndDate->format(self::FORMAT_DATETIME);
 
         return $ret;
+    }
+
+    /*
+     * Returns an assoc array containing:
+     * ['date_start'] = datetime of when the range begins inclusive
+     * ['date_end'] = datetime of when the range ends inclusive
+     * which describes the inclusive start and end date of the last $n ISO days from the given $datetime, offset by $o days inclusively
+     */
+    public static function getMinMaxRangeForLastISODaysInclusive($n, $datetimestring, $o = 0) {
+        date_default_timezone_set(self::REPLAY_TIMEZONE);
+
+        $i = 0;
+
+        $endtime = new \DateTime($datetimestring);
+        $starttime = new \DateTime($datetimestring);
+
+        $end = new \DateInterval("P". ($o) ."D");
+        $start = new \DateInterval("P". ($n - 1 + $o) ."D");
+
+        $endtime->sub($end);
+        $starttime->sub($start);
+
+        $endyear = intval($endtime->format("o"));
+        $endweek = intval($endtime->format("W"));
+        $endday = intval($endtime->format("N"));
+        $startyear = intval($starttime->format("o"));
+        $startweek = intval($starttime->format("W"));
+        $startday = intval($starttime->format("N"));
+
+        $endiso = new \DateTime();
+        $endiso->setISODate($endyear, $endweek, $endday);
+        $endiso->setTime(23, 59, 59);
+        $startiso = new \DateTime();
+        $startiso->setISODate($startyear, $startweek, $startday);
+        $startiso->setTime(0, 0, 0);
+
+        $endret = $endiso->format(self::FORMAT_DATETIME);
+        $startret = $startiso->format(self::FORMAT_DATETIME);
+
+        return [
+            "date_start" => $startret,
+            "date_end" => $endret
+        ];
+    }
+
+    /*
+     * Returns a size $n array or smaller containing unique objects of type :
+     * {
+     *      'year' => ISO_YEAR
+     *      'week' => ISO_WEEK
+     *      'day' => ISO_DAY
+     * }
+     * which describe the last $n ISO days from the given $datetime, offset by $o days inclusively.
+     */
+    public static function getLastISODaysInclusive($n, $datetimestring, $o = 0) {
+        date_default_timezone_set(self::REPLAY_TIMEZONE);
+
+        $i = 0;
+
+        $datetime = new \DateTime($datetimestring);
+
+        $isodays = [];
+
+        while ($i < $n) {
+            $interval = new \DateInterval("P". ($i + $o) ."D");
+
+            /** @var \DateTime $datetime */
+            $datetime->sub($interval);
+
+            $year = intval($datetime->format("o"));
+            $week = intval($datetime->format("W"));
+            $day = intval($datetime->format("N"));
+
+            $isodays['Y' . $year . 'W' . $week . 'D' . $day] = [
+                "year" => $year,
+                "week" => $week,
+                "day" => $day
+            ];
+
+            $datetime->add($interval); //Add back interval for next operation
+
+            $i++;
+        }
+
+        return $isodays;
     }
 
     /*
@@ -260,5 +316,42 @@ class HotstatusPipeline {
         }
 
         return md5($str);
+    }
+
+    /**
+     * @deprecated
+     * Takes a date time string, converts it to a date time, and returns an assoc array
+     * that contains the following fields:
+     * ['week'] = week # of the year
+     * ['year'] = year #
+     * ['day] = day #
+     * ['date_start'] = datetime string of when the week starts
+     * ['date_end'] = datetime string of when the week ends
+     * @param $datetimestring
+     * @return array
+     */
+    public static function getWeekDataOfReplay($datetimestring) {
+        date_default_timezone_set(self::REPLAY_TIMEZONE);
+
+        $replaydate = new \DateTime($datetimestring);
+
+        $weekOfYear = intval($replaydate->format("W"));
+        $yearOfWeek = intval($replaydate->format("o"));
+
+        $weekstartdate = new \DateTime();
+        $weekstartdate->setISODate($yearOfWeek, $weekOfYear);
+        $weekstartdate->setTime(0, 0, 0);
+
+        $weekenddate = new \DateTime();
+        $weekenddate->setISODate($yearOfWeek, $weekOfYear, 7);
+        $weekenddate->setTime(23, 59, 59);
+
+        $ret = [];
+        $ret['week'] = $weekOfYear;
+        $ret['year'] = $yearOfWeek;
+        $ret['date_start'] = $weekstartdate->format(self::FORMAT_DATETIME);
+        $ret['date_end'] = $weekenddate->format(self::FORMAT_DATETIME);
+
+        return $ret;
     }
 }

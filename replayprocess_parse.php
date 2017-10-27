@@ -772,10 +772,6 @@ while (true) {
                         }
                         else {
                             //No error parsing match, continue with upserting of players, heroes
-                            $success_players = false;
-                            $success_heroes = false;
-
-                            //Players
                             $success_playersAndHeroes = updatePlayersAndHeroes($insertResult['match'], $seasonid, $player_new_mmrs, $bannedHeroes);
 
                             $hadError = !$success_playersAndHeroes;

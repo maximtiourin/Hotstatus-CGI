@@ -24,6 +24,7 @@ class Credentials {
     private static $replayProcess_db_database = "%DATABASE%";
     private static $replayProcess_mongodb_uri = "%URI%";
     private static $replayProcess_redis_uri = "%URI%";
+    private static $replayProcess_redis_uri_DEV = "%URI%";
     //Replay Process AWS credentials
     private static $replayProcess_aws_key = "%KEY%";
     private static $replayProcess_aws_secret = "%SECRET%";
@@ -36,9 +37,10 @@ class Credentials {
     private static $hotstatusweb_db_database = "%DATABASE%";
     private static $hotstatusweb_mongodb_uri = "%URI%";
     private static $hotstatusweb_redis_uri = "%URI%";
+    private static $hotstatusweb_redis_uri_DEV = "%URI%";
 
 
-    public static function getReplayProcessCredentials() {
+    public static function getReplayProcessCredentials($dev = false) {
         $a = [];
 
         $a[self::KEY_DB_HOSTNAME] = self::$replayProcess_db_hostname;
@@ -46,7 +48,7 @@ class Credentials {
         $a[self::KEY_DB_PASSWORD] = self::$replayProcess_db_password;
         $a[self::KEY_DB_DATABASE] = self::$replayProcess_db_database;
         $a[self::KEY_MONGODB_URI] = self::$replayProcess_mongodb_uri;
-        $a[self::KEY_REDIS_URI] = self::$replayProcess_redis_uri;
+        $a[self::KEY_REDIS_URI] = ($dev === TRUE) ? (self::$replayProcess_redis_uri_DEV) : (self::$replayProcess_redis_uri);
 
         $a[self::KEY_AWS_KEY] = self::$replayProcess_aws_key;
         $a[self::KEY_AWS_SECRET] = self::$replayProcess_aws_secret;
@@ -55,7 +57,7 @@ class Credentials {
         return $a;
     }
 
-    public static function getHotstatusWebCredentials() {
+    public static function getHotstatusWebCredentials($dev = false) {
         $a = [];
 
         $a[self::KEY_DB_HOSTNAME] = self::$hotstatusweb_db_hostname;
@@ -63,7 +65,7 @@ class Credentials {
         $a[self::KEY_DB_PASSWORD] = self::$hotstatusweb_db_password;
         $a[self::KEY_DB_DATABASE] = self::$hotstatusweb_db_database;
         $a[self::KEY_MONGODB_URI] = self::$hotstatusweb_mongodb_uri;
-        $a[self::KEY_REDIS_URI] = self::$hotstatusweb_redis_uri;
+        $a[self::KEY_REDIS_URI] = ($dev === TRUE) ? (self::$hotstatusweb_redis_uri_DEV) : (self::$hotstatusweb_redis_uri);
 
         return $a;
     }
