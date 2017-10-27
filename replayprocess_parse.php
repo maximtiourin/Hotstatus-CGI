@@ -223,18 +223,18 @@ function insertMatch(&$parse, $mapMapping, $heroNameMappings, &$mmrcalc, &$old_m
     $parse['mmr'] = [
         '0' => [
             'old' => [
-                'rating' => $mmrcalc['team_ratings']['initial'][0]
+                'rating' => $mmrcalc['team_ratings']['initial'][0]['mmr']
             ],
             'new' => [
-                'rating' => $mmrcalc['team_ratings']['final'][0]
+                'rating' => $mmrcalc['team_ratings']['final'][0]['mmr']
             ]
         ],
         '1' => [
             'old' => [
-                'rating' => $mmrcalc['team_ratings']['initial'][1]
+                'rating' => $mmrcalc['team_ratings']['initial'][1]['mmr']
             ],
             'new' => [
-                'rating' => $mmrcalc['team_ratings']['final'][1]
+                'rating' => $mmrcalc['team_ratings']['final'][1]['mmr']
             ]
         ],
         'quality' => $mmrcalc['match_quality']
@@ -308,10 +308,10 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
 
     $isodate = HotstatusPipeline::getISOYearWeekDayForDateTime($match['date']);
 
-    $team0Old = $match['mmr']['0']['old'];
+    $team0Old = $match['mmr']['0']['old']['rating'];
     $team0OldRating = (is_numeric($team0Old)) ? ($team0Old) : (0);
 
-    $team1Old = $match['mmr']['1']['old'];
+    $team1Old = $match['mmr']['1']['old']['rating'];
     $team1OldRating = (is_numeric($team1Old)) ? ($team1Old) : (0);
 
     $r_mmr_average = HotstatusPipeline::getFixedAverageMMRForMatch($team0OldRating, $team1OldRating);
