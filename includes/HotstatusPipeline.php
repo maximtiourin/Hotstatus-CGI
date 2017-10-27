@@ -27,6 +27,7 @@ class HotstatusPipeline {
     const REPLAY_STATUS_MONGODB_MATCHDATA_WRITE_ERROR = "mongodb_matchdata_write_error"; //status value for when a repaly had an unknown mongodb bulkwrite error during match data insertion
     const REPLAY_STATUS_MYSQL_MATCH_WRITE_ERROR = "mysql_match_write_error"; //status value for when a repaly had an unknown mysql write error during match insertion
     const REPLAY_STATUS_MYSQL_MATCHDATA_WRITE_ERROR = "mysql_matchdata_write_error"; //status value for when a repaly had an unknown mysql write error during match data insertion
+    const MMR_AVERAGE_FIXED_CHUNK_SIZE = 100; //Size of the chunks of mmr that the mmr average is rounded to, for use with hero match granularity
     const FORMAT_DATETIME = "Y:m:d H:i:s"; //The format of the datatime strings
     const CACHE_DEFAULT_DATABASE_INDEX = 0; //The default index of the database used for caching in redis
     const HTTPCACHE_DEFAULT_TIMEZONE = "GMT"; //Default timezone used for http headers
@@ -35,6 +36,8 @@ class HotstatusPipeline {
     /*
      * Denotes default how many hours, minutes, seconds from the start 00:00:00 GMT of a day before dynamic bulk data should be invalidated by http cache.
      * With default of hours 34, http caches should invalidate bulk dynamic data at 10:00:00 GMT the following day. (3 AM PST the following day)
+     * Keep in mind this invalidation time should be well after any dynamic bulk data is recalculated, so that a user doesn't clip the caching and end up with stale
+     * data for twice as long.
      */
     const HTTPCACHE_DEFAULT_EXPIRES_TIME = [
         "hours" => 34,
@@ -252,6 +255,16 @@ class HotstatusPipeline {
         }
 
         return self::SEASON_UNKNOWN;
+    }
+
+    /*
+     * Returns the average mmr for the match given team0 and team1 old mmrs, rounding the average
+     * to the near fixed size chunk
+     */
+    public static function getFixedAverageMMRForMatch($team0OldRating, $team1OldRating) {
+        $avg = ($team0OldRating + $team1OldRating) / 2.0;
+
+        return intval(round($avg / self::MMR_AVERAGE_FIXED_CHUNK_SIZE)) * self::MMR_AVERAGE_FIXED_CHUNK_SIZE;
     }
 
     /*
