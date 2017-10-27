@@ -28,7 +28,19 @@ class HotstatusPipeline {
     const REPLAY_STATUS_MYSQL_MATCH_WRITE_ERROR = "mysql_match_write_error"; //status value for when a repaly had an unknown mysql write error during match insertion
     const REPLAY_STATUS_MYSQL_MATCHDATA_WRITE_ERROR = "mysql_matchdata_write_error"; //status value for when a repaly had an unknown mysql write error during match data insertion
     const FORMAT_DATETIME = "Y:m:d H:i:s"; //The format of the datatime strings
+    const CACHE_DEFAULT_DATABASE_INDEX = 0; //The default index of the database used for caching in redis
+    const HTTPCACHE_DEFAULT_TIMEZONE = "GMT"; //Default timezone used for http headers
     const DATABASE_CHARSET = "utf8mb4";
+
+    /*
+     * Denotes default how many hours, minutes, seconds from the start 00:00:00 GMT of a day before dynamic bulk data should be invalidated by http cache.
+     * With default of hours 34, http caches should invalidate bulk dynamic data at 10:00:00 GMT the following day. (3 AM PST the following day)
+     */
+    const HTTPCACHE_DEFAULT_EXPIRES_TIME = [
+        "hours" => 34,
+        "minutes" => 0,
+        "seconds" => 0
+    ];
 
     //Enums
     public static $ENUM_REGIONS_VALID = [false, true, true, true, false, true]; //Flags for whether or not regions at that index are currently tracked
