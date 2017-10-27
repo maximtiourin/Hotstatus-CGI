@@ -304,7 +304,7 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
            $r_stats_kills, $r_stats_assists, $r_stats_deaths, $r_stats_siege_damage, $r_stats_hero_damage, $r_stats_structure_damage,
            $r_stats_healing, $r_stats_damage_taken, $r_stats_merc_camps, $r_stats_exp_contrib, $r_stats_best_killstreak,
            $r_stats_time_spent_dead, $r_medals, $r_talents, $r_builds, $r_parties, $r_build, $r_build_talents, $r_party, $r_players, $r_time_played_silenced,
-           $r_season, $r_rating, $r_mu, $r_sigma, $r_banned;
+           $r_season, $r_rating, $r_mu, $r_sigma, $r_banned, $r_mmr_average;
 
     $isodate = HotstatusPipeline::getISOYearWeekDayForDateTime($match['date']);
 
