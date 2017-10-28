@@ -29,9 +29,6 @@ class HotstatusPipeline {
     const REPLAY_STATUS_MYSQL_MATCHDATA_WRITE_ERROR = "mysql_matchdata_write_error"; //status value for when a repaly had an unknown mysql write error during match data insertion
     const MMR_AVERAGE_FIXED_CHUNK_SIZE = 100; //Size of the chunks of mmr that the mmr average is rounded to, for use with hero match granularity
     const FORMAT_DATETIME = "Y:m:d H:i:s"; //The format of the datatime strings
-    const CACHE_DEFAULT_DATABASE_INDEX = 0; //The default index of the database used for caching in redis
-    const HTTPCACHE_DEFAULT_TIMEZONE = "GMT"; //Default timezone used for http headers
-    const HTTPCACHE_DEFAULT_RECALCULATION_TIME = ["hours" => 11, "minutes" => 0, "seconds" => 0]; //What time of day to expire all http cached dynamic data, should be after bulk data processing is done.
     const DATABASE_CHARSET = "utf8mb4";
 
     //Enums
@@ -53,11 +50,6 @@ class HotstatusPipeline {
             "end" =>    "2017-09-05 06:59:59"
         ]
     ];
-
-    /*
-     * Cached Requests - Collection of keys to specific cached redis data, should be used to cache or invalidate
-     */
-    const CACHE_REQUEST_DATATABLE_HEROES_STATSLIST = "Cache_Request_DataTable_Heroes_Statslist";
 
     /*
      * Takes a date time string, converts it to date time, returns an assoc array:
@@ -216,37 +208,6 @@ class HotstatusPipeline {
         }
 
         return $isoweeks;
-    }
-
-    /*
-     * Returns the next datetime that the http cache should expire using default settings, using the current time
-     */
-    public static function getHTTPCacheDefaultExpirationDateForToday() {
-        date_default_timezone_set(HotstatusPipeline::HTTPCACHE_DEFAULT_TIMEZONE);
-        $currentDate = new \DateTime("now");
-        $currentDateWithExpire = new \DateTime("now");
-        $nextDateWithExpire = new \DateTime("now");
-
-        $hours = HotstatusPipeline::HTTPCACHE_DEFAULT_RECALCULATION_TIME['hours'];
-        $minutes = HotstatusPipeline::HTTPCACHE_DEFAULT_RECALCULATION_TIME['minutes'];
-        $seconds = HotstatusPipeline::HTTPCACHE_DEFAULT_RECALCULATION_TIME['seconds'];
-
-        $currentDateWithExpire->setTime(0, 0, 0);
-        $currentDateWithExpire->add(new \DateInterval("PT" . $hours . "H" . $minutes . "M" . $seconds . "S"));
-
-        $expireDate = null;
-        if ($currentDate->getTimestamp() < $currentDateWithExpire->getTimestamp()) {
-            //Still approaching expiration time, set to currentDateWithExpire
-            $expireDate = $currentDateWithExpire;
-        }
-        else {
-            //Already passed expiration time, set to next expiration
-            $nextDateWithExpire->setTime(0, 0, 0);
-            $nextDateWithExpire->add(new \DateInterval("P1DT" . $hours . "H" . $minutes . "M" . $seconds . "S"));
-            $expireDate = $nextDateWithExpire;
-        }
-
-        return $expireDate;
     }
 
     /*
