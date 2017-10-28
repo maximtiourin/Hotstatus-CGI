@@ -11,34 +11,6 @@ class HotstatusCache {
     const HTTPCACHE_DEFAULT_RECALCULATION_TIME = ["hours" => 11, "minutes" => 0, "seconds" => 0]; //What time of day to expire all http cached dynamic data, should be after bulk data processing is done.
 
     /*
-     * Cache Request - Per Function Response Caching
-     */
-    const CACHE_REQUEST_TYPE_DATATABLE = "DataTable_";
-    const CACHE_REQUEST_PREFIX = "Cache_Request_";
-
-    public static function writeCacheRequest(RedisDatabase $redis, $cache_request_type = "", $functionId, $functionVersion, $value, $ttl = self::CACHE_DEFAULT_TTL) {
-        if ($redis !== NULL && $redis !== FALSE) {
-            $key = self::buildCacheRequestKey($cache_request_type, $functionId);
-            return $redis->cacheHash($key, $functionVersion, $value, $ttl);
-        }
-
-        return NULL;
-    }
-
-    public static function readCacheRequest(RedisDatabase $redis, $cache_request_type = "", $functionId, $functionVersion) {
-        if ($redis !== NULL && $redis !== FALSE) {
-            $key = self::buildCacheRequestKey($cache_request_type, $functionId);
-            return $redis->getCachedHash($key, $functionVersion);
-        }
-
-        return NULL;
-    }
-
-    public static function buildCacheRequestKey($cache_request_type = "", $functionId) {
-        return self::CACHE_REQUEST_PREFIX . $cache_request_type . $functionId;
-    }
-
-    /*
      * Returns the next datetime that the http cache should expire using default settings, using the current time
      */
     public static function getHTTPCacheDefaultExpirationDateForToday() {
@@ -67,5 +39,33 @@ class HotstatusCache {
         }
 
         return $expireDate;
+    }
+
+    /*
+     * Cache Request - Per Function Response Caching
+     */
+    const CACHE_REQUEST_TYPE_DATATABLE = "DataTable_";
+    const CACHE_REQUEST_PREFIX = "Cache_Request_";
+
+    public static function writeCacheRequest(RedisDatabase $redis, $cache_request_type = "", $functionId, $functionVersion, $value, $ttl = self::CACHE_DEFAULT_TTL) {
+        if ($redis !== NULL && $redis !== FALSE) {
+            $key = self::buildCacheRequestKey($cache_request_type, $functionId);
+            return $redis->cacheHash($key, $functionVersion, $value, $ttl);
+        }
+
+        return NULL;
+    }
+
+    public static function readCacheRequest(RedisDatabase $redis, $cache_request_type = "", $functionId, $functionVersion) {
+        if ($redis !== NULL && $redis !== FALSE) {
+            $key = self::buildCacheRequestKey($cache_request_type, $functionId);
+            return $redis->getCachedHash($key, $functionVersion);
+        }
+
+        return NULL;
+    }
+
+    public static function buildCacheRequestKey($cache_request_type = "", $functionId) {
+        return self::CACHE_REQUEST_PREFIX . $cache_request_type . $functionId;
     }
 }
