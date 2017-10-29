@@ -57,11 +57,11 @@ $db->prepare("UpdateReplayDownloaded",
 "UPDATE replays SET file = ?, status = ?, lastused = ? WHERE id = ?");
 $db->bind("UpdateReplayDownloaded", "ssii", $r_filepath, $r_status, $r_timestamp, $r_id);
 
-$db->prepare("SelectDownloadedReplays",
-"SELECT * FROM replays WHERE status = '" . HotstatusPipeline::REPLAY_STATUS_DOWNLOADED . "'");
+$db->prepare("CountDownloadedReplays",
+"SELECT COUNT(id) AS replay_count FROM replays WHERE status = '" . HotstatusPipeline::REPLAY_STATUS_DOWNLOADED . "'");
 
 $db->prepare("SelectNextReplayWithStatus-Unlocked",
-    "SELECT * FROM replays WHERE status = ? AND lastused <= ? ORDER BY match_date ASC, id ASC LIMIT 1");
+    "SELECT * FROM replays WHERE status = ? AND lastused <= ? ORDER BY match_date ASC, id ASC LIMIT 1 FOR UPDATE");
 $db->bind("SelectNextReplayWithStatus-Unlocked", "si", $r_status, $r_timestamp);
 
 //Helper functions
@@ -73,14 +73,22 @@ echo '--------------------------------------'.E
 
 //Look for replays to download and handle
 while (true) {
-    $result = $db->execute("SelectDownloadedReplays");
+    $result = $db->execute("CountDownloadedReplays");
     $resrows = $db->countResultRows($result);
-    if ($resrows >= HotstatusPipeline::REPLAY_DOWNLOAD_LIMIT) {
+    $downloadCount = 0;
+    if ($resrows > 0) {
+        $countrow = $db->fetchArray($result);
+        $downloadCount = $countrow['replay_count'];
+    }
+    if ($downloadCount >= HotstatusPipeline::REPLAY_DOWNLOAD_LIMIT) {
         //Reached download limit
         echo 'Reached replay download limit of ' . HotstatusPipeline::REPLAY_DOWNLOAD_LIMIT . ', waiting for downloaded replays to be processed...'.E.E;
         $sleep->add(DOWNLOADLIMIT_SLEEP_DURATION);
     }
     else {
+        //Begin select for replay failed
+        $db->transaction_begin();
+
         //Have not reached download limit yet, check for unlocked failed replay downloads
         $r_status = HotstatusPipeline::REPLAY_STATUS_DOWNLOADING;
         $r_timestamp = time() - UNLOCK_DOWNLOADING_DURATION;
@@ -97,8 +105,17 @@ while (true) {
             $r_timestamp = time();
 
             $db->execute("UpdateReplayStatus");
+
+            //Commit Replay failed selection
+            $db->transaction_commit();
         }
         else {
+            //Commit Replay failed selection
+            $db->transaction_commit();
+
+            //Begin select for replay queued
+            $db->transaction_begin();
+
             //No replay downloads previously failed, look for an unlocked queued replay to download
             $r_status = HotstatusPipeline::REPLAY_STATUS_QUEUED;
             $r_timestamp = time() - UNLOCK_DEFAULT_DURATION;
@@ -151,6 +168,9 @@ while (true) {
 
                     $sleep->add(MINI_SLEEP_DURATION);
                 }
+
+                //Commit Replay queued select
+                $db->transaction_commit();
             }
             else {
                 //No unlocked queued replays to download, sleep
