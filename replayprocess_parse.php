@@ -56,7 +56,7 @@ $db->prepare("UpdateReplayParsedError",
 $db->bind("UpdateReplayParsedError", "issii", $r_match_id, $r_error, $r_status, $r_timestamp, $r_id);
 
 $db->prepare("SelectNextReplayWithStatus-Unlocked",
-    "SELECT * FROM replays WHERE status = ? AND lastused <= ? ORDER BY match_date ASC, id ASC LIMIT 1 FOR UPDATE");
+    "SELECT * FROM replays WHERE status = ? AND lastused <= ? ORDER BY match_date ASC, id ASC LIMIT 1");
 $db->bind("SelectNextReplayWithStatus-Unlocked", "si", $r_status, $r_timestamp);;
 
 $db->prepare("DoesHeroNameExist",

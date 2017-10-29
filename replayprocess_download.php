@@ -119,42 +119,53 @@ while (true) {
 
                 $db->execute("UpdateReplayStatus");
 
-                echo 'Downloading replay #' . $r_id . '...                              '.E;
+                //Set lock id
+                $replayLockId = "hotstatus_downloadReplay_$r_id";
 
-                $r_fingerprint = $row['fingerprint'];
-                $r_url = $row['hotsapi_url'];
+                //Obtain lock
+                $replayLocked = $db->lock($replayLockId, 0);
 
-                //Ensure directory
-                FileHandling::ensureDirectory(HotstatusPipeline::REPLAY_DOWNLOAD_DIRECTORY);
+                if ($replayLocked) {
+                    echo 'Downloading replay #' . $r_id . '...                              ' . E;
 
-                //Determine filepath
-                $r_filepath = HotstatusPipeline::REPLAY_DOWNLOAD_DIRECTORY . $r_fingerprint . HotstatusPipeline::REPLAY_DOWNLOAD_EXTENSION;
+                    $r_fingerprint = $row['fingerprint'];
+                    $r_url = $row['hotsapi_url'];
 
-                //Download
-                $api = Hotsapi::DownloadS3Replay($r_url, $r_filepath, $s3);
+                    //Ensure directory
+                    FileHandling::ensureDirectory(HotstatusPipeline::REPLAY_DOWNLOAD_DIRECTORY);
 
-                if ($api['success'] == TRUE) {
-                    //Replay downloaded successfully
-                    echo 'Replay #' . $r_id . ' (' . round($api['bytes_downloaded'] / FileHandling::getBytesForMegabytes(1), 2) . ' MB) downloaded to "' . $r_filepath . '"'.E.E;
+                    //Determine filepath
+                    $r_filepath = HotstatusPipeline::REPLAY_DOWNLOAD_DIRECTORY . $r_fingerprint . HotstatusPipeline::REPLAY_DOWNLOAD_EXTENSION;
 
-                    $r_status = HotstatusPipeline::REPLAY_STATUS_DOWNLOADED;
-                    $r_timestamp = time();
+                    //Download
+                    $api = Hotsapi::DownloadS3Replay($r_url, $r_filepath, $s3);
 
-                    $db->execute("UpdateReplayDownloaded");
+                    if ($api['success'] == TRUE) {
+                        //Replay downloaded successfully
+                        echo 'Replay #' . $r_id . ' (' . round($api['bytes_downloaded'] / FileHandling::getBytesForMegabytes(1), 2) . ' MB) downloaded to "' . $r_filepath . '"' . E . E;
+
+                        $r_status = HotstatusPipeline::REPLAY_STATUS_DOWNLOADED;
+                        $r_timestamp = time();
+
+                        $db->execute("UpdateReplayDownloaded");
+                    }
+                    else {
+                        //Error with downloading the replay
+                        echo 'Failed to download replay #' . $r_id . ', Reason: ' . $api['error'] . '...' . E . E;
+
+                        //Set status to download_error
+                        $r_id = $row['id'];
+                        $r_status = HotstatusPipeline::REPLAY_STATUS_DOWNLOAD_ERROR;
+                        $r_timestamp = time();
+                        $r_error = $api['error'];
+
+                        $db->execute("UpdateReplayStatusError");
+
+                        $sleep->add(MINI_SLEEP_DURATION);
+                    }
                 }
                 else {
-                    //Error with downloading the replay
-                    echo 'Failed to download replay #' . $r_id . ', Reason: ' . $api['error'] . '...'.E.E;
-
-                    //Set status to download_error
-                    $r_id = $row['id'];
-                    $r_status = HotstatusPipeline::REPLAY_STATUS_DOWNLOAD_ERROR;
-                    $r_timestamp = time();
-                    $r_error = $api['error'];
-
-                    $db->execute("UpdateReplayStatusError");
-
-                    $sleep->add(MINI_SLEEP_DURATION);
+                    //Could not attain lock on replay, immediately continue
                 }
             }
             else {
