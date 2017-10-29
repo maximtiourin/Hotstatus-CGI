@@ -54,8 +54,12 @@ $db->prepare("UpdateReplayParsedError",
 $db->bind("UpdateReplayParsedError", "issii", $r_match_id, $r_error, $r_status, $r_timestamp, $r_id);
 
 $db->prepare("SelectNextReplayWithStatus-Unlocked",
-    "SELECT * FROM replays WHERE status = ? AND lastused <= ? ORDER BY match_date ASC, id ASC LIMIT 1");
+    "SELECT * FROM replays WHERE status = ? AND lastused <= ? ORDER BY match_date ASC, id ASC LIMIT 1 FOR UPDATE");
 $db->bind("SelectNextReplayWithStatus-Unlocked", "si", $r_status, $r_timestamp);
+
+$db->prepare("LockReplay",
+    "SELECT id FROM replays WHERE id = ? LIMIT 1 FOR UPDATE");
+$db->bind("LockReplay", "i", $r_id);
 
 $db->prepare("DoesHeroNameExist",
     "SELECT `name` FROM herodata_heroes WHERE `name` = ?");
@@ -557,6 +561,9 @@ echo '--------------------------------------'.E
 
 //Look for replays to parse and handle
 while (true) {
+    //Select failed parsing replay transaction
+    $db->transaction_begin();
+
     //Check for unlocked failed replay parses
     $r_status = HotstatusPipeline::REPLAY_STATUS_PARSING;
     $r_timestamp = time() - UNLOCK_PARSING_DURATION;
@@ -573,8 +580,17 @@ while (true) {
         $r_timestamp = time();
 
         $db->execute("UpdateReplayStatus");
+
+        //Commit failed download replay transaction
+        $db->transaction_commit();
     }
     else {
+        //Commit failedparsing replay transaction
+        $db->transaction_commit();
+
+        //Select downloaded replay transaction
+        $db->transaction_begin();
+
         //No replay parsing has previously failed, look for an unlocked downloaded replay to parse
         $r_status = HotstatusPipeline::REPLAY_STATUS_DOWNLOADED;
         $r_timestamp = time() - UNLOCK_DEFAULT_DURATION;
@@ -590,6 +606,13 @@ while (true) {
 
             $db->execute("UpdateReplayStatus");
 
+            //Commit select downloaded replay transaction
+            $db->transaction_commit();
+
+            //Begin full parse transaction
+            $db->transaction_begin();
+
+            $db->execute("LockReplay");
 
             echo 'Parsing replay #' . $r_id . '...                                       '.E;
 
@@ -602,9 +625,6 @@ while (true) {
 
             //Check if parse was a success
             if (!key_exists('error', $parse)) {
-                //Begin transaction
-                $db->transaction_begin();
-
                 /* Collect player mmrs and calculate new mmr for match season */
                 $seasonid = HotstatusPipeline::getSeasonStringForDateTime($parse['date']);
                 $matchtype = $parse['type'];
@@ -937,6 +957,9 @@ while (true) {
                 }
             }
             else {
+                //Rollback Transaction
+                $db->transaction_rollback();
+
                 //Copy local file into replay error directory for debugging purposes
                 $createReplayCopy = TRUE;
 
