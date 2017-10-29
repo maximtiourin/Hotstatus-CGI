@@ -56,7 +56,7 @@ $db->prepare("UpdateReplayParsedError",
 $db->bind("UpdateReplayParsedError", "issii", $r_match_id, $r_error, $r_status, $r_timestamp, $r_id);
 
 $db->prepare("SelectNextReplayWithStatus-Unlocked",
-    "SELECT * FROM replays WHERE status = ? AND lastused <= ? ORDER BY match_date ASC, id ASC LIMIT 1 LOCK IN SHARE MODE");
+    "SELECT * FROM replays WHERE status = ? AND lastused <= ? ORDER BY match_date ASC, id ASC LIMIT 1 FOR UPDATE");
 $db->bind("SelectNextReplayWithStatus-Unlocked", "si", $r_status, $r_timestamp);;
 
 $db->prepare("DoesHeroNameExist",
@@ -577,9 +577,6 @@ while (true) {
         $db->execute("UpdateReplayStatus");
     }
     else {
-        //Begin full parse transaction
-        $db->transaction_begin();
-
         //No replay parsing has previously failed, look for an unlocked downloaded replay to parse
         $r_status = HotstatusPipeline::REPLAY_STATUS_DOWNLOADED;
         $r_timestamp = time() - UNLOCK_DEFAULT_DURATION;
@@ -595,11 +592,14 @@ while (true) {
 
             $db->execute("UpdateReplayStatus");
 
-            //$replayLockId = "hotstatus_parseReplay_$r_id";
+            //Set lock id
+            $replayLockId = "hotstatus_parseReplay_$r_id";
 
-            $replayLocked = TRUE;
+            //Obtain lock
+            $replayLocked = $db->lock($replayLockId, 0);
 
-            //$replayLocked = $db->lock($replayLockId, 0);
+            //Begin full parse transaction
+            $db->transaction_begin();
 
             if ($replayLocked) {
                 echo 'Parsing replay #' . $r_id . '...                                       ' . E;
@@ -818,6 +818,9 @@ while (true) {
 
                                     $db->execute("UpdateReplayStatusError");
 
+                                    //Release lock
+                                    $db->unlock($replayLockId);
+
                                     $sleep->add(MYSQL_ERROR_SLEEP_DURATION);
                                 }
                                 else {
@@ -841,6 +844,9 @@ while (true) {
                                         //Commit Transaction
                                         $db->transaction_commit();
 
+                                        //Release lock
+                                        $db->unlock($replayLockId);
+
                                         echo 'Successfully parsed replay #' . $r_id . '...' . E . E;
                                     }
                                     else {
@@ -857,6 +863,9 @@ while (true) {
                                         $r_error = "Semi-Parsed, Missed: " . $errorstr;
 
                                         $db->execute("UpdateReplayStatusError");
+
+                                        //Release lock
+                                        $db->unlock($replayLockId);
 
                                         echo 'Could not successfully parsed replay #' . $r_id . '. Mysql had trouble with portions of : ' . $errorstr . '...' . E . E;
                                     }
@@ -901,6 +910,9 @@ while (true) {
 
                                 $db->execute("UpdateReplayStatusError");
 
+                                //Release lock
+                                $db->unlock($replayLockId);
+
                                 $sleep->add(MONGODB_ERROR_SLEEP_DURATION);
                             }
                         }
@@ -918,6 +930,9 @@ while (true) {
                             $r_error = $mysqlErrorMsg;
 
                             $db->execute("UpdateReplayStatusError");
+
+                            //Release lock
+                            $db->unlock($replayLockId);
 
                             echo 'Mysql threw exception during operations for replay #' . $r_id . ', Error : "' . $mysqlErrorMsg . '"...' . E . E;
 
@@ -939,6 +954,9 @@ while (true) {
 
                         $db->execute("UpdateReplayStatusError");
 
+                        //Release lock
+                        $db->unlock($replayLockId);
+
                         echo 'Failed to calculate mmr for replay #' . $r_id . ', Error : "' . $calc['error'] . '"...' . E . E;
 
                         $sleep->add(MINI_SLEEP_DURATION);
@@ -958,6 +976,9 @@ while (true) {
                     $r_error = $parse['error'];
 
                     $db->execute("UpdateReplayStatusError");
+
+                    //Release lock
+                    $db->unlock($replayLockId);
 
                     echo 'Failed to parse replay #' . $r_id . ', Error : "' . $parse['error'] . '"...' . E . E;
 
