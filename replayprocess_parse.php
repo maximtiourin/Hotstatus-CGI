@@ -54,7 +54,7 @@ $db->prepare("UpdateReplayParsedError",
 $db->bind("UpdateReplayParsedError", "issii", $r_match_id, $r_error, $r_status, $r_timestamp, $r_id);
 
 $db->prepare("SelectNextReplayWithStatus-Unlocked",
-    "SELECT * FROM replays WHERE status = ? AND lastused <= ? ORDER BY match_date ASC, id ASC LIMIT 1 FOR UPDATE");
+    "SELECT * FROM replays WHERE status = ? AND lastused <= ? ORDER BY match_date ASC, id ASC LIMIT 1");
 $db->bind("SelectNextReplayWithStatus-Unlocked", "si", $r_status, $r_timestamp);
 
 $db->prepare("DoesHeroNameExist",
@@ -557,9 +557,6 @@ echo '--------------------------------------'.E
 
 //Look for replays to parse and handle
 while (true) {
-    //Begin replay selection transaction
-    $db->transaction_begin();
-
     //Check for unlocked failed replay parses
     $r_status = HotstatusPipeline::REPLAY_STATUS_PARSING;
     $r_timestamp = time() - UNLOCK_PARSING_DURATION;
@@ -576,17 +573,8 @@ while (true) {
         $r_timestamp = time();
 
         $db->execute("UpdateReplayStatus");
-
-        //Commit replay selection transaction
-        $db->transaction_commit();
     }
     else {
-        //Commit replay selection transaction
-        $db->transaction_commit();
-
-        //Begin full parse transaction with additional replay selection
-        $db->transaction_begin();
-
         //No replay parsing has previously failed, look for an unlocked downloaded replay to parse
         $r_status = HotstatusPipeline::REPLAY_STATUS_DOWNLOADED;
         $r_timestamp = time() - UNLOCK_DEFAULT_DURATION;
@@ -614,6 +602,9 @@ while (true) {
 
             //Check if parse was a success
             if (!key_exists('error', $parse)) {
+                //Begin transaction
+                $db->transaction_begin();
+
                 /* Collect player mmrs and calculate new mmr for match season */
                 $seasonid = HotstatusPipeline::getSeasonStringForDateTime($parse['date']);
                 $matchtype = $parse['type'];
@@ -946,9 +937,6 @@ while (true) {
                 }
             }
             else {
-                //Rollback Transaction
-                $db->transaction_rollback();
-
                 //Copy local file into replay error directory for debugging purposes
                 $createReplayCopy = TRUE;
 
@@ -983,9 +971,6 @@ while (true) {
             }
         }
         else {
-            //Rollback Transaction
-            $db->transaction_rollback();
-
             //No unlocked downloaded replays to parse, sleep
             $dots = $console->animateDotDotDot();
             echo "No unlocked downloaded replays found$dots                           \r";
