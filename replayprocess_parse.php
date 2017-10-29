@@ -56,7 +56,7 @@ $db->prepare("UpdateReplayParsedError",
 $db->bind("UpdateReplayParsedError", "issii", $r_match_id, $r_error, $r_status, $r_timestamp, $r_id);
 
 $db->prepare("SelectNextReplayWithStatus-Unlocked",
-    "SELECT * FROM replays WHERE status = ? AND lastused <= ? ORDER BY match_date ASC, id ASC LIMIT 1 FOR UPDATE");
+    "SELECT * FROM replays WHERE status = ? AND lastused <= ? ORDER BY match_date ASC, id ASC LIMIT 1 LOCK IN SHARE MODE");
 $db->bind("SelectNextReplayWithStatus-Unlocked", "si", $r_status, $r_timestamp);;
 
 $db->prepare("DoesHeroNameExist",
@@ -577,6 +577,9 @@ while (true) {
         $db->execute("UpdateReplayStatus");
     }
     else {
+        //Begin full parse transaction
+        $db->transaction_begin();
+
         //No replay parsing has previously failed, look for an unlocked downloaded replay to parse
         $r_status = HotstatusPipeline::REPLAY_STATUS_DOWNLOADED;
         $r_timestamp = time() - UNLOCK_DEFAULT_DURATION;
@@ -592,12 +595,11 @@ while (true) {
 
             $db->execute("UpdateReplayStatus");
 
-            $replayLockId = "hotstatus_parseReplay_$r_id";
+            //$replayLockId = "hotstatus_parseReplay_$r_id";
 
-            //Begin full parse transaction
-            $db->transaction_begin();
+            $replayLocked = TRUE;
 
-            $replayLocked = $db->lock($replayLockId, 0);
+            //$replayLocked = $db->lock($replayLockId, 0);
 
             if ($replayLocked) {
                 echo 'Parsing replay #' . $r_id . '...                                       ' . E;
@@ -978,15 +980,15 @@ while (true) {
                 if (file_exists($r_filepath)) {
                     FileHandling::deleteAllFilesMatchingPattern($r_filepath);
                 }
-
-                //Unlock replay
-                $db->unlock($replayLockId);
             }
             else {
                 //Could not attain lock on replay, immediately continue
+                $db->transaction_rollback();
             }
         }
         else {
+            $db->transaction_rollback();
+
             //No unlocked downloaded replays to parse, sleep
             $dots = $console->animateDotDotDot();
             echo "No unlocked downloaded replays found$dots                           \r";
