@@ -57,11 +57,7 @@ $db->bind("UpdateReplayParsedError", "issii", $r_match_id, $r_error, $r_status, 
 
 $db->prepare("SelectNextReplayWithStatus-Unlocked",
     "SELECT * FROM replays WHERE status = ? AND lastused <= ? ORDER BY match_date ASC, id ASC LIMIT 1");
-$db->bind("SelectNextReplayWithStatus-Unlocked", "si", $r_status, $r_timestamp);;
-
-$db->prepare("SelectNextReplayWithStatus-Unlocked-ForUpdate",
-    "SELECT * FROM replays WHERE status = ? AND lastused <= ? ORDER BY match_date ASC, id ASC LIMIT 1 FOR UPDATE");
-$db->bind("SelectNextReplayWithStatus-Unlocked-ForUpdate", "si", $r_status, $r_timestamp);;
+$db->bind("SelectNextReplayWithStatus-Unlocked", "si", $r_status, $r_timestamp);
 
 $db->prepare("DoesHeroNameExist",
     "SELECT `name` FROM herodata_heroes WHERE `name` = ?");
@@ -581,12 +577,10 @@ while (true) {
         $db->execute("UpdateReplayStatus");
     }
     else {
-        $db->transaction_begin();
-
         //No replay parsing has previously failed, look for an unlocked downloaded replay to parse
         $r_status = HotstatusPipeline::REPLAY_STATUS_DOWNLOADED;
         $r_timestamp = time() - UNLOCK_DEFAULT_DURATION;
-        $result2 = $db->execute("SelectNextReplayWithStatus-Unlocked-ForUpdate");
+        $result2 = $db->execute("SelectNextReplayWithStatus-Unlocked");
         $resrows2 = $db->countResultRows($result2);
         if ($resrows2 > 0) {
             //Found an unlocked downloaded replay, parse it
@@ -597,8 +591,6 @@ while (true) {
             $r_timestamp = time();
 
             $db->execute("UpdateReplayStatus");
-
-            $db->transaction_commit();
 
             //Set lock id
             $replayLockId = "hotstatus_parseReplay_$r_id";
