@@ -37,6 +37,8 @@ $console = new Console();
 $linux = OS::getOS() == OS::OS_LINUX;
 
 //Prepare statements
+
+
 $db->prepare("UpdateReplayStatus",
     "UPDATE replays SET status = ?, lastused = ? WHERE id = ?");
 $db->bind("UpdateReplayStatus", "sii", $r_status, $r_timestamp, $r_id);
@@ -55,11 +57,7 @@ $db->bind("UpdateReplayParsedError", "issii", $r_match_id, $r_error, $r_status, 
 
 $db->prepare("SelectNextReplayWithStatus-Unlocked",
     "SELECT * FROM replays WHERE status = ? AND lastused <= ? ORDER BY match_date ASC, id ASC LIMIT 1 FOR UPDATE");
-$db->bind("SelectNextReplayWithStatus-Unlocked", "si", $r_status, $r_timestamp);
-
-$db->prepare("LockReplay",
-    "SELECT id FROM replays WHERE id = ? LIMIT 1 FOR UPDATE");
-$db->bind("LockReplay", "i", $r_id);
+$db->bind("SelectNextReplayWithStatus-Unlocked", "si", $r_status, $r_timestamp);;
 
 $db->prepare("DoesHeroNameExist",
     "SELECT `name` FROM herodata_heroes WHERE `name` = ?");
@@ -561,9 +559,6 @@ echo '--------------------------------------'.E
 
 //Look for replays to parse and handle
 while (true) {
-    //Select failed parsing replay transaction
-    $db->transaction_begin();
-
     //Check for unlocked failed replay parses
     $r_status = HotstatusPipeline::REPLAY_STATUS_PARSING;
     $r_timestamp = time() - UNLOCK_PARSING_DURATION;
@@ -580,17 +575,8 @@ while (true) {
         $r_timestamp = time();
 
         $db->execute("UpdateReplayStatus");
-
-        //Commit failed download replay transaction
-        $db->transaction_commit();
     }
     else {
-        //Commit failedparsing replay transaction
-        $db->transaction_commit();
-
-        //Select downloaded replay transaction
-        $db->transaction_begin();
-
         //No replay parsing has previously failed, look for an unlocked downloaded replay to parse
         $r_status = HotstatusPipeline::REPLAY_STATUS_DOWNLOADED;
         $r_timestamp = time() - UNLOCK_DEFAULT_DURATION;
@@ -606,140 +592,179 @@ while (true) {
 
             $db->execute("UpdateReplayStatus");
 
-            //Commit select downloaded replay transaction
-            $db->transaction_commit();
+            $replayLockId = "hotstatus_parseReplay_$r_id";
 
             //Begin full parse transaction
             $db->transaction_begin();
 
-            $db->execute("LockReplay");
+            $replayLocked = $db->lock($replayLockId, 0);
 
-            echo 'Parsing replay #' . $r_id . '...                                       '.E;
+            if ($replayLocked) {
+                echo 'Parsing replay #' . $r_id . '...                                       ' . E;
 
-            $r_filepath = $row['file'];
-            $r_fingerprint = $row['fingerprint'];
+                $r_filepath = $row['file'];
+                $r_fingerprint = $row['fingerprint'];
 
-            $parse = ReplayParser::ParseReplay(__DIR__, $r_filepath, $linux);
+                $parse = ReplayParser::ParseReplay(__DIR__, $r_filepath, $linux);
 
-            $createReplayCopy = FALSE;
+                $createReplayCopy = FALSE;
 
-            //Check if parse was a success
-            if (!key_exists('error', $parse)) {
-                /* Collect player mmrs and calculate new mmr for match season */
-                $seasonid = HotstatusPipeline::getSeasonStringForDateTime($parse['date']);
-                $matchtype = $parse['type'];
+                //Check if parse was a success
+                if (!key_exists('error', $parse)) {
+                    /* Collect player mmrs and calculate new mmr for match season */
+                    $seasonid = HotstatusPipeline::getSeasonStringForDateTime($parse['date']);
+                    $matchtype = $parse['type'];
 
-                $team0rank = ($parse['winner'] === 0) ? (1) : (2);
-                $team1rank = ($parse['winner'] === 1) ? (1) : (2);
+                    $team0rank = ($parse['winner'] === 0) ? (1) : (2);
+                    $team1rank = ($parse['winner'] === 1) ? (1) : (2);
 
-                //Get old mmrs if any
-                $player_old_mmrs = [
-                    "team0" => [],
-                    "team1" => []
-                ];
+                    //Get old mmrs if any
+                    $player_old_mmrs = [
+                        "team0" => [],
+                        "team1" => []
+                    ];
 
-                try {
-                    foreach ($parse['players'] as $player) {
-                        $r_player_id = $player['id'];
-                        $r_season = $seasonid;
-                        $r_gameType = $matchtype;
+                    try {
+                        foreach ($parse['players'] as $player) {
+                            $r_player_id = $player['id'];
+                            $r_season = $seasonid;
+                            $r_gameType = $matchtype;
 
-                        $mmr_result = $db->execute("GetMMRForPlayer");
-                        $mmr_result_rows = $db->countResultRows($mmr_result);
-                        if ($mmr_result_rows > 0) {
-                            //Found player mmr
-                            $obj = $db->fetchArray($mmr_result);
+                            $mmr_result = $db->execute("GetMMRForPlayer");
+                            $mmr_result_rows = $db->countResultRows($mmr_result);
+                            if ($mmr_result_rows > 0) {
+                                //Found player mmr
+                                $obj = $db->fetchArray($mmr_result);
+
+                                $mmr = [
+                                    'rating' => $obj['rating'],
+                                    'mu' => $obj['mu'],
+                                    'sigma' => $obj['sigma']
+                                ];
+
+                                $player_old_mmrs['team' . $player['team']][$player['id'] . ""] = $mmr;
+                            }
+                            else {
+                                //Did not find an mmr for player
+                                $mmr = [
+                                    'rating' => "?",
+                                    'mu' => "?",
+                                    'sigma' => "?"
+                                ];
+
+                                $player_old_mmrs['team' . $player['team']][$player['id'] . ""] = $mmr;
+                            }
+                            $db->freeResult($mmr_result);
+                        }
+
+                        //Calculate new mmrs
+                        echo 'Calculating MMR...' . E;
+                        $calc = MMRCalculator::Calculate(__DIR__, $team0rank, $team1rank, $player_old_mmrs, $linux);
+                    }
+                    catch (\Exception $e) {
+                        $calc = [];
+
+                        $calc['error'] = $e->getMessage();
+                    }
+
+                    //Check if mmr calculation was a success
+                    if (!key_exists('error', $calc)) {
+                        //Collect new player mmrs
+                        $player_new_mmrs = [
+                            "team0" => [],
+                            "team1" => []
+                        ];
+                        foreach ($parse['players'] as $player) {
+                            $obj = $calc['players'][$player['id'] . ""];
 
                             $mmr = [
-                                'rating' => $obj['rating'],
+                                'rating' => $obj['mmr'],
                                 'mu' => $obj['mu'],
                                 'sigma' => $obj['sigma']
                             ];
 
-                            $player_old_mmrs['team' . $player['team']][$player['id'] . ""] = $mmr;
+                            $player_new_mmrs['team' . $player['team']][$player['id'] . ""] = $mmr;
                         }
-                        else {
-                            //Did not find an mmr for player
-                            $mmr = [
-                                'rating' => "?",
-                                'mu' => "?",
-                                'sigma' => "?"
-                            ];
 
-                            $player_old_mmrs['team' . $player['team']][$player['id'] . ""] = $mmr;
+                        //Error handler
+                        $mysqlError = FALSE;
+                        $mysqlErrorMsg = "";
+
+                        //Collect mapping of ban attributes to hero names
+                        $bannedHeroes = [];
+                        try {
+                            foreach ($parse['bans'] as $teambans) {
+                                foreach ($teambans as $heroban) {
+                                    $r_name_attribute = $heroban;
+
+                                    $result3 = $db->execute("GetHeroNameFromAttribute");
+                                    $resrows3 = $db->countResultRows($result3);
+                                    if ($resrows3 > 0) {
+                                        $row2 = $db->fetchArray($result3);
+
+                                        $bannedHeroes[] = $row2['name'];
+                                    }
+                                    $db->freeResult($result3);
+                                }
+                            }
                         }
-                        $db->freeResult($mmr_result);
-                    }
+                        catch (\Exception $e) {
+                            $mysqlError = TRUE;
+                            $mysqlErrorMsg = "Collect Hero Bans: " . $e->getMessage();
+                        }
 
-                    //Calculate new mmrs
-                    echo 'Calculating MMR...' . E;
-                    $calc = MMRCalculator::Calculate(__DIR__, $team0rank, $team1rank, $player_old_mmrs, $linux);
-                }
-                catch (\Exception $e) {
-                    $calc = [];
+                        //Translation invalidation flag
+                        $translationInvalidateMatch = FALSE;
 
-                    $calc['error'] = $e->getMessage();
-                }
+                        //Collect mapping of hero names, translated if necessary
+                        $heroNameMappings = [];
+                        $invalidHeroNames = [];
 
-                //Check if mmr calculation was a success
-                if (!key_exists('error', $calc)) {
-                    //Collect new player mmrs
-                    $player_new_mmrs = [
-                        "team0" => [],
-                        "team1" => []
-                    ];
-                    foreach ($parse['players'] as $player) {
-                        $obj = $calc['players'][$player['id'].""];
+                        try {
+                            foreach ($parse['players'] as $player) {
+                                $r_name = $player['hero'];
+                                $r_name_translation = $player['hero'];
 
-                        $mmr = [
-                            'rating' => $obj['mmr'],
-                            'mu' => $obj['mu'],
-                            'sigma' => $obj['sigma']
-                        ];
+                                $result3 = $db->execute("GetHeroNameFromHeroNameTranslation");
+                                $resrows3 = $db->countResultRows($result3);
+                                if ($resrows3 > 0) {
+                                    //This name needs to be translated
+                                    $row2 = $db->fetchArray($result3);
+                                    $r_name = $row2['name'];
+                                }
 
-                        $player_new_mmrs['team'.$player['team']][$player['id'].""] = $mmr;
-                    }
+                                $db->freeResult($result3);
 
-                    //Error handler
-                    $mysqlError = FALSE;
-                    $mysqlErrorMsg = "";
-
-                    //Collect mapping of ban attributes to hero names
-                    $bannedHeroes = [];
-                    try {
-                        foreach ($parse['bans'] as $teambans) {
-                            foreach ($teambans as $heroban) {
-                                $r_name_attribute = $heroban;
-
-                                $result3 = $db->execute("GetHeroNameFromAttribute");
+                                $result3 = $db->execute("DoesHeroNameExist");
                                 $resrows3 = $db->countResultRows($result3);
                                 if ($resrows3 > 0) {
                                     $row2 = $db->fetchArray($result3);
 
-                                    $bannedHeroes[] = $row2['name'];
+                                    $heroNameMappings[$player['hero']] = $r_name;
                                 }
+                                else {
+                                    //Hero name is not valid
+                                    $invalidHeroNames[] = $r_name;
+                                    $translationInvalidateMatch = TRUE;
+                                }
+
                                 $db->freeResult($result3);
                             }
                         }
-                    }
-                    catch (\Exception $e) {
-                        $mysqlError = TRUE;
-                        $mysqlErrorMsg = "Collect Hero Bans: " . $e->getMessage();
-                    }
+                        catch (\Exception $e) {
+                            $mysqlError = TRUE;
+                            $mysqlErrorMsg = "Collect Hero Name Translations: " . $e->getMessage();
+                        }
 
-                    //Translation invalidation flag
-                    $translationInvalidateMatch = FALSE;
+                        //Collect mapping of maps, translated if necessary
+                        $mapMapping = $parse['map']; //Default Value
+                        $invalidMapName = null;
 
-                    //Collect mapping of hero names, translated if necessary
-                    $heroNameMappings = [];
-                    $invalidHeroNames = [];
+                        $r_name = $parse['map'];
+                        $r_name_translation = $parse['map'];
 
-                    try {
-                        foreach ($parse['players'] as $player) {
-                            $r_name = $player['hero'];
-                            $r_name_translation = $player['hero'];
-
-                            $result3 = $db->execute("GetHeroNameFromHeroNameTranslation");
+                        try {
+                            $result3 = $db->execute("GetMapNameFromMapNameTranslation");
                             $resrows3 = $db->countResultRows($result3);
                             if ($resrows3 > 0) {
                                 //This name needs to be translated
@@ -749,171 +774,152 @@ while (true) {
 
                             $db->freeResult($result3);
 
-                            $result3 = $db->execute("DoesHeroNameExist");
+
+                            $result3 = $db->execute("DoesMapNameExist");
                             $resrows3 = $db->countResultRows($result3);
                             if ($resrows3 > 0) {
                                 $row2 = $db->fetchArray($result3);
 
-                                $heroNameMappings[$player['hero']] = $r_name;
+                                $mapMapping = $r_name;
                             }
                             else {
-                                //Hero name is not valid
-                                $invalidHeroNames[] = $r_name;
+                                //Map name is not valid
+                                $invalidMapName = $r_name;
                                 $translationInvalidateMatch = TRUE;
                             }
 
                             $db->freeResult($result3);
                         }
-                    }
-                    catch (\Exception $e) {
-                        $mysqlError = TRUE;
-                        $mysqlErrorMsg = "Collect Hero Name Translations: " . $e->getMessage();
-                    }
-
-                    //Collect mapping of maps, translated if necessary
-                    $mapMapping = $parse['map']; //Default Value
-                    $invalidMapName = null;
-
-                    $r_name = $parse['map'];
-                    $r_name_translation = $parse['map'];
-
-                    try {
-                        $result3 = $db->execute("GetMapNameFromMapNameTranslation");
-                        $resrows3 = $db->countResultRows($result3);
-                        if ($resrows3 > 0) {
-                            //This name needs to be translated
-                            $row2 = $db->fetchArray($result3);
-                            $r_name = $row2['name'];
+                        catch (\Exception $e) {
+                            $mysqlError = TRUE;
+                            $mysqlErrorMsg = "Collect Map Name Translations: " . $e->getMessage();
                         }
 
-                        $db->freeResult($result3);
+                        if ($mysqlError === FALSE) {
+                            if ($translationInvalidateMatch === FALSE) {
+                                //No translation error, add all relevant match data to database
+                                $insertResult = insertMatch($parse, $mapMapping, $heroNameMappings, $calc, $player_old_mmrs, $player_new_mmrs);
 
-
-                        $result3 = $db->execute("DoesMapNameExist");
-                        $resrows3 = $db->countResultRows($result3);
-                        if ($resrows3 > 0) {
-                            $row2 = $db->fetchArray($result3);
-
-                            $mapMapping = $r_name;
-                        }
-                        else {
-                            //Map name is not valid
-                            $invalidMapName = $r_name;
-                            $translationInvalidateMatch = TRUE;
-                        }
-
-                        $db->freeResult($result3);
-                    }
-                    catch (\Exception $e) {
-                        $mysqlError = TRUE;
-                        $mysqlErrorMsg = "Collect Map Name Translations: " . $e->getMessage();
-                    }
-
-                    if ($mysqlError === FALSE) {
-                        if ($translationInvalidateMatch === FALSE) {
-                            //No translation error, add all relevant match data to database
-                            $insertResult = insertMatch($parse, $mapMapping, $heroNameMappings, $calc, $player_old_mmrs, $player_new_mmrs);
-
-                            if ($insertResult === FALSE) {
-                                //Rollback Transaction
-                                $db->transaction_rollback();
-
-                                //Error parsing match and inserting into 'matches', cancel parsing
-                                //Copy local file into replay error directory for debugging purposes
-                                $createReplayCopy = TRUE;
-
-                                //Flag replay match status as 'mysql_match_write_error'
-                                $r_id = $row['id'];
-                                $r_status = HotstatusPipeline::REPLAY_STATUS_MYSQL_MATCH_WRITE_ERROR;
-                                $r_timestamp = time();
-                                $r_error = "Couldn't insert into 'matches'";
-
-                                $db->execute("UpdateReplayStatusError");
-
-                                $sleep->add(MYSQL_ERROR_SLEEP_DURATION);
-                            }
-                            else {
-                                //No error parsing match, continue with upserting of players, heroes
-                                $success_playersAndHeroes = updatePlayersAndHeroes($insertResult['match'], $seasonid, $player_new_mmrs, $bannedHeroes);
-
-                                $hadError = !$success_playersAndHeroes;
-
-                                $errorstr = "";
-                                if (!$success_playersAndHeroes) $errorstr .= "Players, Heroes";
-
-                                if (!$hadError) {
-                                    //Flag replay as fully parsed
-                                    $r_id = $row['id'];
-                                    $r_match_id = $insertResult['match_id'];
-                                    $r_status = HotstatusPipeline::REPLAY_STATUS_PARSED;
-                                    $r_timestamp = time();
-
-                                    $db->execute("UpdateReplayParsed");
-
-                                    //Commit Transaction
-                                    $db->transaction_commit();
-
-                                    echo 'Successfully parsed replay #' . $r_id . '...' . E . E;
-                                }
-                                else {
+                                if ($insertResult === FALSE) {
                                     //Rollback Transaction
                                     $db->transaction_rollback();
 
+                                    //Error parsing match and inserting into 'matches', cancel parsing
                                     //Copy local file into replay error directory for debugging purposes
                                     $createReplayCopy = TRUE;
 
-                                    //Flag replay as partially parsed with mysql_matchdata_write_error
+                                    //Flag replay match status as 'mysql_match_write_error'
                                     $r_id = $row['id'];
-                                    $r_status = HotstatusPipeline::REPLAY_STATUS_MYSQL_MATCHDATA_WRITE_ERROR;
+                                    $r_status = HotstatusPipeline::REPLAY_STATUS_MYSQL_MATCH_WRITE_ERROR;
                                     $r_timestamp = time();
-                                    $r_error = "Semi-Parsed, Missed: " . $errorstr;
+                                    $r_error = "Couldn't insert into 'matches'";
 
                                     $db->execute("UpdateReplayStatusError");
 
-                                    echo 'Could not successfully parsed replay #' . $r_id . '. Mysql had trouble with portions of : ' . $errorstr . '...' . E . E;
+                                    $sleep->add(MYSQL_ERROR_SLEEP_DURATION);
                                 }
+                                else {
+                                    //No error parsing match, continue with upserting of players, heroes
+                                    $success_playersAndHeroes = updatePlayersAndHeroes($insertResult['match'], $seasonid, $player_new_mmrs, $bannedHeroes);
+
+                                    $hadError = !$success_playersAndHeroes;
+
+                                    $errorstr = "";
+                                    if (!$success_playersAndHeroes) $errorstr .= "Players, Heroes";
+
+                                    if (!$hadError) {
+                                        //Flag replay as fully parsed
+                                        $r_id = $row['id'];
+                                        $r_match_id = $insertResult['match_id'];
+                                        $r_status = HotstatusPipeline::REPLAY_STATUS_PARSED;
+                                        $r_timestamp = time();
+
+                                        $db->execute("UpdateReplayParsed");
+
+                                        //Commit Transaction
+                                        $db->transaction_commit();
+
+                                        echo 'Successfully parsed replay #' . $r_id . '...' . E . E;
+                                    }
+                                    else {
+                                        //Rollback Transaction
+                                        $db->transaction_rollback();
+
+                                        //Copy local file into replay error directory for debugging purposes
+                                        $createReplayCopy = TRUE;
+
+                                        //Flag replay as partially parsed with mysql_matchdata_write_error
+                                        $r_id = $row['id'];
+                                        $r_status = HotstatusPipeline::REPLAY_STATUS_MYSQL_MATCHDATA_WRITE_ERROR;
+                                        $r_timestamp = time();
+                                        $r_error = "Semi-Parsed, Missed: " . $errorstr;
+
+                                        $db->execute("UpdateReplayStatusError");
+
+                                        echo 'Could not successfully parsed replay #' . $r_id . '. Mysql had trouble with portions of : ' . $errorstr . '...' . E . E;
+                                    }
+                                }
+                            }
+                            else {
+                                //Rollback Transaction
+                                $db->transaction_rollback();
+
+                                //Map or Hero names could not be translated, set error status and describe error
+                                //Copy local file into replay error directory for debugging purposes
+                                $createReplayCopy = TRUE;
+
+                                //Compile translation error string
+                                $tstr = "";
+                                if ($invalidMapName !== NULL) $tstr .= "Map: [" . $invalidMapName . "]";
+
+                                $invcount = count($invalidHeroNames);
+
+                                if ($invcount > 0) {
+                                    $tstr .= " , Heroes: [";
+
+                                    $i = 0;
+                                    foreach ($invalidHeroNames as $invalidhero) {
+                                        $tstr .= $invalidhero;
+
+                                        if ($i < $invcount - 1) {
+                                            $tstr .= ",";
+                                        }
+
+                                        $i++;
+                                    }
+
+                                    $tstr .= "]";
+                                }
+
+                                //Flag replay match status as 'parse_translate_error'
+                                $r_id = $row['id'];
+                                $r_status = HotstatusPipeline::REPLAY_STATUS_PARSE_TRANSLATE_ERROR;
+                                $r_timestamp = time();
+                                $r_error = $tstr;
+
+                                $db->execute("UpdateReplayStatusError");
+
+                                $sleep->add(MONGODB_ERROR_SLEEP_DURATION);
                             }
                         }
                         else {
                             //Rollback Transaction
                             $db->transaction_rollback();
 
-                            //Map or Hero names could not be translated, set error status and describe error
                             //Copy local file into replay error directory for debugging purposes
                             $createReplayCopy = TRUE;
 
-                            //Compile translation error string
-                            $tstr = "";
-                            if ($invalidMapName !== NULL) $tstr .= "Map: [" . $invalidMapName . "]";
-
-                            $invcount = count($invalidHeroNames);
-
-                            if ($invcount > 0) {
-                                $tstr .= " , Heroes: [";
-
-                                $i = 0;
-                                foreach ($invalidHeroNames as $invalidhero) {
-                                    $tstr .= $invalidhero;
-
-                                    if ($i < $invcount - 1) {
-                                        $tstr .= ",";
-                                    }
-
-                                    $i++;
-                                }
-
-                                $tstr .= "]";
-                            }
-
-                            //Flag replay match status as 'parse_translate_error'
+                            //Encountered an mysql error parsing replay, output it, and flag replay as 'parse_mmr_error'
                             $r_id = $row['id'];
-                            $r_status = HotstatusPipeline::REPLAY_STATUS_PARSE_TRANSLATE_ERROR;
+                            $r_status = HotstatusPipeline::REPLAY_STATUS_MYSQL_ERROR;
                             $r_timestamp = time();
-                            $r_error = $tstr;
+                            $r_error = $mysqlErrorMsg;
 
                             $db->execute("UpdateReplayStatusError");
 
-                            $sleep->add(MONGODB_ERROR_SLEEP_DURATION);
+                            echo 'Mysql threw exception during operations for replay #' . $r_id . ', Error : "' . $mysqlErrorMsg . '"...' . E . E;
+
+                            $sleep->add(MINI_SLEEP_DURATION);
                         }
                     }
                     else {
@@ -923,15 +929,15 @@ while (true) {
                         //Copy local file into replay error directory for debugging purposes
                         $createReplayCopy = TRUE;
 
-                        //Encountered an mysql error parsing replay, output it, and flag replay as 'parse_mmr_error'
+                        //Encountered an error parsing replay, output it, and flag replay as 'parse_mmr_error'
                         $r_id = $row['id'];
-                        $r_status = HotstatusPipeline::REPLAY_STATUS_MYSQL_ERROR;
+                        $r_status = HotstatusPipeline::REPLAY_STATUS_PARSE_MMR_ERROR;
                         $r_timestamp = time();
-                        $r_error = $mysqlErrorMsg;
+                        $r_error = $calc['error'];
 
                         $db->execute("UpdateReplayStatusError");
 
-                        echo 'Mysql threw exception during operations for replay #' . $r_id . ', Error : "' . $mysqlErrorMsg . '"...'.E.E;
+                        echo 'Failed to calculate mmr for replay #' . $r_id . ', Error : "' . $calc['error'] . '"...' . E . E;
 
                         $sleep->add(MINI_SLEEP_DURATION);
                     }
@@ -943,54 +949,41 @@ while (true) {
                     //Copy local file into replay error directory for debugging purposes
                     $createReplayCopy = TRUE;
 
-                    //Encountered an error parsing replay, output it, and flag replay as 'parse_mmr_error'
+                    //Encountered an error parsing replay, output it and flag replay as 'parse_replay_error'
                     $r_id = $row['id'];
-                    $r_status = HotstatusPipeline::REPLAY_STATUS_PARSE_MMR_ERROR;
+                    $r_status = HotstatusPipeline::REPLAY_STATUS_PARSE_REPLAY_ERROR;
                     $r_timestamp = time();
-                    $r_error = $calc['error'];
+                    $r_error = $parse['error'];
 
                     $db->execute("UpdateReplayStatusError");
 
-                    echo 'Failed to calculate mmr for replay #' . $r_id . ', Error : "' . $calc['error'] . '"...'.E.E;
+                    echo 'Failed to parse replay #' . $r_id . ', Error : "' . $parse['error'] . '"...' . E . E;
 
                     $sleep->add(MINI_SLEEP_DURATION);
                 }
+
+                if ($createReplayCopy) {
+                    //Copy local file into replay error directory for debugging purposes
+                    if (file_exists($r_filepath)) {
+                        $errordir = __DIR__ . '/' . HotstatusPipeline::REPLAY_DOWNLOAD_DIRECTORY_ERROR;
+
+                        FileHandling::ensureDirectory($errordir);
+
+                        $newfilepath = $errordir . $r_fingerprint . HotstatusPipeline::REPLAY_DOWNLOAD_EXTENSION;
+                        FileHandling::copyFile($r_filepath, $newfilepath);
+                    }
+                }
+
+                //Delete local file
+                if (file_exists($r_filepath)) {
+                    FileHandling::deleteAllFilesMatchingPattern($r_filepath);
+                }
+
+                //Unlock replay
+                $db->unlock($replayLockId);
             }
             else {
-                //Rollback Transaction
-                $db->transaction_rollback();
-
-                //Copy local file into replay error directory for debugging purposes
-                $createReplayCopy = TRUE;
-
-                //Encountered an error parsing replay, output it and flag replay as 'parse_replay_error'
-                $r_id = $row['id'];
-                $r_status = HotstatusPipeline::REPLAY_STATUS_PARSE_REPLAY_ERROR;
-                $r_timestamp = time();
-                $r_error = $parse['error'];
-
-                $db->execute("UpdateReplayStatusError");
-
-                echo 'Failed to parse replay #' . $r_id . ', Error : "' . $parse['error'] . '"...'.E.E;
-
-                $sleep->add(MINI_SLEEP_DURATION);
-            }
-
-            if ($createReplayCopy) {
-                //Copy local file into replay error directory for debugging purposes
-                if (file_exists($r_filepath)) {
-                    $errordir = __DIR__ . '/' . HotstatusPipeline::REPLAY_DOWNLOAD_DIRECTORY_ERROR;
-
-                    FileHandling::ensureDirectory($errordir);
-
-                    $newfilepath = $errordir . $r_fingerprint . HotstatusPipeline::REPLAY_DOWNLOAD_EXTENSION;
-                    FileHandling::copyFile($r_filepath, $newfilepath);
-                }
-            }
-
-            //Delete local file
-            if (file_exists($r_filepath)) {
-                FileHandling::deleteAllFilesMatchingPattern($r_filepath);
+                //Could not attain lock on replay, immediately continue
             }
         }
         else {
