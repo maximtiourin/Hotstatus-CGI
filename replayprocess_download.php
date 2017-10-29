@@ -163,6 +163,9 @@ while (true) {
 
                         $sleep->add(MINI_SLEEP_DURATION);
                     }
+
+                    //Release lock
+                    $db->unlock($replayLockId);
                 }
                 else {
                     //Could not attain lock on replay, immediately continue
