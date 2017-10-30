@@ -55,10 +55,8 @@ class MMRCalculator {
         //Execute
         $output = shell_exec($linuxmono . $callingDirectory . HotstatusPipeline::REPLAY_EXECUTABLE_DIRECTORY . HotstatusPipeline::REPLAY_EXECUTABLE_ID_MMRCALCULATOR . " " . $str);
 
-        //If linux, remove potential UTF8 BOM
-        if ($isLinux) {
-            $output = self::remove_utf8_bom($output);
-        }
+        //Remove potential UTF8 BOM
+        $output = self::remove_utf8_bom($output);
 
         $json = json_decode($output, true);
 
