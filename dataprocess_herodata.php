@@ -16,7 +16,7 @@ $timestart = microtime(true);
 $dataparsed = FALSE;
 
 //Database credentials for use with --dbout command line argument
-$creds = Credentials::getReplayProcessCredentials();
+$creds = Credentials::getCredentialsForUser(Credentials::USER_REPLAYPROCESS);
 
 //The json array that holds all of the heroes
 $global_json = [];

@@ -7,67 +7,60 @@ namespace Fizzik;
  * To create own, rename to Credentials.php and enter relevant info.
  */
 class Credentials {
+    const USER_REPLAYPROCESS = "replayprocess";
+    const USER_HOTSTATUSWEB = "hotstatusweb";
+
+    const MODE_PROD = "prod";
+    const MODE_DEV = "dev";
+
+    const DEFAULT_MODE = self::MODE_DEV;
+
     const KEY_DB_HOSTNAME = "db_host";
     const KEY_DB_USER = "db_user";
     const KEY_DB_PASSWORD = "db_password";
     const KEY_DB_DATABASE = "db_database";
-    const KEY_MONGODB_URI = "mongodb_uri";
     const KEY_REDIS_URI = "redis_uri";
     const KEY_AWS_KEY = "aws_key";
     const KEY_AWS_SECRET = "aws_secret";
     const KEY_AWS_REPLAYREGION = 'aws_replayregion';
 
-    //Replay Process Database Connections
-    private static $replayProcess_db_hostname = "%HOSTNAME%";
-    private static $replayProcess_db_user = "%USER%";
-    private static $replayProcess_db_password = "%PASSWORD%";
-    private static $replayProcess_db_database = "%DATABASE%";
-    private static $replayProcess_mongodb_uri = "%URI%";
-    private static $replayProcess_redis_uri = "%URI%";
-    private static $replayProcess_redis_uri_DEV = "%URI%";
-    //Replay Process AWS credentials
-    private static $replayProcess_aws_key = "%KEY%";
-    private static $replayProcess_aws_secret = "%SECRET%";
-    private static $replayProcess_aws_replayregion = "%REPLAYREGION%"; //Ex: eu-west-1
+    //Credentials
+    private static $creds = [
+        self::USER_REPLAYPROCESS => [
+            self::MODE_PROD => [
 
-    //Hotstatus Webserver Database Connections
-    private static $hotstatusweb_db_hostname = "%HOSTNAME%";
-    private static $hotstatusweb_db_user = "%USER%";
-    private static $hotstatusweb_db_password = "%PASSWORD%";
-    private static $hotstatusweb_db_database = "%DATABASE%";
-    private static $hotstatusweb_mongodb_uri = "%URI%";
-    private static $hotstatusweb_redis_uri = "%URI%";
-    private static $hotstatusweb_redis_uri_DEV = "%URI%";
+            ],
+            self::MODE_DEV => [
+                self::KEY_DB_HOSTNAME => "",
+                self::KEY_DB_USER => "",
+                self::KEY_DB_PASSWORD => "",
+                self::KEY_DB_DATABASE => "",
+                self::KEY_REDIS_URI => "",
+                self::KEY_AWS_KEY => "",
+                self::KEY_AWS_SECRET => "",
+                self::KEY_AWS_REPLAYREGION => "" //Ex: eu-west-1
+            ]
+        ],
+        self::USER_HOTSTATUSWEB => [
+            self::MODE_PROD => [
 
+            ],
+            self::MODE_DEV => [
+                self::KEY_DB_HOSTNAME => "",
+                self::KEY_DB_USER => "",
+                self::KEY_DB_PASSWORD => "",
+                self::KEY_DB_DATABASE => "",
+                self::KEY_REDIS_URI => ""
+            ]
+        ]
+    ];
 
-    public static function getReplayProcessCredentials($dev = false) {
-        $a = [];
-
-        $a[self::KEY_DB_HOSTNAME] = self::$replayProcess_db_hostname;
-        $a[self::KEY_DB_USER] = self::$replayProcess_db_user;
-        $a[self::KEY_DB_PASSWORD] = self::$replayProcess_db_password;
-        $a[self::KEY_DB_DATABASE] = self::$replayProcess_db_database;
-        $a[self::KEY_MONGODB_URI] = self::$replayProcess_mongodb_uri;
-        $a[self::KEY_REDIS_URI] = ($dev === TRUE) ? (self::$replayProcess_redis_uri_DEV) : (self::$replayProcess_redis_uri);
-
-        $a[self::KEY_AWS_KEY] = self::$replayProcess_aws_key;
-        $a[self::KEY_AWS_SECRET] = self::$replayProcess_aws_secret;
-        $a[self::KEY_AWS_REPLAYREGION] = self::$replayProcess_aws_replayregion;
-
-        return $a;
-    }
-
-    public static function getHotstatusWebCredentials($dev = false) {
-        $a = [];
-
-        $a[self::KEY_DB_HOSTNAME] = self::$hotstatusweb_db_hostname;
-        $a[self::KEY_DB_USER] = self::$hotstatusweb_db_user;
-        $a[self::KEY_DB_PASSWORD] = self::$hotstatusweb_db_password;
-        $a[self::KEY_DB_DATABASE] = self::$hotstatusweb_db_database;
-        $a[self::KEY_MONGODB_URI] = self::$hotstatusweb_mongodb_uri;
-        $a[self::KEY_REDIS_URI] = ($dev === TRUE) ? (self::$hotstatusweb_redis_uri_DEV) : (self::$hotstatusweb_redis_uri);
-
-        return $a;
+    /*
+     * Returns a credentials object for the given user and mode. Keys can be accessed using KEY constants, not all users
+     * share the same keys.
+     */
+    public static function getCredentialsForUser($user, $mode = self::DEFAULT_MODE) {
+        return self::$creds[$user][$mode];
     }
 }
 ?>
