@@ -164,19 +164,19 @@ $db->bind("+=:players_mmr",
     $r_player_id, $r_season, $r_gameType, $r_rating, $r_mu, $r_sigma);
 
 $db->prepare("??:heroes_matches_recent_granular",
-    "SELECT medals, talent, builds, matchup_friends, matchup_foes FROM heroes_matches_recent_granular "
-    . "WHERE hero = ? AND year = ? AND week = ? AND day = ? AND map = ? AND gameType = ? AND mmr_average = ? AND range_match_length = ? AND range_player_played = ? FOR UPDATE");
+    "SELECT medals, talents, builds, matchup_friends, matchup_foes FROM heroes_matches_recent_granular "
+    . "WHERE hero = ? AND year = ? AND week = ? AND day = ? AND map = ? AND gameType = ? AND mmr_average = ? AND range_match_length = ? AND range_hero_level = ? FOR UPDATE");
 $db->bind("??:heroes_matches_recent_granular",
-    "siiississ", $r_hero, $r_year, $r_week, $r_day, $r_map, $r_gameType, $r_mmr_average, $r_range_match_length, $r_range_player_played);
+    "siiississ", $r_hero, $r_year, $r_week, $r_day, $r_map, $r_gameType, $r_mmr_average, $r_range_match_length, $r_range_hero_level);
 
 $db->prepare("+=:heroes_matches_recent_granular",
     "INSERT INTO heroes_matches_recent_granular "
-    . "(hero, year, week, day, date_end, gameType, map, mmr_average, range_match_length, range_player_played, played, won, banned, time_played, stats_kills, stats_assists, 
+    . "(hero, year, week, day, date_end, gameType, map, mmr_average, range_match_length, range_hero_level, played, won, time_played, stats_kills, stats_assists, 
     stats_deaths, stats_siege_damage, stats_hero_damage, stats_structure_damage, stats_healing, stats_damage_taken, stats_merc_camps, stats_exp_contrib, stats_best_killstreak, 
     stats_time_spent_dead, medals, talents, builds, matchup_friends, matchup_foes) "
-    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
     . "ON DUPLICATE KEY UPDATE "
-    . "date_end = VALUES(date_end), played = played + VALUES(played), won = won + VALUES(won), banned = banned + VALUES(banned), time_played = time_played + VALUES(time_played), 
+    . "date_end = VALUES(date_end), played = played + VALUES(played), won = won + VALUES(won), time_played = time_played + VALUES(time_played), 
     stats_kills = stats_kills + VALUES(stats_kills), stats_assists = stats_assists + VALUES(stats_assists), stats_deaths = stats_deaths + VALUES(stats_deaths), 
     stats_siege_damage = stats_siege_damage + VALUES(stats_siege_damage), stats_hero_damage = stats_hero_damage + VALUES(stats_hero_damage), 
     stats_structure_damage = stats_structure_damage + VALUES(stats_structure_damage), stats_healing = stats_healing + VALUES(stats_healing), 
@@ -185,21 +185,21 @@ $db->prepare("+=:heroes_matches_recent_granular",
     stats_time_spent_dead = stats_time_spent_dead + VALUES(stats_time_spent_dead), medals = VALUES(medals), talents = VALUES(talents), builds = VALUES(builds), 
     matchup_friends = VALUES(matchup_friends), matchup_foes = VALUES(matchup_foes)");
 $db->bind("+=:heroes_matches_recent_granular",
-    "siiisssissiiiiiiiiiiiiiiiisssss",
-    $r_hero, $r_year, $r_week, $r_day, $r_date_end, $r_gameType, $r_map, $r_mmr_average, $r_range_match_length, $r_range_player_played, $r_played, $r_won, $r_banned,
+    "siiisssissiiiiiiiiiiiiiiisssss",
+    $r_hero, $r_year, $r_week, $r_day, $r_date_end, $r_gameType, $r_map, $r_mmr_average, $r_range_match_length, $r_range_hero_level, $r_played, $r_won,
     $r_time_played, $r_stats_kills, $r_stats_assists, $r_stats_deaths, $r_stats_siege_damage, $r_stats_hero_damage, $r_stats_structure_damage, $r_stats_healing,
     $r_stats_damage_taken, $r_stats_merc_camps, $r_stats_exp_contrib, $r_stats_best_killstreak, $r_stats_time_spent_dead, $r_medals, $r_talents, $r_builds,
     $r_matchup_friends, $r_matchup_foes);
 
 $db->prepare("trackHeroBan",
-    "INSERT INTO heroes_matches_recent_granular "
-    . "(hero, year, week, day, date_end, gameType, map, banned, medals, talents, builds) "
-    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+    "INSERT INTO heroes_bans_recent_granular "
+    . "(hero, year, week, day, date_end, gameType, map, banned) "
+    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?) "
     . "ON DUPLICATE KEY UPDATE "
     . "banned = banned + VALUES(banned)");
 $db->bind("trackHeroBan",
-    "siiisssisss",
-    $r_hero, $r_year, $r_week, $r_day, $r_date_end, $r_gameType, $r_map, $r_banned, $r_medals, $r_talents, $r_builds);
+    "siiisssi",
+    $r_hero, $r_year, $r_week, $r_day, $r_date_end, $r_gameType, $r_map, $r_banned);
 
 $db->prepare("ensureTalentBuild",
     "INSERT INTO heroes_builds (hero, build, talents) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE hero = hero");
@@ -209,9 +209,9 @@ $db->prepare("ensurePlayerParty",
     "INSERT INTO players_parties (id, party, players) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE id = id");
 $db->bind("ensurePlayerParty", "iss", $r_player_id, $r_party, $r_players);
 
-$db->prepare("CountPlayerMatchesForHero",
+/*$db->prepare("CountPlayerMatchesForHero",
     "SELECT COALESCE(SUM(`played`), 0) AS `count` FROM `players_matches_total` WHERE `id` = ? AND `hero` = ?");
-$db->bind("CountPlayerMatchesForHero", "is", $r_player_id, $r_hero);
+$db->bind("CountPlayerMatchesForHero", "is", $r_player_id, $r_hero);*/
 
 //Helper functions
 
@@ -315,7 +315,7 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
            $r_stats_kills, $r_stats_assists, $r_stats_deaths, $r_stats_siege_damage, $r_stats_hero_damage, $r_stats_structure_damage,
            $r_stats_healing, $r_stats_damage_taken, $r_stats_merc_camps, $r_stats_exp_contrib, $r_stats_best_killstreak,
            $r_stats_time_spent_dead, $r_medals, $r_talents, $r_builds, $r_parties, $r_build, $r_build_talents, $r_party, $r_players, $r_time_played_silenced,
-           $r_season, $r_rating, $r_mu, $r_sigma, $r_banned, $r_mmr_average, $r_range_match_length, $r_range_player_played, $r_matchup_friends, $r_matchup_foes;
+           $r_season, $r_rating, $r_mu, $r_sigma, $r_banned, $r_mmr_average, $r_range_match_length, $r_range_hero_level, $r_matchup_friends, $r_matchup_foes;
 
     $isodate = HotstatusPipeline::getISOYearWeekDayForDateTime($match['date']);
 
@@ -326,6 +326,8 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
     $team1OldRating = (is_numeric($team1Old)) ? ($team1Old) : (0);
 
     $r_mmr_average = HotstatusPipeline::getFixedAverageMMRForMatch($team0OldRating, $team1OldRating);
+
+    $r_range_match_length = HotstatusPipeline::getRangeNameForMatchLength($match['match_length']);
 
     //Build Team Structure For Reference
     $teamplayers = [];
@@ -505,10 +507,6 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
             /*
              * +=:players_matches_total
              */
-            //Get player matches played for this hero
-            $playerMatchesForHeroResult = $db->execute("CountPlayerMatchesForHero");
-            $playerMatchesForHero = $db->fetchArray($playerMatchesForHeroResult)['count'] + 1;
-
             $r_time_played_silenced = $timeSilenced;
 
             $db->execute("+=:players_matches_total");
@@ -529,8 +527,7 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
              */
 
             //Set Key Params
-            $r_range_match_length = HotstatusPipeline::getRangeNameForMatchLength($match['match_length']);
-            $r_range_player_played = HotstatusPipeline::getRangeNameForMatchesPlayed($playerMatchesForHero);
+            $r_range_hero_level = HotstatusPipeline::getRangeNameForHeroLevel($player['hero_level']);
 
             //Check if row exists to increment json
             $h_res = $db->execute("??:heroes_matches_recent_granular");
@@ -577,7 +574,6 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
 
             //Set main params
             $r_hero = $player['hero'];
-            $r_banned = 0;
 
             $db->execute("+=:heroes_matches_recent_granular");
         }
@@ -594,9 +590,6 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
             $r_map = $match['map'];
             $r_gameType = $match['type'];
             $r_banned = 1;
-            $r_medals = "[]";
-            $r_talents = "[]";
-            $r_builds = "[]";
 
             $db->execute("trackHeroBan");
         }
@@ -934,7 +927,7 @@ while (true) {
 
                                         $db->execute("UpdateReplayStatusError");
 
-                                        echo 'Could not successfully parsed replay #' . $r_id . '. Mysql had trouble with portions of : ' . $errorstr . '...' . E . E;
+                                        echo 'Could not successfully parse replay #' . $r_id . '. Mysql had trouble with portions of : ' . $errorstr . '...' . E . E;
                                     }
                                 }
                             }
@@ -977,7 +970,7 @@ while (true) {
 
                                 $db->execute("UpdateReplayStatusError");
 
-                                $sleep->add(MONGODB_ERROR_SLEEP_DURATION);
+                                $sleep->add(MYSQL_ERROR_SLEEP_DURATION);
                             }
                         }
                         else {

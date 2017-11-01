@@ -20,6 +20,9 @@ class HotstatusPipeline {
     const REPLAY_STATUS_DOWNLOAD_ERROR = "download_error"; //status value for when a replay could not be downloaded due to an error
     const REPLAY_STATUS_PARSING = "parsing"; //status value for when a replay is being parsed
     const REPLAY_STATUS_PARSED = "parsed"; //status value for when a replay is done being parsed
+    const REPLAY_STATUS_REPARSING = "reparsing"; //status value for a when a replay is being reparsed
+    const REPLAY_STATUS_REPARSED = "reparsed"; //status value for when a replay is done being reparsed
+    const REPLAY_STATUS_REPARSE_ERROR = "reparse_error"; //status value for when a replay had an unknown error during reparsing
     const REPLAY_STATUS_PARSE_MMR_ERROR = "parse_mmr_error"; //status value for when a replay had an unknown error during mmr parsing
     const REPLAY_STATUS_PARSE_REPLAY_ERROR = "parse_replay_error"; //status value for when a replay had an unknown error during mmr parsing
     const REPLAY_STATUS_PARSE_TRANSLATE_ERROR = "parse_translate_error"; //status value for when a replay had hero or map names that couldnt be translated
@@ -157,31 +160,27 @@ class HotstatusPipeline {
     ];
 
     /*
-     * Filter Matches Played
+     * Filter Hero Levels
      * ["RangeProperName"] => [
-     *      "min" => rangeStartInclusiveMatches
-     *      "max" => rangeEndInclusiveMatches
+     *      "min" => rangeStartInclusiveLevels
+     *      "max" => rangeEndInclusiveLevels
      * ]
      */
-    public static $filter_matches_played = [
-        "1-50" => [
+    public static $filter_hero_levels = [
+        "1-5" => [
             "min" => 1,
-            "max" => 50
+            "max" => 5
         ],
-        "51-100" => [
-            "min" => 51,
-            "max" => 100
+        "6-10" => [
+            "min" => 6,
+            "max" => 10
         ],
-        "101-150" => [
-            "min" => 101,
-            "max" => 150
+        "11-15" => [
+            "min" => 11,
+            "max" => 15
         ],
-        "151-200" => [
-            "min" => 151,
-            "max" => 200
-        ],
-        "201+" => [
-            "min" => 201,
+        "16+" => [
+            "min" => 16,
             "max" => PHP_INT_MAX
         ],
     ];
@@ -674,13 +673,13 @@ class HotstatusPipeline {
     }
 
     /*
-     * Returns the proper name string of the range for the given matches played, returns "UNKNOWN" if the matches played
+     * Returns the proper name string of the range for the given hero level, returns "UNKNOWN" if the hero level
      * doesn't fall into the known ranges
      */
-    public static function getRangeNameForMatchesPlayed($matchesPlayed) {
-        if (is_numeric($matchesPlayed)) {
-            foreach (self::$filter_matches_played as $rangeName => $range) {
-                if ($matchesPlayed >= $range['min'] && $matchesPlayed <= $range['max']) {
+    public static function getRangeNameForHeroLevel($herolevel) {
+        if (is_numeric($herolevel)) {
+            foreach (self::$filter_hero_levels as $rangeName => $range) {
+                if ($herolevel >= $range['min'] && $herolevel <= $range['max']) {
                     return $rangeName;
                 }
             }
