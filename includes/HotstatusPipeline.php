@@ -41,14 +41,22 @@ class HotstatusPipeline {
      * All dates are UTC, so when looking up Blizzard's season start and end dates, add 7 hours to PST time accordingly
      */
     const SEASON_UNKNOWN = "Legacy"; //This is the season to use when no season dates are defined for a given date time
+    const SEASON_NONE = "None"; //This is the value of NO previous season
     public static $SEASONS = [
         "2017 Season 3" => [
             "start" =>  "2017-09-05 07:00:00",
-            "end" =>    "2017-12-12 06:59:59"
+            "end" =>    "2017-12-12 06:59:59",
+            "previous" => "2017 Season 2"
         ],
         "2017 Season 2" => [
             "start" =>  "2017-06-13 07:00:00",
-            "end" =>    "2017-09-05 06:59:59"
+            "end" =>    "2017-09-05 06:59:59",
+            "previous" => self::SEASON_UNKNOWN
+        ],
+        self::SEASON_UNKNOWN => [
+            "start" =>  "2010-01-01 07:00:00",
+            "end" =>    "2017-06-13 06:59:59",
+            "previous" => self::SEASON_NONE
         ]
     ];
 
@@ -146,6 +154,70 @@ class HotstatusPipeline {
         "Master" => [
             "selected" => TRUE
         ]
+    ];
+
+    /*
+     * Filter Matches Played
+     * ["RangeProperName"] => [
+     *      "min" => rangeStartInclusiveMatches
+     *      "max" => rangeEndInclusiveMatches
+     * ]
+     */
+    public static $filter_matches_played = [
+        "1-50" => [
+            "min" => 1,
+            "max" => 50
+        ],
+        "51-100" => [
+            "min" => 51,
+            "max" => 100
+        ],
+        "101-150" => [
+            "min" => 101,
+            "max" => 150
+        ],
+        "151-200" => [
+            "min" => 151,
+            "max" => 200
+        ],
+        "201+" => [
+            "min" => 201,
+            "max" => PHP_INT_MAX
+        ],
+    ];
+
+    /*
+     * Filter Matches Lengths
+     * ["RangeProperName"] => [
+     *      "min" => rangeStartInclusiveSeconds
+     *      "max" => rangeEndInclusiveSeconds
+     * ]
+     */
+    public static $filter_matches_lengths = [
+        "0-10" => [
+            "min" => 0,
+            "max" => 600
+        ],
+        "11-15" => [
+            "min" => 601,
+            "max" => 900
+        ],
+        "16-20" => [
+            "min" => 901,
+            "max" => 1200
+        ],
+        "21-25" => [
+            "min" => 1201,
+            "max" => 1500
+        ],
+        "26-30" => [
+            "min" => 1501,
+            "max" => 1800
+        ],
+        "31+" => [
+            "min" => 1801,
+            "max" => PHP_INT_MAX
+        ],
     ];
 
     /*
@@ -561,6 +633,18 @@ class HotstatusPipeline {
         }
 
         return self::SEASON_UNKNOWN;
+    }
+
+    /*
+     * Returns the previous season string for the given season str.
+     * Seasons without a previous season return const SEASON_NONE
+     */
+    public static function getSeasonPreviousStringForSeasonString($seasonstr) {
+        if (key_exists($seasonstr, self::$SEASONS)) {
+            return self::$SEASONS[$seasonstr]['previous'];
+        }
+
+        return self::SEASON_NONE;
     }
 
     /*
