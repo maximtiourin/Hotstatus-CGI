@@ -169,19 +169,23 @@ class HotstatusPipeline {
     public static $filter_hero_levels = [
         "1-5" => [
             "min" => 1,
-            "max" => 5
+            "max" => 5,
+            "selected" => TRUE
         ],
         "6-10" => [
             "min" => 6,
-            "max" => 10
+            "max" => 10,
+            "selected" => TRUE
         ],
         "11-15" => [
             "min" => 11,
-            "max" => 15
+            "max" => 15,
+            "selected" => TRUE
         ],
         "16+" => [
             "min" => 16,
-            "max" => PHP_INT_MAX
+            "max" => PHP_INT_MAX,
+            "selected" => TRUE
         ],
     ];
 
@@ -195,27 +199,33 @@ class HotstatusPipeline {
     public static $filter_matches_lengths = [
         "0-10" => [
             "min" => 0,
-            "max" => 600
+            "max" => 600,
+            "selected" => TRUE
         ],
         "11-15" => [
             "min" => 601,
-            "max" => 900
+            "max" => 900,
+            "selected" => TRUE
         ],
         "16-20" => [
             "min" => 901,
-            "max" => 1200
+            "max" => 1200,
+            "selected" => TRUE
         ],
         "21-25" => [
             "min" => 1201,
-            "max" => 1500
+            "max" => 1500,
+            "selected" => TRUE
         ],
         "26-30" => [
             "min" => 1501,
-            "max" => 1800
+            "max" => 1800,
+            "selected" => TRUE
         ],
         "31+" => [
             "min" => 1801,
-            "max" => PHP_INT_MAX
+            "max" => PHP_INT_MAX,
+            "selected" => TRUE
         ],
     ];
 
