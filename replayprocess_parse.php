@@ -706,7 +706,7 @@ while (true) {
                                         $seasoncurrent = $season_row;
                                     }
                                     else if ($season_row['season'] === $seasonprevid) {
-                                        $seasoncurrent = $season_row;
+                                        $seasonprevious = $season_row;
                                     }
                                 }
 
