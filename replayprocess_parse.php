@@ -1059,8 +1059,6 @@ while (true) {
             }
         }
         else {
-            $db->transaction_commit();
-
             //No unlocked downloaded replays to parse, sleep
             $dots = $console->animateDotDotDot();
             echo "No unlocked downloaded replays found$dots                           \r";
