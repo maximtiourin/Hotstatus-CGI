@@ -67,393 +67,411 @@ class HotstatusPipeline {
      * Filter Informations
      * All preset data for hotstatus filters, using subsets of data such as maps, leagues, gameTypes, etc.
      */
-    /*
-     * Filter Maps
-     * ["MapProperName"] => [
-     *      ['name_sort'] => mapNameSort
-     *      ['selected] => TRUE/FALSE (can be modified as needed)
-     * ]
-     */
-    public static $filter_maps = [
-        "Battlefield of Eternity" => [
-            "name_sort" => "BattlefieldofEternity",
-            "selected" => TRUE
-        ],
-        "Blackheart's Bay" => [
-            "name_sort" => "BlackheartsBay",
-            "selected" => TRUE
-        ],
-        "Braxis Holdout" => [
-            "name_sort" => "BraxisHoldout",
-            "selected" => TRUE
-        ],
-        "Cursed Hollow" => [
-            "name_sort" => "CursedHollow",
-            "selected" => TRUE
-        ],
-        "Dragon Shire" => [
-            "name_sort" => "DragonShire",
-            "selected" => TRUE
-        ],
-        "Garden of Terror" => [
-            "name_sort" => "GardenofTerror",
-            "selected" => TRUE
-        ],
-        "Hanamura" => [
-            "name_sort" => "Hanamura",
-            "selected" => TRUE
-        ],
-        "Haunted Mines" => [
-            "name_sort" => "HauntedMines",
-            "selected" => TRUE
-        ],
-        "Infernal Shrines" => [
-            "name_sort" => "InfernalShrines",
-            "selected" => TRUE
-        ],
-        "Sky Temple" => [
-            "name_sort" => "SkyTemple",
-            "selected" => TRUE
-        ],
-        "Tomb of the Spider Queen" => [
-            "name_sort" => "TomboftheSpiderQueen",
-            "selected" => TRUE
-        ],
-        "Towers of Doom" => [
-            "name_sort" => "TowersofDoom",
-            "selected" => TRUE
-        ],
-        "Volskaya Foundry" => [
-            "name_sort" => "VolskayaFoundry",
-            "selected" => TRUE
-        ],
-        "Warhead Junction" => [
-            "name_sort" => "WarheadJunction",
-            "selected" => TRUE
-        ],
-    ];
-    /*
-     * Filter Ranks
-     * ["RankProperName"] => [
-     *      "selected" => TRUE/FALSE (can be modified as needed)
-     * ]
-     */
-    public static $filter_ranks = [
-        "Bronze" => [
-            "selected" => TRUE
-        ],
-        "Silver" => [
-            "selected" => TRUE
-        ],
-        "Gold" => [
-            "selected" => TRUE
-        ],
-        "Platinum" => [
-            "selected" => TRUE
-        ],
-        "Diamond" => [
-            "selected" => TRUE
-        ],
-        "Master" => [
-            "selected" => TRUE
-        ]
-    ];
+    const FILTER_KEY_MAP = "map";
+    const FILTER_KEY_RANK = "rank";
+    const FILTER_KEY_HERO_LEVEL = "hero_level";
+    const FILTER_KEY_MATCH_LENGTH = "match_length";
+    const FILTER_KEY_HERO = "hero";
 
-    /*
-     * Filter Hero Levels
-     * ["RangeProperName"] => [
-     *      "min" => rangeStartInclusiveLevels
-     *      "max" => rangeEndInclusiveLevels
-     * ]
-     */
-    public static $filter_hero_levels = [
-        "1-5" => [
-            "min" => 1,
-            "max" => 5,
-            "selected" => TRUE
-        ],
-        "6-10" => [
-            "min" => 6,
-            "max" => 10,
-            "selected" => TRUE
-        ],
-        "11-15" => [
-            "min" => 11,
-            "max" => 15,
-            "selected" => TRUE
-        ],
-        "16+" => [
-            "min" => 16,
-            "max" => PHP_INT_MAX,
-            "selected" => TRUE
-        ],
-    ];
-
-    /*
-     * Filter Matches Lengths
-     * ["RangeProperName"] => [
-     *      "min" => rangeStartInclusiveSeconds
-     *      "max" => rangeEndInclusiveSeconds
-     * ]
-     */
-    public static $filter_matches_lengths = [
-        "0-10" => [
-            "min" => 0,
-            "max" => 600,
-            "selected" => TRUE
-        ],
-        "11-15" => [
-            "min" => 601,
-            "max" => 900,
-            "selected" => TRUE
-        ],
-        "16-20" => [
-            "min" => 901,
-            "max" => 1200,
-            "selected" => TRUE
-        ],
-        "21-25" => [
-            "min" => 1201,
-            "max" => 1500,
-            "selected" => TRUE
-        ],
-        "26-30" => [
-            "min" => 1501,
-            "max" => 1800,
-            "selected" => TRUE
-        ],
-        "31+" => [
-            "min" => 1801,
-            "max" => PHP_INT_MAX,
-            "selected" => TRUE
-        ],
-    ];
-
-    /*
-     * Filter Heroes (Don't use database queries to populate filters to improve app performance)
-     * ["HeroProperName"] => [
-     *      "image_minimap" => HeroImageMinimapNameWithoutExtension
-     * ]
-     */
-    public static $filter_heroes = [
-        "Abathur" => [
-            "image_minimap" => "storm_ui_minimapicon_heros_infestor"
-        ],
-        "Alarak" => [
-            "image_minimap" => "storm_ui_minimapicon_alarak"
-        ],
-        "Ana" => [
-            "image_minimap" => "storm_ui_minimapicon_ana"
-        ],
-        "Anub'arak" => [
-            "image_minimap" => "storm_ui_minimapicon_anubarak"
-        ],
-        "Artanis" => [
-            "image_minimap" => "storm_ui_minimapicon_artanis"
-        ],
-        "Arthas" => [
-            "image_minimap" => "storm_ui_minimapicon_arthas"
-        ],
-        "Auriel" => [
-            "image_minimap" => "storm_ui_minimapicon_auriel"
-        ],
-        "Azmodan" => [
-            "image_minimap" => "storm_ui_minimapicon_heros_azmodan"
-        ],
-        "Brightwing" => [
-            "image_minimap" => "storm_ui_minimapicon_heros_faeriedragon"
-        ],
-        "The Butcher" => [
-            "image_minimap" => "storm_ui_minimapicon_butcher"
-        ],
-        "Cassia" => [
-            "image_minimap" => "storm_ui_minimapicon_d2amazonf"
-        ],
-        "Chen" => [
-            "image_minimap" => "storm_ui_minimapicon_heros_chen"
-        ],
-        "Cho" => [
-            "image_minimap" => "storm_ui_minimapicon_cho"
-        ],
-        "Chromie" => [
-            "image_minimap" => "storm_ui_minimapicon_chromie"
-        ],
-        "Dehaka" => [
-            "image_minimap" => "storm_ui_minimapicon_dehaka"
-        ],
-        "Diablo" => [
-            "image_minimap" => "storm_ui_minimapicon_heros_diablo"
-        ],
-        "D.Va" => [
-            "image_minimap" => "storm_ui_minimapicon_dva"
-        ],
-        "E.T.C." => [
-            "image_minimap" => "storm_ui_minimapicon_etc"
-        ],
-        "Falstad" => [
-            "image_minimap" => "storm_ui_minimapicon_gryphon_rider"
-        ],
-        "Gall" => [
-            "image_minimap" => "storm_ui_minimapicon_gall"
-        ],
-        "Garrosh" => [
-            "image_minimap" => "storm_ui_minimapicon_garrosh"
-        ],
-        "Gazlowe" => [
-            "image_minimap" => "storm_ui_minimapicon_heros_gazlowe"
-        ],
-        "Genji" => [
-            "image_minimap" => "storm_ui_minimapicon_genji"
-        ],
-        "Greymane" => [
-            "image_minimap" => "storm_ui_minimapicon_genngreymane"
-        ],
-        "Gul'dan" => [
-            "image_minimap" => "storm_ui_minimapicon_guldan"
-        ],
-        "Illidan" => [
-            "image_minimap" => "storm_ui_minimapicon_illidan"
-        ],
-        "Jaina" => [
-            "image_minimap" => "storm_ui_minimapicon_heros_jaina"
-        ],
-        "Johanna" => [
-            "image_minimap" => "storm_ui_minimapicon_heros_johanna"
-        ],
-        "Junkrat" => [
-            "image_minimap" => "storm_ui_minimapicon_junkrat"
-        ],
-        "Kael'thas" => [
-            "image_minimap" => "storm_ui_minimapicon_heros_kaelthas"
-        ],
-        "Kel'Thuzad" => [
-            "image_minimap" => "storm_ui_minimapicon_kelthuzad"
-        ],
-        "Kerrigan" => [
-            "image_minimap" => "storm_ui_minimapicon_kerrigan"
-        ],
-        "Kharazim" => [
-            "image_minimap" => "storm_ui_minimapicon_monk"
-        ],
-        "Leoric" => [
-            "image_minimap" => "storm_ui_minimapicon_leoric"
-        ],
-        "Li Li" => [
-            "image_minimap" => "storm_ui_minimapicon_heros_lili"
-        ],
-        "Li-Ming" => [
-            "image_minimap" => "storm_ui_minimapicon_wizard"
-        ],
-        "The Lost Vikings" => [
-            "image_minimap" => "storm_ui_minimapicon_heros_erik"
-        ],
-        "Lt. Morales" => [
-            "image_minimap" => "storm_ui_minimapicon_medic"
-        ],
-        "Lúcio" => [
-            "image_minimap" => "storm_ui_minimapicon_lucio"
-        ],
-        "Lunara" => [
-            "image_minimap" => "storm_ui_minimapicon_lunara"
-        ],
-        "Malfurion" => [
-            "image_minimap" => "storm_ui_minimapicon_heros_malfurion"
-        ],
-        "Malthael" => [
-            "image_minimap" => "storm_ui_minimapicon_malthael"
-        ],
-        "Medivh" => [
-            "image_minimap" => "storm_ui_minimapicon_medivh"
-        ],
-        "Muradin" => [
-            "image_minimap" => "storm_ui_minimapicon_muradin"
-        ],
-        "Murky" => [
-            "image_minimap" => "storm_ui_minimapicon_heros_murky"
-        ],
-        "Nazeebo" => [
-            "image_minimap" => "storm_ui_minimapicon_witchdoctor"
-        ],
-        "Nova" => [
-            "image_minimap" => "storm_ui_minimapicon_nova"
-        ],
-        "Probius" => [
-            "image_minimap" => "storm_ui_minimapicon_probius"
-        ],
-        "Ragnaros" => [
-            "image_minimap" => "storm_ui_minimapicon_ragnaros"
-        ],
-        "Raynor" => [
-            "image_minimap" => "storm_ui_minimapicon_raynor"
-        ],
-        "Rehgar" => [
-            "image_minimap" => "storm_ui_minimapicon_rehgar"
-        ],
-        "Rexxar" => [
-            "image_minimap" => "storm_ui_minimapicon_heros_rexxar"
-        ],
-        "Samuro" => [
-            "image_minimap" => "storm_ui_minimapicon_samuro"
-        ],
-        "Sgt. Hammer" => [
-            "image_minimap" => "storm_ui_minimapicon_warfield"
-        ],
-        "Sonya" => [
-            "image_minimap" => "storm_ui_minimapicon_heros_femalebarbarian"
-        ],
-        "Stitches" => [
-            "image_minimap" => "storm_ui_minimapicon_heros_stitches"
-        ],
-        "Stukov" => [
-            "image_minimap" => "storm_ui_minimapicon_stukov"
-        ],
-        "Sylvanas" => [
-            "image_minimap" => "storm_ui_minimapicon_sylvanas"
-        ],
-        "Tassadar" => [
-            "image_minimap" => "storm_ui_minimapicon_tassadar"
-        ],
-        "Thrall" => [
-            "image_minimap" => "storm_ui_minimapicon_thrall"
-        ],
-        "Tracer" => [
-            "image_minimap" => "storm_ui_minimapicon_tracer"
-        ],
-        "Tychus" => [
-            "image_minimap" => "storm_ui_minimapicon_tychus"
-        ],
-        "Tyrael" => [
-            "image_minimap" => "storm_ui_minimapicon_heros_tyrael"
-        ],
-        "Tyrande" => [
-            "image_minimap" => "storm_ui_minimapicon_heros_tyrande"
-        ],
-        "Uther" => [
-            "image_minimap" => "storm_ui_minimapicon_uther"
-        ],
-        "Valeera" => [
-            "image_minimap" => "storm_ui_minimapicon_valeera"
-        ],
-        "Valla" => [
-            "image_minimap" => "storm_ui_minimapicon_demonhunter"
-        ],
-        "Varian" => [
-            "image_minimap" => "storm_ui_minimapicon_varian"
-        ],
-        "Xul" => [
-            "image_minimap" => "storm_ui_minimapicon_necromancer"
-        ],
-        "Zagara" => [
-            "image_minimap" => "storm_ui_minimapicon_zagara"
-        ],
-        "Zarya" => [
-            "image_minimap" => "storm_ui_minimapicon_zarya"
-        ],
-        "Zeratul" => [
-            "image_minimap" => "storm_ui_minimapicon_zeratul"
-        ],
-        "Zul'jin" => [
-            "image_minimap" => "storm_ui_minimapicon_zuljin"
+    public static $filter = [
+        /*
+         * Filter Maps
+         * ["MapProperName"] => [
+         *      ['name_sort'] => mapNameSort
+         *      ['selected] => TRUE/FALSE (can be modified as needed)
+         * ]
+         */
+        self::FILTER_KEY_MAP => [
+            "Battlefield of Eternity" => [
+                "name_sort" => "BattlefieldofEternity",
+                "selected" => TRUE
+            ],
+            "Blackheart's Bay" => [
+                "name_sort" => "BlackheartsBay",
+                "selected" => TRUE
+            ],
+            "Braxis Holdout" => [
+                "name_sort" => "BraxisHoldout",
+                "selected" => TRUE
+            ],
+            "Cursed Hollow" => [
+                "name_sort" => "CursedHollow",
+                "selected" => TRUE
+            ],
+            "Dragon Shire" => [
+                "name_sort" => "DragonShire",
+                "selected" => TRUE
+            ],
+            "Garden of Terror" => [
+                "name_sort" => "GardenofTerror",
+                "selected" => TRUE
+            ],
+            "Hanamura" => [
+                "name_sort" => "Hanamura",
+                "selected" => TRUE
+            ],
+            "Haunted Mines" => [
+                "name_sort" => "HauntedMines",
+                "selected" => TRUE
+            ],
+            "Infernal Shrines" => [
+                "name_sort" => "InfernalShrines",
+                "selected" => TRUE
+            ],
+            "Sky Temple" => [
+                "name_sort" => "SkyTemple",
+                "selected" => TRUE
+            ],
+            "Tomb of the Spider Queen" => [
+                "name_sort" => "TomboftheSpiderQueen",
+                "selected" => TRUE
+            ],
+            "Towers of Doom" => [
+                "name_sort" => "TowersofDoom",
+                "selected" => TRUE
+            ],
+            "Volskaya Foundry" => [
+                "name_sort" => "VolskayaFoundry",
+                "selected" => TRUE
+            ],
+            "Warhead Junction" => [
+                "name_sort" => "WarheadJunction",
+                "selected" => TRUE
+            ],
+        ],
+        /*
+         * Filter Ranks
+         * ["RankProperName"] => [
+         *      "selected" => TRUE/FALSE (can be modified as needed)
+         * ]
+         * TODO Temporary Rank distributions, actual distribution must be analyzed down the line
+         */
+        self::FILTER_KEY_RANK => [
+            "Bronze" => [
+                "min" => 0,
+                "max" => 799,
+                "selected" => TRUE
+            ],
+            "Silver" => [
+                "min" => 800,
+                "max" => 1599,
+                "selected" => TRUE
+            ],
+            "Gold" => [
+                "min" => 1600,
+                "max" => 2399,
+                "selected" => TRUE
+            ],
+            "Platinum" => [
+                "min" => 2400,
+                "max" => 3199,
+                "selected" => TRUE
+            ],
+            "Diamond" => [
+                "min" => 3200,
+                "max" => 3599,
+                "selected" => TRUE
+            ],
+            "Master" => [
+                "min" => 3600,
+                "max" => PHP_INT_MAX,
+                "selected" => TRUE
+            ]
+        ],
+        /*
+         * Filter Hero Levels
+         * ["RangeProperName"] => [
+         *      "min" => rangeStartInclusiveLevels
+         *      "max" => rangeEndInclusiveLevels
+         * ]
+         */
+        self::FILTER_KEY_HERO_LEVEL => [
+            "1-5" => [
+                "min" => 1,
+                "max" => 5,
+                "selected" => TRUE
+            ],
+            "6-10" => [
+                "min" => 6,
+                "max" => 10,
+                "selected" => TRUE
+            ],
+            "11-15" => [
+                "min" => 11,
+                "max" => 15,
+                "selected" => TRUE
+            ],
+            "16+" => [
+                "min" => 16,
+                "max" => PHP_INT_MAX,
+                "selected" => TRUE
+            ],
+        ],
+        /*
+         * Filter Matches Lengths
+         * ["RangeProperName"] => [
+         *      "min" => rangeStartInclusiveSeconds
+         *      "max" => rangeEndInclusiveSeconds
+         * ]
+         */
+        self::FILTER_KEY_MATCH_LENGTH => [
+            "0-10" => [
+                "min" => 0,
+                "max" => 600,
+                "selected" => TRUE
+            ],
+            "11-15" => [
+                "min" => 601,
+                "max" => 900,
+                "selected" => TRUE
+            ],
+            "16-20" => [
+                "min" => 901,
+                "max" => 1200,
+                "selected" => TRUE
+            ],
+            "21-25" => [
+                "min" => 1201,
+                "max" => 1500,
+                "selected" => TRUE
+            ],
+            "26-30" => [
+                "min" => 1501,
+                "max" => 1800,
+                "selected" => TRUE
+            ],
+            "31+" => [
+                "min" => 1801,
+                "max" => PHP_INT_MAX,
+                "selected" => TRUE
+            ],
+        ],
+        /*
+         * Filter Heroes (Don't use database queries to populate filters to improve app performance)
+         * ["HeroProperName"] => [
+         *      "image_minimap" => HeroImageMinimapNameWithoutExtension
+         * ]
+         */
+        self::FILTER_KEY_HERO => [
+            "Abathur" => [
+                "image_minimap" => "storm_ui_minimapicon_heros_infestor"
+            ],
+            "Alarak" => [
+                "image_minimap" => "storm_ui_minimapicon_alarak"
+            ],
+            "Ana" => [
+                "image_minimap" => "storm_ui_minimapicon_ana"
+            ],
+            "Anub'arak" => [
+                "image_minimap" => "storm_ui_minimapicon_anubarak"
+            ],
+            "Artanis" => [
+                "image_minimap" => "storm_ui_minimapicon_artanis"
+            ],
+            "Arthas" => [
+                "image_minimap" => "storm_ui_minimapicon_arthas"
+            ],
+            "Auriel" => [
+                "image_minimap" => "storm_ui_minimapicon_auriel"
+            ],
+            "Azmodan" => [
+                "image_minimap" => "storm_ui_minimapicon_heros_azmodan"
+            ],
+            "Brightwing" => [
+                "image_minimap" => "storm_ui_minimapicon_heros_faeriedragon"
+            ],
+            "The Butcher" => [
+                "image_minimap" => "storm_ui_minimapicon_butcher"
+            ],
+            "Cassia" => [
+                "image_minimap" => "storm_ui_minimapicon_d2amazonf"
+            ],
+            "Chen" => [
+                "image_minimap" => "storm_ui_minimapicon_heros_chen"
+            ],
+            "Cho" => [
+                "image_minimap" => "storm_ui_minimapicon_cho"
+            ],
+            "Chromie" => [
+                "image_minimap" => "storm_ui_minimapicon_chromie"
+            ],
+            "Dehaka" => [
+                "image_minimap" => "storm_ui_minimapicon_dehaka"
+            ],
+            "Diablo" => [
+                "image_minimap" => "storm_ui_minimapicon_heros_diablo"
+            ],
+            "D.Va" => [
+                "image_minimap" => "storm_ui_minimapicon_dva"
+            ],
+            "E.T.C." => [
+                "image_minimap" => "storm_ui_minimapicon_etc"
+            ],
+            "Falstad" => [
+                "image_minimap" => "storm_ui_minimapicon_gryphon_rider"
+            ],
+            "Gall" => [
+                "image_minimap" => "storm_ui_minimapicon_gall"
+            ],
+            "Garrosh" => [
+                "image_minimap" => "storm_ui_minimapicon_garrosh"
+            ],
+            "Gazlowe" => [
+                "image_minimap" => "storm_ui_minimapicon_heros_gazlowe"
+            ],
+            "Genji" => [
+                "image_minimap" => "storm_ui_minimapicon_genji"
+            ],
+            "Greymane" => [
+                "image_minimap" => "storm_ui_minimapicon_genngreymane"
+            ],
+            "Gul'dan" => [
+                "image_minimap" => "storm_ui_minimapicon_guldan"
+            ],
+            "Illidan" => [
+                "image_minimap" => "storm_ui_minimapicon_illidan"
+            ],
+            "Jaina" => [
+                "image_minimap" => "storm_ui_minimapicon_heros_jaina"
+            ],
+            "Johanna" => [
+                "image_minimap" => "storm_ui_minimapicon_heros_johanna"
+            ],
+            "Junkrat" => [
+                "image_minimap" => "storm_ui_minimapicon_junkrat"
+            ],
+            "Kael'thas" => [
+                "image_minimap" => "storm_ui_minimapicon_heros_kaelthas"
+            ],
+            "Kel'Thuzad" => [
+                "image_minimap" => "storm_ui_minimapicon_kelthuzad"
+            ],
+            "Kerrigan" => [
+                "image_minimap" => "storm_ui_minimapicon_kerrigan"
+            ],
+            "Kharazim" => [
+                "image_minimap" => "storm_ui_minimapicon_monk"
+            ],
+            "Leoric" => [
+                "image_minimap" => "storm_ui_minimapicon_leoric"
+            ],
+            "Li Li" => [
+                "image_minimap" => "storm_ui_minimapicon_heros_lili"
+            ],
+            "Li-Ming" => [
+                "image_minimap" => "storm_ui_minimapicon_wizard"
+            ],
+            "The Lost Vikings" => [
+                "image_minimap" => "storm_ui_minimapicon_heros_erik"
+            ],
+            "Lt. Morales" => [
+                "image_minimap" => "storm_ui_minimapicon_medic"
+            ],
+            "Lúcio" => [
+                "image_minimap" => "storm_ui_minimapicon_lucio"
+            ],
+            "Lunara" => [
+                "image_minimap" => "storm_ui_minimapicon_lunara"
+            ],
+            "Malfurion" => [
+                "image_minimap" => "storm_ui_minimapicon_heros_malfurion"
+            ],
+            "Malthael" => [
+                "image_minimap" => "storm_ui_minimapicon_malthael"
+            ],
+            "Medivh" => [
+                "image_minimap" => "storm_ui_minimapicon_medivh"
+            ],
+            "Muradin" => [
+                "image_minimap" => "storm_ui_minimapicon_muradin"
+            ],
+            "Murky" => [
+                "image_minimap" => "storm_ui_minimapicon_heros_murky"
+            ],
+            "Nazeebo" => [
+                "image_minimap" => "storm_ui_minimapicon_witchdoctor"
+            ],
+            "Nova" => [
+                "image_minimap" => "storm_ui_minimapicon_nova"
+            ],
+            "Probius" => [
+                "image_minimap" => "storm_ui_minimapicon_probius"
+            ],
+            "Ragnaros" => [
+                "image_minimap" => "storm_ui_minimapicon_ragnaros"
+            ],
+            "Raynor" => [
+                "image_minimap" => "storm_ui_minimapicon_raynor"
+            ],
+            "Rehgar" => [
+                "image_minimap" => "storm_ui_minimapicon_rehgar"
+            ],
+            "Rexxar" => [
+                "image_minimap" => "storm_ui_minimapicon_heros_rexxar"
+            ],
+            "Samuro" => [
+                "image_minimap" => "storm_ui_minimapicon_samuro"
+            ],
+            "Sgt. Hammer" => [
+                "image_minimap" => "storm_ui_minimapicon_warfield"
+            ],
+            "Sonya" => [
+                "image_minimap" => "storm_ui_minimapicon_heros_femalebarbarian"
+            ],
+            "Stitches" => [
+                "image_minimap" => "storm_ui_minimapicon_heros_stitches"
+            ],
+            "Stukov" => [
+                "image_minimap" => "storm_ui_minimapicon_stukov"
+            ],
+            "Sylvanas" => [
+                "image_minimap" => "storm_ui_minimapicon_sylvanas"
+            ],
+            "Tassadar" => [
+                "image_minimap" => "storm_ui_minimapicon_tassadar"
+            ],
+            "Thrall" => [
+                "image_minimap" => "storm_ui_minimapicon_thrall"
+            ],
+            "Tracer" => [
+                "image_minimap" => "storm_ui_minimapicon_tracer"
+            ],
+            "Tychus" => [
+                "image_minimap" => "storm_ui_minimapicon_tychus"
+            ],
+            "Tyrael" => [
+                "image_minimap" => "storm_ui_minimapicon_heros_tyrael"
+            ],
+            "Tyrande" => [
+                "image_minimap" => "storm_ui_minimapicon_heros_tyrande"
+            ],
+            "Uther" => [
+                "image_minimap" => "storm_ui_minimapicon_uther"
+            ],
+            "Valeera" => [
+                "image_minimap" => "storm_ui_minimapicon_valeera"
+            ],
+            "Valla" => [
+                "image_minimap" => "storm_ui_minimapicon_demonhunter"
+            ],
+            "Varian" => [
+                "image_minimap" => "storm_ui_minimapicon_varian"
+            ],
+            "Xul" => [
+                "image_minimap" => "storm_ui_minimapicon_necromancer"
+            ],
+            "Zagara" => [
+                "image_minimap" => "storm_ui_minimapicon_zagara"
+            ],
+            "Zarya" => [
+                "image_minimap" => "storm_ui_minimapicon_zarya"
+            ],
+            "Zeratul" => [
+                "image_minimap" => "storm_ui_minimapicon_zeratul"
+            ],
+            "Zul'jin" => [
+                "image_minimap" => "storm_ui_minimapicon_zuljin"
+            ],
         ],
     ];
 
@@ -672,7 +690,7 @@ class HotstatusPipeline {
      */
     public static function getRangeNameForMatchLength($matchlength) {
         if (is_numeric($matchlength)) {
-            foreach (self::$filter_matches_lengths as $rangeName => $range) {
+            foreach (self::$filter[self::FILTER_KEY_MATCH_LENGTH] as $rangeName => $range) {
                 if ($matchlength >= $range['min'] && $matchlength <= $range['max']) {
                     return $rangeName;
                 }
@@ -688,7 +706,7 @@ class HotstatusPipeline {
      */
     public static function getRangeNameForHeroLevel($herolevel) {
         if (is_numeric($herolevel)) {
-            foreach (self::$filter_hero_levels as $rangeName => $range) {
+            foreach (self::$filter[self::FILTER_KEY_HERO_LEVEL] as $rangeName => $range) {
                 if ($herolevel >= $range['min'] && $herolevel <= $range['max']) {
                     return $rangeName;
                 }
