@@ -3,7 +3,7 @@
  * Utility Process Filter Heroes
  * Grabs proper hero names from the database and outputs a php str descrbing an associative array for them of structure:
  * ["ProperHeroName"] => [
- *
+ *       "image_minimap" => imageNameForMinimapImage
  * ]
  */
 

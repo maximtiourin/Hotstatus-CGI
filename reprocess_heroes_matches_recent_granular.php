@@ -1,7 +1,6 @@
 <?php
 /*
- * Replay Process Parse
- * In charge of looking for downloaded replays and parsing them to insert their data into a database
+ * Replay Reprocess heroes_matches_recent_granular 
  */
 
 namespace Fizzik;
