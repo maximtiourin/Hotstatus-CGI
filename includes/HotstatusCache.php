@@ -42,6 +42,17 @@ class HotstatusCache {
     }
 
     /*
+     * Returns the time in seconds from which a redis cached value should expire using default settings, using the current time
+     */
+    public static function getCacheDefaultExpirationTimeInSecondsForToday() {
+        date_default_timezone_set(self::HTTPCACHE_DEFAULT_TIMEZONE);
+        $currentTimestamp = (new \DateTime("now"))->getTimestamp();
+        $expireTimestamp = self::getHTTPCacheDefaultExpirationDateForToday()->getTimestamp();
+
+        return $expireTimestamp - $currentTimestamp;
+    }
+
+    /*
      * Cache Request - Per Function Response Caching
      */
     const CACHE_REQUEST_TYPE_DATATABLE = "DataTable_";
