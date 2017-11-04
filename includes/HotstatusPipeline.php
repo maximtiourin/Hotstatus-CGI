@@ -67,6 +67,8 @@ class HotstatusPipeline {
      * Filter Informations
      * All preset data for hotstatus filters, using subsets of data such as maps, leagues, gameTypes, etc.
      */
+    const FILTER_KEY_DATE = "date";
+    const FILTER_KEY_GAMETYPE = "gameType";
     const FILTER_KEY_MAP = "map";
     const FILTER_KEY_RANK = "rank";
     const FILTER_KEY_HERO_LEVEL = "hero_level";
@@ -74,6 +76,34 @@ class HotstatusPipeline {
     const FILTER_KEY_HERO = "hero";
 
     public static $filter = [
+        /*
+         * Date filter must be generated at runtime, so call filter_generate_date before referencing
+         */
+        self::FILTER_KEY_DATE => [],
+        /*
+         * Filter Maps
+         * ["GameTypeProperName"] => [
+         *      ['selected] => TRUE/FALSE (can be modified as needed)
+         * ]
+         */
+        self::FILTER_KEY_GAMETYPE => [
+            "Hero League" => [
+                "name_sort" => "HeroLeague",
+                "selected" => TRUE
+            ],
+            "Team League" => [
+                "name_sort" => "TeamLeague",
+                "selected" => FALSE
+            ],
+            "Unranked Draft" => [
+                "name_sort" => "UnrankedDraft",
+                "selected" => FALSE
+            ],
+            "Quick Match" => [
+                "name_sort" => "QuickMatch",
+                "selected" => FALSE
+            ],
+        ],
         /*
          * Filter Maps
          * ["MapProperName"] => [
@@ -183,6 +213,7 @@ class HotstatusPipeline {
          * ["RangeProperName"] => [
          *      "min" => rangeStartInclusiveLevels
          *      "max" => rangeEndInclusiveLevels
+         *      "selected" => TRUE/FALSE (can be modified as needed)
          * ]
          */
         self::FILTER_KEY_HERO_LEVEL => [
@@ -212,6 +243,7 @@ class HotstatusPipeline {
          * ["RangeProperName"] => [
          *      "min" => rangeStartInclusiveSeconds
          *      "max" => rangeEndInclusiveSeconds
+         *      "selected" => TRUE/FALSE (can be modified as needed)
          * ]
          */
         self::FILTER_KEY_MATCH_LENGTH => [
@@ -474,6 +506,72 @@ class HotstatusPipeline {
             ],
         ],
     ];
+
+    /*
+     * Generates the dynamic values for the filter date
+     * ["DateRangeProperName] => [
+     *      "min" => DateTimeRangeStartInclusive
+     *      "max" => DateTimeRangeEndInclusive
+     *      "offset_date" => DateTimeOffsetsAreCalculatedFrom
+     *      "offset_amount" => HowManyDaysToCountBackBy
+     *      "selected" => WhetherOrNotThisFilterOptionStartsSelected
+     * ]
+     */
+    public static function filter_generate_date() {
+        date_default_timezone_set(self::REPLAY_TIMEZONE);
+
+        $date_offset = "now"; //TODO for release should be "now", for testing make it the date of the youngest set of data
+
+        $debug_offset = "2017-07-18"; //TODO DEBUG
+        $debug = self::getMinMaxRangeForLastISODaysInclusive(7, $debug_offset); //TODO DEBUG
+        $debug_offset2 = "2017-07-11"; //TODO DEBUG
+        $debug2 = self::getMinMaxRangeForLastISODaysInclusive(7, $debug_offset2); //TODO DEBUG
+
+        $last7days = self::getMinMaxRangeForLastISODaysInclusive(7, $date_offset);
+        $last30days = self::getMinMaxRangeForLastISODaysInclusive(30, $date_offset);
+        $last90days = self::getMinMaxRangeForLastISODaysInclusive(90, $date_offset);
+
+
+        self::$filter[self::FILTER_KEY_DATE] = [
+            "Last 7 Days" => [
+                "min" => $last7days['date_start'],
+                "max" => $last7days['date_end'],
+                "offset_date" => $date_offset,
+                "offset_amount" => 7,
+                "selected" => TRUE
+            ],
+            "Last 30 Days" => [
+                "min" => $last30days['date_start'],
+                "max" => $last30days['date_end'],
+                "offset_date" => $date_offset,
+                "offset_amount" => 30,
+                "selected" => FALSE
+            ],
+            "Last 90 Days" => [
+                "min" => $last90days['date_start'],
+                "max" => $last90days['date_end'],
+                "offset_date" => $date_offset,
+                "offset_amount" => 90,
+                "selected" => FALSE
+            ],
+            //TODO DEBUG
+            "2017-07-18 Last 7" => [
+                "min" => $debug['date_start'],
+                "max" => $debug['date_end'],
+                "offset_date" => $debug_offset,
+                "offset_amount" => 7,
+                "selected" => FALSE
+            ],
+            //TODO DEBUG
+            "2017-07-11 Last 7" => [
+                "min" => $debug2['date_start'],
+                "max" => $debug2['date_end'],
+                "offset_date" => $debug_offset2,
+                "offset_amount" => 7,
+                "selected" => FALSE
+            ],
+        ];
+    }
 
     /*
      * Takes a date time string, converts it to date time, returns an assoc array:
