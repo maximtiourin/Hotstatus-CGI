@@ -117,18 +117,18 @@ $db->bind("+=:players_matches",
 
 $db->prepare("??:players_matches_recent_granular",
     "SELECT medals, talents, builds, parties FROM players_matches_recent_granular "
-    . "WHERE id = ? AND year = ? AND week = ? AND day = ? AND hero = ? AND map = ? AND gameType = ? FOR UPDATE");
+    . "WHERE id = ? AND date_end = ? AND hero = ? AND map = ? AND gameType = ? FOR UPDATE");
 $db->bind("??:players_matches_recent_granular",
-    "iiiisss", $r_player_id, $r_year, $r_week, $r_day, $r_hero, $r_map, $r_gameType);
+    "issss", $r_player_id, $r_date_end, $r_hero, $r_map, $r_gameType);
 
 $db->prepare("+=:players_matches_recent_granular",
     "INSERT INTO players_matches_recent_granular "
-    . "(id, year, week, day, date_end, hero, gameType, map, played, won, time_played, stats_kills, stats_assists, stats_deaths, stats_siege_damage, stats_hero_damage, 
+    . "(id, date_end, hero, gameType, map, played, won, time_played, stats_kills, stats_assists, stats_deaths, stats_siege_damage, stats_hero_damage, 
     stats_structure_damage, stats_healing, stats_damage_taken, stats_merc_camps, stats_exp_contrib, stats_best_killstreak, stats_time_spent_dead, medals, talents, 
     builds, parties) "
-    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
     . "ON DUPLICATE KEY UPDATE "
-    . "date_end = VALUES(date_end), played = played + VALUES(played), won = won + VALUES(won), time_played = time_played + VALUES(time_played), 
+    . "played = played + VALUES(played), won = won + VALUES(won), time_played = time_played + VALUES(time_played), 
     stats_kills = stats_kills + VALUES(stats_kills), stats_assists = stats_assists + VALUES(stats_assists), stats_deaths = stats_deaths + VALUES(stats_deaths), 
     stats_siege_damage = stats_siege_damage + VALUES(stats_siege_damage), stats_hero_damage = stats_hero_damage + VALUES(stats_hero_damage), 
     stats_structure_damage = stats_structure_damage + VALUES(stats_structure_damage), stats_healing = stats_healing + VALUES(stats_healing), 
@@ -137,7 +137,7 @@ $db->prepare("+=:players_matches_recent_granular",
     stats_time_spent_dead = stats_time_spent_dead + VALUES(stats_time_spent_dead), medals = VALUES(medals), talents = VALUES(talents), builds = VALUES(builds), 
     parties = VALUES(parties)");
 $db->bind("+=:players_matches_recent_granular",
-    "iiiissssiiiiiiiiiiiiiiissss",
+    "issssiiiiiiiiiiiiiiissss",
     $r_player_id, $r_year, $r_week, $r_day, $r_date_end, $r_hero, $r_gameType, $r_map, $r_played, $r_won, $r_time_played, $r_stats_kills, $r_stats_assists, $r_stats_deaths,
     $r_stats_siege_damage, $r_stats_hero_damage, $r_stats_structure_damage, $r_stats_healing, $r_stats_damage_taken, $r_stats_merc_camps, $r_stats_exp_contrib,
     $r_stats_best_killstreak, $r_stats_time_spent_dead, $r_medals, $r_talents, $r_builds, $r_parties);
