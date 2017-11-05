@@ -53,18 +53,18 @@ $db->bind("GetHeroNameFromAttribute", "s", $r_name_attribute);
 
 $db->prepare("??:heroes_matches_recent_granular",
     "SELECT medals, talents, builds, matchup_friends, matchup_foes FROM heroes_matches_recent_granular "
-    . "WHERE hero = ? AND year = ? AND week = ? AND day = ? AND map = ? AND gameType = ? AND mmr_average = ? AND range_match_length = ? AND range_hero_level = ? FOR UPDATE");
+    . "WHERE hero = ? AND date_end = ? AND map = ? AND gameType = ? AND mmr_average = ? AND range_match_length = ? AND range_hero_level = ? FOR UPDATE");
 $db->bind("??:heroes_matches_recent_granular",
-    "siiississ", $r_hero, $r_year, $r_week, $r_day, $r_map, $r_gameType, $r_mmr_average, $r_range_match_length, $r_range_hero_level);
+    "ssssiss", $r_hero, $r_date_end, $r_map, $r_gameType, $r_mmr_average, $r_range_match_length, $r_range_hero_level);
 
 $db->prepare("+=:heroes_matches_recent_granular",
     "INSERT INTO heroes_matches_recent_granular "
-    . "(hero, year, week, day, date_end, gameType, map, mmr_average, range_match_length, range_hero_level, played, won, time_played, stats_kills, stats_assists, 
+    . "(hero, date_end, gameType, map, mmr_average, range_match_length, range_hero_level, played, won, time_played, stats_kills, stats_assists, 
     stats_deaths, stats_siege_damage, stats_hero_damage, stats_structure_damage, stats_healing, stats_damage_taken, stats_merc_camps, stats_exp_contrib, stats_best_killstreak, 
     stats_time_spent_dead, medals, talents, builds, matchup_friends, matchup_foes) "
-    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
     . "ON DUPLICATE KEY UPDATE "
-    . "date_end = VALUES(date_end), played = played + VALUES(played), won = won + VALUES(won), time_played = time_played + VALUES(time_played), 
+    . "played = played + VALUES(played), won = won + VALUES(won), time_played = time_played + VALUES(time_played), 
     stats_kills = stats_kills + VALUES(stats_kills), stats_assists = stats_assists + VALUES(stats_assists), stats_deaths = stats_deaths + VALUES(stats_deaths), 
     stats_siege_damage = stats_siege_damage + VALUES(stats_siege_damage), stats_hero_damage = stats_hero_damage + VALUES(stats_hero_damage), 
     stats_structure_damage = stats_structure_damage + VALUES(stats_structure_damage), stats_healing = stats_healing + VALUES(stats_healing), 
@@ -73,21 +73,21 @@ $db->prepare("+=:heroes_matches_recent_granular",
     stats_time_spent_dead = stats_time_spent_dead + VALUES(stats_time_spent_dead), medals = VALUES(medals), talents = VALUES(talents), builds = VALUES(builds), 
     matchup_friends = VALUES(matchup_friends), matchup_foes = VALUES(matchup_foes)");
 $db->bind("+=:heroes_matches_recent_granular",
-    "siiisssissiiiiiiiiiiiiiiisssss",
-    $r_hero, $r_year, $r_week, $r_day, $r_date_end, $r_gameType, $r_map, $r_mmr_average, $r_range_match_length, $r_range_hero_level, $r_played, $r_won,
+    "ssssissiiiiiiiiiiiiiiisssss",
+    $r_hero, $r_date_end, $r_gameType, $r_map, $r_mmr_average, $r_range_match_length, $r_range_hero_level, $r_played, $r_won,
     $r_time_played, $r_stats_kills, $r_stats_assists, $r_stats_deaths, $r_stats_siege_damage, $r_stats_hero_damage, $r_stats_structure_damage, $r_stats_healing,
     $r_stats_damage_taken, $r_stats_merc_camps, $r_stats_exp_contrib, $r_stats_best_killstreak, $r_stats_time_spent_dead, $r_medals, $r_talents, $r_builds,
     $r_matchup_friends, $r_matchup_foes);
 
 $db->prepare("trackHeroBan",
     "INSERT INTO heroes_bans_recent_granular "
-    . "(hero, year, week, day, date_end, gameType, map, mmr_average, banned) "
-    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) "
+    . "(hero, date_end, gameType, map, mmr_average, banned) "
+    . "VALUES (?, ?, ?, ?, ?, ?) "
     . "ON DUPLICATE KEY UPDATE "
     . "banned = banned + VALUES(banned)");
 $db->bind("trackHeroBan",
-    "siiisssii",
-    $r_hero, $r_year, $r_week, $r_day, $r_date_end, $r_gameType, $r_map, $r_mmr_average, $r_banned);
+    "ssssii",
+    $r_hero, $r_date_end, $r_gameType, $r_map, $r_mmr_average, $r_banned);
 
 $db->prepare("ensureTalentBuild",
     "INSERT INTO heroes_builds (hero, build, talents) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE hero = hero");
@@ -105,7 +105,7 @@ $db->bind("GetMatch", "i", $r_match_id);
 
 function updateHeroes(&$match, &$bannedHeroes) {
     global $db, $r_player_id, $r_name, $r_tag, $r_region, $r_account_level, $r_hero, $r_hero_level, $r_match_id, $r_date,
-           $r_year, $r_week, $r_day, $r_date_end, $r_hero, $r_gameType, $r_map, $r_played, $r_won, $r_time_played,
+           $r_date_end, $r_hero, $r_gameType, $r_map, $r_played, $r_won, $r_time_played,
            $r_stats_kills, $r_stats_assists, $r_stats_deaths, $r_stats_siege_damage, $r_stats_hero_damage, $r_stats_structure_damage,
            $r_stats_healing, $r_stats_damage_taken, $r_stats_merc_camps, $r_stats_exp_contrib, $r_stats_best_killstreak,
            $r_stats_time_spent_dead, $r_medals, $r_talents, $r_builds, $r_parties, $r_build, $r_build_talents, $r_party, $r_players, $r_time_played_silenced,
@@ -202,15 +202,12 @@ function updateHeroes(&$match, &$bannedHeroes) {
 
 
             //Set key params
-            $r_year = $isodate['year'];
-            $r_week = $isodate['week'];
-            $r_day = $isodate['day'];
+            $r_date_end = $isodate['date_end'];
             $r_map = $match['map'];
             $r_gameType = $match['type'];
 
 
             //Set main params
-            $r_date_end = $isodate['date_end'];
             $r_played = 1;
             $r_won = $winInc;
             $r_time_played = $match['match_length'];
@@ -291,9 +288,6 @@ function updateHeroes(&$match, &$bannedHeroes) {
         //Handle Bans
         foreach ($bannedHeroes as $heroban) {
             $r_hero = $heroban;
-            $r_year = $isodate['year'];
-            $r_week = $isodate['week'];
-            $r_day = $isodate['day'];
             $r_date_end = $isodate['date_end'];
             $r_map = $match['map'];
             $r_gameType = $match['type'];
