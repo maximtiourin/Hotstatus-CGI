@@ -311,7 +311,7 @@ function insertMatch(&$parse, $mapMapping, $heroNameMappings, &$mmrcalc, &$old_m
  */
 function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) {
     global $db, $r_player_id, $r_name, $r_tag, $r_region, $r_account_level, $r_hero, $r_hero_level, $r_match_id, $r_date,
-           $r_year, $r_week, $r_day, $r_date_end, $r_hero, $r_gameType, $r_map, $r_played, $r_won, $r_time_played,
+           $r_date_end, $r_hero, $r_gameType, $r_map, $r_played, $r_won, $r_time_played,
            $r_stats_kills, $r_stats_assists, $r_stats_deaths, $r_stats_siege_damage, $r_stats_hero_damage, $r_stats_structure_damage,
            $r_stats_healing, $r_stats_damage_taken, $r_stats_merc_camps, $r_stats_exp_contrib, $r_stats_best_killstreak,
            $r_stats_time_spent_dead, $r_medals, $r_talents, $r_builds, $r_parties, $r_build, $r_build_talents, $r_party, $r_players, $r_time_played_silenced,
@@ -442,9 +442,7 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
 
 
             //Set key params
-            $r_year = $isodate['year'];
-            $r_week = $isodate['week'];
-            $r_day = $isodate['day'];
+            $r_date_end = $isodate['date_end'];
             $r_map = $match['map'];
             $r_gameType = $match['type'];
 
@@ -485,7 +483,6 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
             $db->freeResult($p_res);
 
             //Set main params
-            $r_date_end = $isodate['date_end'];
             $r_played = 1;
             $r_won = $winInc;
             $r_time_played = $match['match_length'];
@@ -583,9 +580,6 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
         //Handle Bans
         foreach ($bannedHeroes as $heroban) {
             $r_hero = $heroban;
-            $r_year = $isodate['year'];
-            $r_week = $isodate['week'];
-            $r_day = $isodate['day'];
             $r_date_end = $isodate['date_end'];
             $r_map = $match['map'];
             $r_gameType = $match['type'];
