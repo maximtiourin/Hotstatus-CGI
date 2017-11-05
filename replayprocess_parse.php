@@ -193,13 +193,13 @@ $db->bind("+=:heroes_matches_recent_granular",
 
 $db->prepare("trackHeroBan",
     "INSERT INTO heroes_bans_recent_granular "
-    . "(hero, year, week, day, date_end, gameType, map, mmr_average, banned) "
-    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) "
+    . "(hero, date_end, gameType, map, mmr_average, banned) "
+    . "VALUES (?, ?, ?, ?, ?, ?) "
     . "ON DUPLICATE KEY UPDATE "
     . "banned = banned + VALUES(banned)");
 $db->bind("trackHeroBan",
-    "siiisssii",
-    $r_hero, $r_year, $r_week, $r_day, $r_date_end, $r_gameType, $r_map, $r_mmr_average, $r_banned);
+    "ssssii",
+    $r_hero, $r_date_end, $r_gameType, $r_map, $r_mmr_average, $r_banned);
 
 $db->prepare("ensureTalentBuild",
     "INSERT INTO heroes_builds (hero, build, talents) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE hero = hero");
