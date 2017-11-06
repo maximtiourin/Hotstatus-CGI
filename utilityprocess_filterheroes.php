@@ -31,7 +31,7 @@ $result = $db->execute("GetHeroes");
 $result_rows = $db->countResultRows($result);
 if ($result_rows > 0) {
     while ($row = $db->fetchArray($result)) {
-        echo '"'.$row['name'].'" => ['.E."\t".'"image_minimap" => "'.$row['image_minimap'].'"'.E.'],'.E;
+        echo '"'.$row['name'].'" => ['.E."\t".'"image_minimap" => "'.$row['image_minimap'].'",'.E."\t".'"selected" => false'.E.'],'.E;
     }
 }
 else {

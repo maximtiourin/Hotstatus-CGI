@@ -56,6 +56,7 @@ class HotstatusCache {
      * Cache Request - Per Function Response Caching
      */
     const CACHE_REQUEST_TYPE_DATATABLE = "DataTable_";
+    const CACHE_REQUEST_TYPE_PAGEDATA = "PageData_";
     const CACHE_REQUEST_PREFIX = "Cache_Request_";
 
     public static function writeCacheRequest(RedisDatabase $redis, $cache_request_type = "", $functionId, $functionVersion, $value, $ttl = self::CACHE_DEFAULT_TTL) {

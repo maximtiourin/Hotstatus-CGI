@@ -286,223 +286,296 @@ class HotstatusPipeline {
          */
         self::FILTER_KEY_HERO => [
             "Abathur" => [
-                "image_minimap" => "storm_ui_minimapicon_heros_infestor"
+                "image_minimap" => "storm_ui_minimapicon_heros_infestor",
+                "selected" => false
             ],
             "Alarak" => [
-                "image_minimap" => "storm_ui_minimapicon_alarak"
+                "image_minimap" => "storm_ui_minimapicon_alarak",
+                "selected" => false
             ],
             "Ana" => [
-                "image_minimap" => "storm_ui_minimapicon_ana"
+                "image_minimap" => "storm_ui_minimapicon_ana",
+                "selected" => false
             ],
             "Anub'arak" => [
-                "image_minimap" => "storm_ui_minimapicon_anubarak"
+                "image_minimap" => "storm_ui_minimapicon_anubarak",
+                "selected" => false
             ],
             "Artanis" => [
-                "image_minimap" => "storm_ui_minimapicon_artanis"
+                "image_minimap" => "storm_ui_minimapicon_artanis",
+                "selected" => false
             ],
             "Arthas" => [
-                "image_minimap" => "storm_ui_minimapicon_arthas"
+                "image_minimap" => "storm_ui_minimapicon_arthas",
+                "selected" => false
             ],
             "Auriel" => [
-                "image_minimap" => "storm_ui_minimapicon_auriel"
+                "image_minimap" => "storm_ui_minimapicon_auriel",
+                "selected" => false
             ],
             "Azmodan" => [
-                "image_minimap" => "storm_ui_minimapicon_heros_azmodan"
+                "image_minimap" => "storm_ui_minimapicon_heros_azmodan",
+                "selected" => false
             ],
             "Brightwing" => [
-                "image_minimap" => "storm_ui_minimapicon_heros_faeriedragon"
+                "image_minimap" => "storm_ui_minimapicon_heros_faeriedragon",
+                "selected" => false
             ],
             "The Butcher" => [
-                "image_minimap" => "storm_ui_minimapicon_butcher"
+                "image_minimap" => "storm_ui_minimapicon_butcher",
+                "selected" => false
             ],
             "Cassia" => [
-                "image_minimap" => "storm_ui_minimapicon_d2amazonf"
+                "image_minimap" => "storm_ui_minimapicon_d2amazonf",
+                "selected" => false
             ],
             "Chen" => [
-                "image_minimap" => "storm_ui_minimapicon_heros_chen"
+                "image_minimap" => "storm_ui_minimapicon_heros_chen",
+                "selected" => false
             ],
             "Cho" => [
-                "image_minimap" => "storm_ui_minimapicon_cho"
+                "image_minimap" => "storm_ui_minimapicon_cho",
+                "selected" => false
             ],
             "Chromie" => [
-                "image_minimap" => "storm_ui_minimapicon_chromie"
+                "image_minimap" => "storm_ui_minimapicon_chromie",
+                "selected" => false
             ],
             "Dehaka" => [
-                "image_minimap" => "storm_ui_minimapicon_dehaka"
+                "image_minimap" => "storm_ui_minimapicon_dehaka",
+                "selected" => false
             ],
             "Diablo" => [
-                "image_minimap" => "storm_ui_minimapicon_heros_diablo"
+                "image_minimap" => "storm_ui_minimapicon_heros_diablo",
+                "selected" => false
             ],
             "D.Va" => [
-                "image_minimap" => "storm_ui_minimapicon_dva"
+                "image_minimap" => "storm_ui_minimapicon_dva",
+                "selected" => false
             ],
             "E.T.C." => [
-                "image_minimap" => "storm_ui_minimapicon_etc"
+                "image_minimap" => "storm_ui_minimapicon_etc",
+                "selected" => false
             ],
             "Falstad" => [
-                "image_minimap" => "storm_ui_minimapicon_gryphon_rider"
+                "image_minimap" => "storm_ui_minimapicon_gryphon_rider",
+                "selected" => false
             ],
             "Gall" => [
-                "image_minimap" => "storm_ui_minimapicon_gall"
+                "image_minimap" => "storm_ui_minimapicon_gall",
+                "selected" => false
             ],
             "Garrosh" => [
-                "image_minimap" => "storm_ui_minimapicon_garrosh"
+                "image_minimap" => "storm_ui_minimapicon_garrosh",
+                "selected" => false
             ],
             "Gazlowe" => [
-                "image_minimap" => "storm_ui_minimapicon_heros_gazlowe"
+                "image_minimap" => "storm_ui_minimapicon_heros_gazlowe",
+                "selected" => false
             ],
             "Genji" => [
-                "image_minimap" => "storm_ui_minimapicon_genji"
+                "image_minimap" => "storm_ui_minimapicon_genji",
+                "selected" => false
             ],
             "Greymane" => [
-                "image_minimap" => "storm_ui_minimapicon_genngreymane"
+                "image_minimap" => "storm_ui_minimapicon_genngreymane",
+                "selected" => false
             ],
             "Gul'dan" => [
-                "image_minimap" => "storm_ui_minimapicon_guldan"
+                "image_minimap" => "storm_ui_minimapicon_guldan",
+                "selected" => false
             ],
             "Illidan" => [
-                "image_minimap" => "storm_ui_minimapicon_illidan"
+                "image_minimap" => "storm_ui_minimapicon_illidan",
+                "selected" => false
             ],
             "Jaina" => [
-                "image_minimap" => "storm_ui_minimapicon_heros_jaina"
+                "image_minimap" => "storm_ui_minimapicon_heros_jaina",
+                "selected" => false
             ],
             "Johanna" => [
-                "image_minimap" => "storm_ui_minimapicon_heros_johanna"
+                "image_minimap" => "storm_ui_minimapicon_heros_johanna",
+                "selected" => false
             ],
             "Junkrat" => [
-                "image_minimap" => "storm_ui_minimapicon_junkrat"
+                "image_minimap" => "storm_ui_minimapicon_junkrat",
+                "selected" => false
             ],
             "Kael'thas" => [
-                "image_minimap" => "storm_ui_minimapicon_heros_kaelthas"
+                "image_minimap" => "storm_ui_minimapicon_heros_kaelthas",
+                "selected" => false
             ],
             "Kel'Thuzad" => [
-                "image_minimap" => "storm_ui_minimapicon_kelthuzad"
+                "image_minimap" => "storm_ui_minimapicon_kelthuzad",
+                "selected" => false
             ],
             "Kerrigan" => [
-                "image_minimap" => "storm_ui_minimapicon_kerrigan"
+                "image_minimap" => "storm_ui_minimapicon_kerrigan",
+                "selected" => false
             ],
             "Kharazim" => [
-                "image_minimap" => "storm_ui_minimapicon_monk"
+                "image_minimap" => "storm_ui_minimapicon_monk",
+                "selected" => false
             ],
             "Leoric" => [
-                "image_minimap" => "storm_ui_minimapicon_leoric"
+                "image_minimap" => "storm_ui_minimapicon_leoric",
+                "selected" => false
             ],
             "Li Li" => [
-                "image_minimap" => "storm_ui_minimapicon_heros_lili"
+                "image_minimap" => "storm_ui_minimapicon_heros_lili",
+                "selected" => false
             ],
             "Li-Ming" => [
-                "image_minimap" => "storm_ui_minimapicon_wizard"
+                "image_minimap" => "storm_ui_minimapicon_wizard",
+                "selected" => false
             ],
             "The Lost Vikings" => [
-                "image_minimap" => "storm_ui_minimapicon_heros_erik"
+                "image_minimap" => "storm_ui_minimapicon_heros_erik",
+                "selected" => false
             ],
             "Lt. Morales" => [
-                "image_minimap" => "storm_ui_minimapicon_medic"
+                "image_minimap" => "storm_ui_minimapicon_medic",
+                "selected" => false
             ],
             "Lúcio" => [
-                "image_minimap" => "storm_ui_minimapicon_lucio"
+                "image_minimap" => "storm_ui_minimapicon_lucio",
+                "selected" => false
             ],
             "Lunara" => [
-                "image_minimap" => "storm_ui_minimapicon_lunara"
+                "image_minimap" => "storm_ui_minimapicon_lunara",
+                "selected" => false
             ],
             "Malfurion" => [
-                "image_minimap" => "storm_ui_minimapicon_heros_malfurion"
+                "image_minimap" => "storm_ui_minimapicon_heros_malfurion",
+                "selected" => false
             ],
             "Malthael" => [
-                "image_minimap" => "storm_ui_minimapicon_malthael"
+                "image_minimap" => "storm_ui_minimapicon_malthael",
+                "selected" => false
             ],
             "Medivh" => [
-                "image_minimap" => "storm_ui_minimapicon_medivh"
+                "image_minimap" => "storm_ui_minimapicon_medivh",
+                "selected" => false
             ],
             "Muradin" => [
-                "image_minimap" => "storm_ui_minimapicon_muradin"
+                "image_minimap" => "storm_ui_minimapicon_muradin",
+                "selected" => false
             ],
             "Murky" => [
-                "image_minimap" => "storm_ui_minimapicon_heros_murky"
+                "image_minimap" => "storm_ui_minimapicon_heros_murky",
+                "selected" => false
             ],
             "Nazeebo" => [
-                "image_minimap" => "storm_ui_minimapicon_witchdoctor"
+                "image_minimap" => "storm_ui_minimapicon_witchdoctor",
+                "selected" => false
             ],
             "Nova" => [
-                "image_minimap" => "storm_ui_minimapicon_nova"
+                "image_minimap" => "storm_ui_minimapicon_nova",
+                "selected" => false
             ],
             "Probius" => [
-                "image_minimap" => "storm_ui_minimapicon_probius"
+                "image_minimap" => "storm_ui_minimapicon_probius",
+                "selected" => false
             ],
             "Ragnaros" => [
-                "image_minimap" => "storm_ui_minimapicon_ragnaros"
+                "image_minimap" => "storm_ui_minimapicon_ragnaros",
+                "selected" => false
             ],
             "Raynor" => [
-                "image_minimap" => "storm_ui_minimapicon_raynor"
+                "image_minimap" => "storm_ui_minimapicon_raynor",
+                "selected" => false
             ],
             "Rehgar" => [
-                "image_minimap" => "storm_ui_minimapicon_rehgar"
+                "image_minimap" => "storm_ui_minimapicon_rehgar",
+                "selected" => false
             ],
             "Rexxar" => [
-                "image_minimap" => "storm_ui_minimapicon_heros_rexxar"
+                "image_minimap" => "storm_ui_minimapicon_heros_rexxar",
+                "selected" => false
             ],
             "Samuro" => [
-                "image_minimap" => "storm_ui_minimapicon_samuro"
+                "image_minimap" => "storm_ui_minimapicon_samuro",
+                "selected" => false
             ],
             "Sgt. Hammer" => [
-                "image_minimap" => "storm_ui_minimapicon_warfield"
+                "image_minimap" => "storm_ui_minimapicon_warfield",
+                "selected" => false
             ],
             "Sonya" => [
-                "image_minimap" => "storm_ui_minimapicon_heros_femalebarbarian"
+                "image_minimap" => "storm_ui_minimapicon_heros_femalebarbarian",
+                "selected" => false
             ],
             "Stitches" => [
-                "image_minimap" => "storm_ui_minimapicon_heros_stitches"
+                "image_minimap" => "storm_ui_minimapicon_heros_stitches",
+                "selected" => false
             ],
             "Stukov" => [
-                "image_minimap" => "storm_ui_minimapicon_stukov"
+                "image_minimap" => "storm_ui_minimapicon_stukov",
+                "selected" => false
             ],
             "Sylvanas" => [
-                "image_minimap" => "storm_ui_minimapicon_sylvanas"
+                "image_minimap" => "storm_ui_minimapicon_sylvanas",
+                "selected" => false
             ],
             "Tassadar" => [
-                "image_minimap" => "storm_ui_minimapicon_tassadar"
+                "image_minimap" => "storm_ui_minimapicon_tassadar",
+                "selected" => false
             ],
             "Thrall" => [
-                "image_minimap" => "storm_ui_minimapicon_thrall"
+                "image_minimap" => "storm_ui_minimapicon_thrall",
+                "selected" => false
             ],
             "Tracer" => [
-                "image_minimap" => "storm_ui_minimapicon_tracer"
+                "image_minimap" => "storm_ui_minimapicon_tracer",
+                "selected" => false
             ],
             "Tychus" => [
-                "image_minimap" => "storm_ui_minimapicon_tychus"
+                "image_minimap" => "storm_ui_minimapicon_tychus",
+                "selected" => false
             ],
             "Tyrael" => [
-                "image_minimap" => "storm_ui_minimapicon_heros_tyrael"
+                "image_minimap" => "storm_ui_minimapicon_heros_tyrael",
+                "selected" => false
             ],
             "Tyrande" => [
-                "image_minimap" => "storm_ui_minimapicon_heros_tyrande"
+                "image_minimap" => "storm_ui_minimapicon_heros_tyrande",
+                "selected" => false
             ],
             "Uther" => [
-                "image_minimap" => "storm_ui_minimapicon_uther"
+                "image_minimap" => "storm_ui_minimapicon_uther",
+                "selected" => false
             ],
             "Valeera" => [
-                "image_minimap" => "storm_ui_minimapicon_valeera"
+                "image_minimap" => "storm_ui_minimapicon_valeera",
+                "selected" => false
             ],
             "Valla" => [
-                "image_minimap" => "storm_ui_minimapicon_demonhunter"
+                "image_minimap" => "storm_ui_minimapicon_demonhunter",
+                "selected" => false
             ],
             "Varian" => [
-                "image_minimap" => "storm_ui_minimapicon_varian"
+                "image_minimap" => "storm_ui_minimapicon_varian",
+                "selected" => false
             ],
             "Xul" => [
-                "image_minimap" => "storm_ui_minimapicon_necromancer"
+                "image_minimap" => "storm_ui_minimapicon_necromancer",
+                "selected" => false
             ],
             "Zagara" => [
-                "image_minimap" => "storm_ui_minimapicon_zagara"
+                "image_minimap" => "storm_ui_minimapicon_zagara",
+                "selected" => false
             ],
             "Zarya" => [
-                "image_minimap" => "storm_ui_minimapicon_zarya"
+                "image_minimap" => "storm_ui_minimapicon_zarya",
+                "selected" => false
             ],
             "Zeratul" => [
-                "image_minimap" => "storm_ui_minimapicon_zeratul"
+                "image_minimap" => "storm_ui_minimapicon_zeratul",
+                "selected" => false
             ],
             "Zul'jin" => [
-                "image_minimap" => "storm_ui_minimapicon_zuljin"
+                "image_minimap" => "storm_ui_minimapicon_zuljin",
+                "selected" => false
             ],
         ],
     ];
