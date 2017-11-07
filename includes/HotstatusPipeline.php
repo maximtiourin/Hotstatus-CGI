@@ -647,6 +647,72 @@ class HotstatusPipeline {
     }
 
     /*
+     * Hero Page Information
+     * Map structure to describe what information should be shown on a hero page, and how it is shown
+     */
+    const HEROPAGE_KEY_AVERAGE_STATS = "average_stats";
+
+    const HEROPAGE_TYPE_KEY_AVG_PMIN = "avg-pmin";
+    const HEROPAGE_TYPE_KEY_PERCENTAGE = "percentage";
+    const HEROPAGE_TYPE_KEY_KDA = "kda";
+
+    public static $heropage = [
+        self::HEROPAGE_KEY_AVERAGE_STATS => [
+            "winrate" => [
+                "name" => "Winrate",
+                "type" => self::HEROPAGE_TYPE_KEY_PERCENTAGE
+            ],
+            "kills" => [
+                "name" => "Kills",
+                "type" => self::HEROPAGE_TYPE_KEY_AVG_PMIN
+            ],
+            "assists" => [
+                "name" => "Assists",
+                "type" => self::HEROPAGE_TYPE_KEY_AVG_PMIN
+            ],
+            "deaths" => [
+                "name" => "Deaths",
+                "type" => self::HEROPAGE_TYPE_KEY_AVG_PMIN
+            ],
+            "kda" => [
+                "name" => "K/D/A",
+                "type" => self::HEROPAGE_TYPE_KEY_KDA
+            ],
+            "siege_damage" => [
+                "name" => "Siege Damage",
+                "type" => self::HEROPAGE_TYPE_KEY_AVG_PMIN
+            ],
+            "hero_damage" => [
+                "name" => "Hero Damage",
+                "type" => self::HEROPAGE_TYPE_KEY_AVG_PMIN
+            ],
+            "structure_damage" => [
+                "name" => "Structure Damage",
+                "type" => self::HEROPAGE_TYPE_KEY_AVG_PMIN
+            ],
+            "healing" => [
+                "name" => "Healing",
+                "type" => self::HEROPAGE_TYPE_KEY_AVG_PMIN
+            ],
+            "damage_taken" => [
+                "name" => "Damage Taken",
+                "type" => self::HEROPAGE_TYPE_KEY_AVG_PMIN
+            ],
+        ],
+    ];
+
+    public static $heropage_tooltips = [
+        self::HEROPAGE_KEY_AVERAGE_STATS => [
+            self::HEROPAGE_TYPE_KEY_AVG_PMIN => [
+                "avg" => " Per Game",
+                "pmin" => " Per Minute"
+            ],
+            self::HEROPAGE_TYPE_KEY_PERCENTAGE => " Percentage",
+            self::HEROPAGE_TYPE_KEY_KDA => "(Kills + Assists) / Deaths",
+        ],
+    ];
+
+    /*
      * Takes a date time string, converts it to date time, returns an assoc array:
      * ['year] = ISO Year
      * ['week] = ISO Week of the Year (Weeks start on monday)
