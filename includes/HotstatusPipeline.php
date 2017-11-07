@@ -655,6 +655,8 @@ class HotstatusPipeline {
     const HEROPAGE_TYPE_KEY_AVG_PMIN = "avg-pmin";
     const HEROPAGE_TYPE_KEY_PERCENTAGE = "percentage";
     const HEROPAGE_TYPE_KEY_KDA = "kda";
+    const HEROPAGE_TYPE_KEY_RAW = "raw";
+    const HEROPAGE_TYPE_KEY_TIME_SPENT_DEAD = "time-spent-dead";
 
     public static $heropage = [
         self::HEROPAGE_KEY_AVERAGE_STATS => [
@@ -698,17 +700,34 @@ class HotstatusPipeline {
                 "name" => "Damage Taken",
                 "type" => self::HEROPAGE_TYPE_KEY_AVG_PMIN
             ],
+            "merc_camps" => [
+                "name" => "Mercenary Camps",
+                "type" => self::HEROPAGE_TYPE_KEY_AVG_PMIN
+            ],
+            "exp_contrib" => [
+                "name" => "Exp Contribution",
+                "type" => self::HEROPAGE_TYPE_KEY_AVG_PMIN
+            ],
+            "best_killstreak" => [
+                "name" => "Best Killstreak",
+                "type" => self::HEROPAGE_TYPE_KEY_RAW
+            ],
+            "time_spent_dead" => [
+                "name" => "Time Spent Dead",
+                "type" => self::HEROPAGE_TYPE_KEY_TIME_SPENT_DEAD
+            ],
         ],
     ];
 
     public static $heropage_tooltips = [
         self::HEROPAGE_KEY_AVERAGE_STATS => [
             self::HEROPAGE_TYPE_KEY_AVG_PMIN => [
-                "avg" => " Per Game",
-                "pmin" => " Per Minute"
+                "avg" => " per Game",
+                "pmin" => " per Minute"
             ],
             self::HEROPAGE_TYPE_KEY_PERCENTAGE => " Percentage",
             self::HEROPAGE_TYPE_KEY_KDA => "(Kills + Assists) / Deaths",
+            self::HEROPAGE_TYPE_KEY_TIME_SPENT_DEAD => " in Minutes",
         ],
     ];
 
