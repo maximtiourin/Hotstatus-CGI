@@ -80,7 +80,7 @@ $db->prepare("GetMapNameFromMapNameTranslation",
 $db->bind("GetMapNameFromMapNameTranslation", "s", $r_name_translation);
 
 $db->prepare("GetMMRForPlayer",
-    "SELECT rating, mu, sigma FROM players_mmr WHERE id = ? AND (season = ? OR season = ?) AND gameType = ? FOR UPDATE");
+    "SELECT season, rating, mu, sigma FROM players_mmr WHERE id = ? AND (season = ? OR season = ?) AND gameType = ? FOR UPDATE");
 $db->bind("GetMMRForPlayer", "isss", $r_player_id, $r_season, $r_season_previous, $r_gameType);
 
 $db->prepare("InsertMatch",
