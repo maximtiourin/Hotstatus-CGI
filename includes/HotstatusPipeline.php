@@ -727,7 +727,7 @@ class HotstatusPipeline {
             ],
             self::HEROPAGE_TYPE_KEY_PERCENTAGE => " Percentage",
             self::HEROPAGE_TYPE_KEY_KDA => "(Kills + Assists) / Deaths",
-            self::HEROPAGE_TYPE_KEY_TIME_SPENT_DEAD => " in Minutes",
+            self::HEROPAGE_TYPE_KEY_TIME_SPENT_DEAD => " in Minutes per Game",
         ],
     ];
 
