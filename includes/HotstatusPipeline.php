@@ -731,6 +731,16 @@ class HotstatusPipeline {
         ],
     ];
 
+    public static $heropage_talent_tiers = [
+        "1" => "Level: 1",
+        "2" => "Level: 4",
+        "3" => "Level: 7",
+        "4" => "Level: 10",
+        "5" => "Level: 13",
+        "6" => "Level: 16",
+        "7" => "Level: 20"
+    ];
+
     /*
      * Takes a date time string, converts it to date time, returns an assoc array:
      * ['year] = ISO Year
