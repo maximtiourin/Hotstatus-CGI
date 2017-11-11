@@ -692,10 +692,10 @@ function extractHero_xmlToJson($filepath, &$file_strings) {
                     $hero['title'] = extractLine(array("Hero/Title/"), $name_internal, $str2, "");
 
                     //Description Tagline
-                    $hero['desc_tagline'] = htmlspecialchars(extractLine(array("Hero/Description/"), $name_internal, $str2, NONE), ENT_COMPAT);
+                    $hero['desc_tagline'] = htmlspecialchars(extractLine(array("Hero/Description/"), $name_internal, $str2, NONE), ENT_QUOTES);
 
                     //Description Bio
-                    $hero['desc_bio'] = htmlspecialchars(extractLine(array("Hero/Info/"), $name_internal, $str2, NONE), ENT_COMPAT);
+                    $hero['desc_bio'] = htmlspecialchars(extractLine(array("Hero/Info/"), $name_internal, $str2, NONE), ENT_QUOTES);
 
                     /*
                      * Image strings
@@ -1735,12 +1735,13 @@ $validargs = [
                     $log("[--dbout $mode] No award mappings were found...".E);
                 }
 
+                //@DEPRECATED -- Cache is now more complex, let it expire itself rather than depending on this process
                 //Invalidate any cached requests that made use of data generated from this operation
-                $redis = new RedisDatabase();
+               /* $redis = new RedisDatabase();
                 $redis->connect($creds[Credentials::KEY_REDIS_URI]);
 
                 //Go through the cache requests to expire
-                $redis->expire(HotstatusPipeline::CACHE_REQUEST_DATATABLE_HEROES_STATSLIST);
+                $redis->expire(HotstatusPipeline::CACHE_REQUEST_DATATABLE_HEROES_STATSLIST);*/
 
                 $log("[--dbout $mode] Updated database with new herodata...".E);
             }
