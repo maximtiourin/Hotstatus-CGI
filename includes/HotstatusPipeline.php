@@ -665,19 +665,6 @@ class HotstatusPipeline {
 
         $date_offset = "now";
 
-        //Current Build
-        $cpatch = self::$PATCHES[self::PATCH_CURRENT];
-        $rangeoffset = "now";
-        $rangelength = self::getLengthInISODaysForDateTimeRange($cpatch['start'], $rangeoffset);
-        $range = self::getMinMaxRangeForLastISODaysInclusive($rangelength, $rangeoffset);
-        self::$filter[self::FILTER_KEY_DATE]["Current Build (".$cpatch['version'].")"] = [
-            "min" => $range['date_start'],
-            "max" => $range['date_end'],
-            "offset_date" => $rangeoffset,
-            "offset_amount" => $rangelength,
-            "selected" => TRUE
-        ];
-
         //Last 7 Days
         $last7days = self::getMinMaxRangeForLastISODaysInclusive(7, $date_offset);
         self::$filter[self::FILTER_KEY_DATE]['Last 7 Days'] = [
@@ -685,7 +672,7 @@ class HotstatusPipeline {
             "max" => $last7days['date_end'],
             "offset_date" => $date_offset,
             "offset_amount" => 7,
-            "selected" => FALSE
+            "selected" => TRUE
         ];
 
         //Last 30 Days
@@ -706,6 +693,19 @@ class HotstatusPipeline {
             "offset_date" => $date_offset,
             "offset_amount" => 90,
             "selected" => FALSE
+        ];
+
+        //Current Build
+        $cpatch = self::$PATCHES[self::PATCH_CURRENT];
+        $rangeoffset = "now";
+        $rangelength = self::getLengthInISODaysForDateTimeRange($cpatch['start'], $rangeoffset);
+        $range = self::getMinMaxRangeForLastISODaysInclusive($rangelength, $rangeoffset);
+        self::$filter[self::FILTER_KEY_DATE][$cpatch['version']." (Current)"] = [
+            "min" => $range['date_start'],
+            "max" => $range['date_end'],
+            "offset_date" => $rangeoffset,
+            "offset_amount" => $rangelength,
+            "selected" => FALSE,
         ];
 
         //Add non-current patches
