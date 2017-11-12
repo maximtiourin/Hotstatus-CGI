@@ -64,6 +64,76 @@ class HotstatusPipeline {
     ];
 
     /*
+     * Patch information
+     * Historical patches are listed here, they must be filtered for a cutoff date in order to only pull patches whose
+     * entire data range meets the cutoff
+     */
+    const PATCH_CURRENT = "CURRENT";
+    public static $PATCHES = [
+        self::PATCH_CURRENT => [
+            "start" => "2017-11-01 00:00:00",
+            "end" => null,
+            "length" => null,
+            "version" => "2.28.5",
+            "type" => "Balance",
+        ],
+        "2.28.3" => [
+            "start" => "2017-10-17 00:00:00",
+            "end" => "2017-10-31 23:59:59",
+            "version" => "2.28.3",
+            "type" => "Junkrat",
+        ],
+        "2.28.2" => [
+            "start" => "2017-10-11 00:00:00",
+            "end" => "2017-10-16 23:59:59",
+            "version" => "2.28.2",
+            "type" => "Balance",
+        ],
+        "2.28.0" => [
+            "start" => "2017-09-26 00:00:00",
+            "end" => "2017-10-10 23:59:59",
+            "version" => "2.28.0",
+            "type" => "Ana",
+        ],
+        "2.27.5" => [
+            "start" => "2017-09-20 00:00:00",
+            "end" => "2017-09-25 23:59:59",
+            "version" => "2.27.5",
+            "type" => "Balance",
+        ],
+        "2.27.3" => [
+            "start" => "2017-09-05 00:00:00",
+            "end" => "2017-09-19 23:59:59",
+            "version" => "2.27.3",
+            "type" => "Kel'Thuzad",
+        ],
+        "2.27.2" => [
+            "start" => "2017-08-23 00:00:00",
+            "end" => "2017-09-04 23:59:59",
+            "version" => "2.27.2",
+            "type" => "Balance",
+        ],
+        "2.27.0" => [
+            "start" => "2017-08-08 00:00:00",
+            "end" => "2017-08-22 23:59:59",
+            "version" => "2.27.0",
+            "type" => "Garrosh",
+        ],
+        "2.26.4" => [
+            "start" => "2017-07-26 00:00:00",
+            "end" => "2017-08-07 23:59:59",
+            "version" => "2.26.4",
+            "type" => "Balance",
+        ],
+        "2.26.3" => [
+            "start" => "2017-07-11 00:00:00",
+            "end" => "2017-07-25 23:59:59",
+            "version" => "2.26.3",
+            "type" => "Stukov",
+        ],
+    ];
+
+    /*
      * Filter Informations
      * All preset data for hotstatus filters, using subsets of data such as maps, leagues, gameTypes, etc.
      */
@@ -593,57 +663,70 @@ class HotstatusPipeline {
     public static function filter_generate_date() {
         date_default_timezone_set(self::REPLAY_TIMEZONE);
 
-        $date_offset = "now"; //TODO for release should be "now", for testing make it the date of the youngest set of data
+        $date_offset = "now";
 
-        $debug_offset = "2017-07-18"; //TODO DEBUG
-        $debug = self::getMinMaxRangeForLastISODaysInclusive(7, $debug_offset); //TODO DEBUG
-        $debug_offset2 = "2017-07-11"; //TODO DEBUG
-        $debug2 = self::getMinMaxRangeForLastISODaysInclusive(7, $debug_offset2); //TODO DEBUG
-
-        $last7days = self::getMinMaxRangeForLastISODaysInclusive(7, $date_offset);
-        $last30days = self::getMinMaxRangeForLastISODaysInclusive(30, $date_offset);
-        $last90days = self::getMinMaxRangeForLastISODaysInclusive(90, $date_offset);
-
-
-        self::$filter[self::FILTER_KEY_DATE] = [
-            "Last 7 Days" => [
-                "min" => $last7days['date_start'],
-                "max" => $last7days['date_end'],
-                "offset_date" => $date_offset,
-                "offset_amount" => 7,
-                "selected" => TRUE
-            ],
-            "Last 30 Days" => [
-                "min" => $last30days['date_start'],
-                "max" => $last30days['date_end'],
-                "offset_date" => $date_offset,
-                "offset_amount" => 30,
-                "selected" => FALSE
-            ],
-            "Last 90 Days" => [
-                "min" => $last90days['date_start'],
-                "max" => $last90days['date_end'],
-                "offset_date" => $date_offset,
-                "offset_amount" => 90,
-                "selected" => FALSE
-            ],
-            //TODO DEBUG
-            "2017-07-18 Last 7" => [
-                "min" => $debug['date_start'],
-                "max" => $debug['date_end'],
-                "offset_date" => $debug_offset,
-                "offset_amount" => 7,
-                "selected" => FALSE
-            ],
-            //TODO DEBUG
-            "2017-07-11 Last 7" => [
-                "min" => $debug2['date_start'],
-                "max" => $debug2['date_end'],
-                "offset_date" => $debug_offset2,
-                "offset_amount" => 7,
-                "selected" => FALSE
-            ],
+        //Current Build
+        $cpatch = self::$PATCHES[self::PATCH_CURRENT];
+        $rangeoffset = "now";
+        $rangelength = self::getLengthInISODaysForDateTimeRange($cpatch['start'], $rangeoffset);
+        $range = self::getMinMaxRangeForLastISODaysInclusive($rangelength, $rangeoffset);
+        self::$filter[self::FILTER_KEY_DATE]["Current Build (".$cpatch['version'].")"] = [
+            "min" => $range['date_start'],
+            "max" => $range['date_end'],
+            "offset_date" => $rangeoffset,
+            "offset_amount" => $rangelength,
+            "selected" => TRUE
         ];
+
+        //Last 7 Days
+        $last7days = self::getMinMaxRangeForLastISODaysInclusive(7, $date_offset);
+        self::$filter[self::FILTER_KEY_DATE]['Last 7 Days'] = [
+            "min" => $last7days['date_start'],
+            "max" => $last7days['date_end'],
+            "offset_date" => $date_offset,
+            "offset_amount" => 7,
+            "selected" => FALSE
+        ];
+
+        //Last 30 Days
+        $last30days = self::getMinMaxRangeForLastISODaysInclusive(30, $date_offset);
+        self::$filter[self::FILTER_KEY_DATE]['Last 30 Days'] = [
+            "min" => $last30days['date_start'],
+            "max" => $last30days['date_end'],
+            "offset_date" => $date_offset,
+            "offset_amount" => 30,
+            "selected" => FALSE
+        ];
+
+        //Last 90 Days
+        $last90days = self::getMinMaxRangeForLastISODaysInclusive(90, $date_offset);
+        self::$filter[self::FILTER_KEY_DATE]['Last 90 Days'] = [
+            "min" => $last90days['date_start'],
+            "max" => $last90days['date_end'],
+            "offset_date" => $date_offset,
+            "offset_amount" => 90,
+            "selected" => FALSE
+        ];
+
+        //Add non-current patches
+        foreach (self::$PATCHES as $patchkey => $patch) {
+            if ($patchkey !== self::PATCH_CURRENT) {
+                $version = $patch['version'];
+                $type = $patch['type'];
+
+                $rangeoffset = $patch['end'];
+                $rangelength = self::getLengthInISODaysForDateTimeRange($patch['start'], $rangeoffset);
+                $range = self::getMinMaxRangeForLastISODaysInclusive($rangelength, $rangeoffset);
+
+                self::$filter[self::FILTER_KEY_DATE][$version . ' ('.$type.')'] = [
+                    "min" => $range['date_start'],
+                    "max" => $range['date_end'],
+                    "offset_date" => $rangeoffset,
+                    "offset_amount" => $rangelength,
+                    "selected" => FALSE
+                ];
+            }
+        }
     }
 
     /*
@@ -740,6 +823,30 @@ class HotstatusPipeline {
         "6" => "Level: 16",
         "7" => "Level: 20"
     ];
+
+    public static function getLengthInISODaysForDateTimeRange($datestart, $dateend) {
+        date_default_timezone_set(self::REPLAY_TIMEZONE);
+
+        $endtime = new \DateTime($dateend);
+        $starttime = new \DateTime($datestart);
+
+        $endyear = intval($endtime->format("o"));
+        $endweek = intval($endtime->format("W"));
+        $endday = intval($endtime->format("N"));
+        $startyear = intval($starttime->format("o"));
+        $startweek = intval($starttime->format("W"));
+        $startday = intval($starttime->format("N"));
+
+        $endiso = new \DateTime();
+        $endiso->setISODate($endyear, $endweek, $endday);
+        $endiso->setTime(23, 59, 59);
+        $startiso = new \DateTime();
+        $startiso->setISODate($startyear, $startweek, $startday);
+        $startiso->setTime(0, 0, 0);
+
+        $interval = $startiso->diff($endiso);
+        return $interval->days;
+    }
 
     /*
      * Takes a date time string, converts it to date time, returns an assoc array:
