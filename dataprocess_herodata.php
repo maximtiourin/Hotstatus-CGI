@@ -206,6 +206,13 @@ $awardMappings = [
 ];
 
 /*
+ * Image fragment generation to image fragment mapping of medal images
+ */
+$awardImageMappings = [
+    "dominator" => "skull",
+];
+
+/*
  * List of award ids to ignore
  */
 $awardMappingsExceptions = [
@@ -533,7 +540,7 @@ function extractButtonImages($filepath) {
 }
 
 function extractAwards(&$file_strings) {
-    global $awardMappings, $awardMappingsExceptions;
+    global $awardMappings, $awardImageMappings, $awardMappingsExceptions;
 
     $str = $file_strings; //Line seperated localization strings
 
@@ -566,14 +573,27 @@ function extractAwards(&$file_strings) {
 
             if (!key_exists($awardid, $awardMappingsExceptions)) {
                 if (!key_exists($awardid, $awardMappings)) $awardMappings[$awardid] = [];
-                if (!key_exists('desc', $awardMappings[$awardid])) $awardMappings[$awardid]['desc'] = $awarddesc;
+                if (!key_exists('desc', $awardMappings[$awardid])) $awardMappings[$awardid]['desc'] = trim($awarddesc);
             }
         }
     }
 
     //Go through all valid award ids found and enter default values as necessary
+    $awardprefix = "storm_ui_scorescreen_mvp_";
     foreach ($awardMappings as &$award) {
-        if (!key_exists('name', $award)) $award['name'] = UNKNOWN;
+        if (!key_exists('name', $award)) {
+            $award['name'] = UNKNOWN;
+            $award['image_'] = NONE;
+        }
+        else {
+            $pmedal = strtolower(extractURLFriendlyProperName($award['name']));
+
+            if (key_exists($pmedal, $awardImageMappings)) {
+                $pmedal = $awardImageMappings[$pmedal];
+            }
+
+            $award['image'] = $awardprefix . $pmedal;
+        }
         if (!key_exists('desc', $award)) $award['desc'] = NONE;
     }
 }
@@ -1583,13 +1603,13 @@ $validargs = [
                 // UpsertAward
                 $db->prepare("UpsertAward",
                     "INSERT INTO herodata_awards "
-                    . "(id, name, desc_simple) "
-                    . "VALUES (?, ?, ?) "
+                    . "(id, name, desc_simple, image) "
+                    . "VALUES (?, ?, ?, ?) "
                     . "ON DUPLICATE KEY UPDATE "
-                    . "name = VALUES(name), desc_simple = VALUES(desc_simple)");
+                    . "name = VALUES(name), desc_simple = VALUES(desc_simple), image = VALUES(image)");
                 $db->bind("UpsertAward",
-                    "sss",
-                    $r_id, $r_name, $r_desc_simple);
+                    "ssss",
+                    $r_id, $r_name, $r_desc_simple, $r_image);
                 // UpsertMapTranslation
                 $db->prepare("UpsertMapTranslation",
                     "INSERT INTO herodata_maps_translations "
@@ -1728,6 +1748,7 @@ $validargs = [
                         $r_id = $awardid;
                         $r_name =$award['name'];
                         $r_desc_simple = $award['desc'];
+                        $r_image = $award['image'];
                         $db->execute("UpsertAward");
                     }
                 }
@@ -1760,7 +1781,7 @@ $validargs = [
             . "[overwrite] : --mode=overwrite : will work on all files and overwrite any that already exist\n\n"
             . "[cleardir] : --mode=cleardir : completely empty output dir before doing work and will work on all files\n",
         "exec" => function (...$args) {
-            global $global_json, $validargs;
+            global $global_json, $awardMappings, $validargs;
 
             if (count($args) == 4) {
                 //Init logging info
@@ -1810,15 +1831,26 @@ $validargs = [
                 foreach ($global_json['heroes'] as $hero) {
                     echo "Compiling list of image strings from heroes ($i/$count)                           \r";
 
+                    //Heroes
                     imageOutHelper($hero['image_hero'], $images);
                     imageOutHelper($hero['image_minimap'], $images);
 
+                    //Abilities
                     foreach ($hero['abilities'] as $ability) {
                         imageOutHelper($ability['image'], $images);
                     }
 
+                    //Talents
                     foreach ($hero['talents'] as $talent) {
                         imageOutHelper($talent['image'], $images);
+                    }
+
+                    //Awards
+                    $awardsuffixes = ["_red", "_blue"];
+                    foreach ($awardMappings as $award) {
+                        foreach ($awardsuffixes as $suffix) {
+                            imageOutHelper($award['image'] . $suffix, $images);
+                        }
                     }
 
                     $i++;

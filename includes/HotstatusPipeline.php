@@ -134,6 +134,46 @@ class HotstatusPipeline {
     ];
 
     /*
+     * Medal Processing Information
+     */
+    const MEDALS_KEY_OUTDATED = "outdated";
+    const MEDALS_KEY_REMAPPING = "remapping";
+    const MEDALS_KEY_MAPSPECIFIC = "mapspecific";
+
+    public static $medals = [
+        /*
+         * Array of medals that are no longer valid, should be filtered out of all medal calculations
+         */
+        self::MEDALS_KEY_OUTDATED => [],
+        /*
+         * Assoc Array of medal id remapping that should be done for medal calculations
+         */
+        self::MEDALS_KEY_REMAPPING => [
+            "ZeroDeaths" => "0Deaths",
+            "ZeroOutnumberedDeaths" => "0OutnumberedDeaths",
+            "MostAltarDamage" => "MostAltarDamageDone",
+        ],
+        /*
+         * Assoc Array of medal ids that are map specific
+         */
+        self::MEDALS_KEY_MAPSPECIFIC => [
+            "MostCoinsPaid",
+            "MostCurseDamageDone",
+            "MostDamageDoneToZerg",
+            "MostDamageToMinions",
+            "MostDamageToPlants",
+            "MostDragonShrinesCaptured",
+            "MostGemsTurnedIn",
+            "MostImmortalDamage",
+            "MostNukeDamageDone",
+            "MostSkullsCollected",
+            "MostTimeInTemple",
+            "MostTimeOnPoint",
+            "MostTimePushing",
+        ],
+    ];
+
+    /*
      * Filter Informations
      * All preset data for hotstatus filters, using subsets of data such as maps, leagues, gameTypes, etc.
      */
