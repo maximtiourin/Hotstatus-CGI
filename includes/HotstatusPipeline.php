@@ -71,9 +71,14 @@ class HotstatusPipeline {
     const PATCH_CURRENT = "CURRENT";
     public static $PATCHES = [
         self::PATCH_CURRENT => [
-            "start" => "2017-11-01 00:00:00",
+            "start" => "2017-11-14 00:00:00",
             "end" => null,
-            "length" => null,
+            "version" => "2.29.0",
+            "type" => "Alexstrasza",
+        ],
+        "2.28.5" => [
+            "start" => "2017-11-01 00:00:00",
+            "end" => "2017-11-13 23:59:59",
             "version" => "2.28.5",
             "type" => "Balance",
         ],
