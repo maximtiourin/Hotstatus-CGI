@@ -25,13 +25,20 @@ $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 const E = PHP_EOL;
 
 //Prepare statements
-$db->prepare("GetHeroes", "SELECT `name`, `image_minimap` FROM herodata_heroes ORDER BY name_sort ASC");
+$db->prepare("GetHeroes", "SELECT * FROM herodata_heroes ORDER BY name_sort ASC");
 
 $result = $db->execute("GetHeroes");
 $result_rows = $db->countResultRows($result);
 if ($result_rows > 0) {
     while ($row = $db->fetchArray($result)) {
-        echo '"'.$row['name'].'" => ['.E."\t".'"image_minimap" => "'.$row['image_minimap'].'",'.E."\t".'"selected" => false'.E.'],'.E;
+        echo '"'.$row['name'].'" => ['.E
+            ."\t".'"name_sort" => "'.$row['name_sort'].'",'.E
+            ."\t".'"image_hero" => "'.$row['image_hero'].'",'.E
+            ."\t".'"image_minimap" => "'.$row['image_minimap'].'",'.E
+            ."\t".'"role_blizzard" => "'.$row['role_blizzard'].'",'.E
+            ."\t".'"role_specific" => "'.$row['role_specific'].'",'.E
+            ."\t".'"selected" => false'.E
+            .'],'.E;
     }
 }
 else {
