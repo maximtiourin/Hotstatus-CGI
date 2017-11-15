@@ -104,6 +104,7 @@ $stormDataNames = [
 //What heromods hero identifiers to use for folders (and hopefully for underlying xml data as well)
 $heromodsDataNames = [
     "alarak" => TRUE,
+    "alexstrasza" => TRUE,
     "amazon" => TRUE,
     "ana" => TRUE,
     "auriel" => TRUE,
@@ -134,7 +135,8 @@ $heromodsDataNames = [
 $heromodsDataNamesExceptions = [
     "garrosh" => "Garrosh.xml",
     "kelthuzad" => "KelThuzad.xml",
-    "guldan" => "GuldanData.xml"
+    "guldan" => "GuldanData.xml",
+    "alexstrasza" => "AlexstraszaData.xml"
 ];
 
 //What internal hero names to ignore from the list
@@ -236,6 +238,7 @@ const CROLE_BRUISER = "Bruiser";
 $heroCustomRoleMappings = [
     "Abathur" => CROLE_UTILITY,
     "Alarak" => CROLE_DMG_AMBUSHER,
+    "Alexstrasza" => CROLE_HEALER,
     "Ana" => CROLE_HEALER,
     "Anubarak" => CROLE_TANK, //Anub'arak
     "Artanis" => CROLE_BRUISER,

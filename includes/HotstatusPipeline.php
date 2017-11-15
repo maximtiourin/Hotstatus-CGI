@@ -412,6 +412,14 @@ class HotstatusPipeline {
                 "role_specific" => "Ambusher",
                 "selected" => false
             ],
+            "Alexstrasza" => [
+                "name_sort" => "Alexstrasza",
+                "image_hero" => "ui_targetportrait_hero_alexstrasza",
+                "image_minimap" => "storm_ui_minimapicon_alexstrasza",
+                "role_blizzard" => "Support",
+                "role_specific" => "Healer",
+                "selected" => false
+            ],
             "Ana" => [
                 "name_sort" => "Ana",
                 "image_hero" => "ui_targetportrait_hero_ana",
