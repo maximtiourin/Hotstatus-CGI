@@ -8,6 +8,9 @@ class HotstatusCache {
     const CACHE_DEFAULT_DATABASE_INDEX = 0; //The default index of the database used for caching in redis
     const CACHE_PLAYERSEARCH_DATABASE_INDEX = 1; //The index of the databse used for caching player searches
     const CACHE_DEFAULT_TTL = PHP_INT_MAX; //The default TTL of stored cache values, keys with a TTL are subject to the volatile-lru cache policy
+    const CACHE_PLAYERSEARCH_TTL = 300; //The TTL of stored playersearch cache values.
+    const CACHE_PLAYER_HIT_TTL = 3600; //TTL of player caching when valid result
+    const CACHE_PLAYER_MISS_TTL = 300; //TTL of player caching when invalid result
     const HTTPCACHE_DEFAULT_TIMEZONE = "GMT"; //Default timezone used for http headers
     const HTTPCACHE_DEFAULT_RECALCULATION_TIME = ["hours" => 11, "minutes" => 0, "seconds" => 0]; //What time of day to expire all http cached dynamic data, should be after bulk data processing is done.
 
