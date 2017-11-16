@@ -6,6 +6,7 @@ use Fizzik\Database\RedisDatabase;
 
 class HotstatusCache {
     const CACHE_DEFAULT_DATABASE_INDEX = 0; //The default index of the database used for caching in redis
+    const CACHE_PLAYERSEARCH_DATABASE_INDEX = 1; //The index of the databse used for caching player searches
     const CACHE_DEFAULT_TTL = PHP_INT_MAX; //The default TTL of stored cache values, keys with a TTL are subject to the volatile-lru cache policy
     const HTTPCACHE_DEFAULT_TIMEZONE = "GMT"; //Default timezone used for http headers
     const HTTPCACHE_DEFAULT_RECALCULATION_TIME = ["hours" => 11, "minutes" => 0, "seconds" => 0]; //What time of day to expire all http cached dynamic data, should be after bulk data processing is done.
