@@ -45,16 +45,10 @@ $tables = [
     "replays"
 ];
 
-//Prepare Statements
-foreach ($tables as $table) {
-    $db->prepare($table, "SELECT COUNT(*) AS `count` FROM `$table`");
-}
-
 //Execute Statements
 foreach ($tables as $table) {
-    $result = $db->execute($table);
+    $result = $db->query("SELECT COUNT(*) as `count` FROM `$table`");
     $row = $db->fetchArray($result);
-
     $count = $row['count'];
 
     echo "Warmed ($table): $count rows.$e";
