@@ -130,7 +130,7 @@ while (true) {
                     echo 'Downloading replay #' . $r_id . '...                              ' . E;
 
                     $r_fingerprint = $row['fingerprint'];
-                    $r_url = $row['hotsapi_url'];
+                    $r_url = $row['storage_id'];
 
                     //Ensure directory
                     FileHandling::ensureDirectory(HotstatusPipeline::REPLAY_DOWNLOAD_DIRECTORY);

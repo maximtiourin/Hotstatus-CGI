@@ -38,7 +38,7 @@ class Credentials {
                 self::KEY_REDIS_URI => "",
                 self::KEY_AWS_KEY => "",
                 self::KEY_AWS_SECRET => "",
-                self::KEY_AWS_REPLAYREGION => "" //Ex: eu-west-1
+                self::KEY_AWS_REPLAYREGION => "", //Ex: us-west-2
             ]
         ],
         self::USER_HOTSTATUSWEB => [

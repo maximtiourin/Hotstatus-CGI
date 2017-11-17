@@ -31,6 +31,7 @@ class HotstatusPipeline {
     const REPLAY_STATUS_MYSQL_ERROR = "mysql_error"; //status value for when a replay had a generic unknown mysql error, possibly from manipulating empty result objects
     const REPLAY_STATUS_MYSQL_MATCH_WRITE_ERROR = "mysql_match_write_error"; //status value for when a replay had an unknown mysql write error during match insertion
     const REPLAY_STATUS_MYSQL_MATCHDATA_WRITE_ERROR = "mysql_matchdata_write_error"; //status value for when a repaly had an unknown mysql write error during match data insertion
+    const REPLAY_STORAGE_CATALOG = "hotsapi"; //The replay is currently stored on hotsapi s3
     const MMR_AVERAGE_FIXED_CHUNK_SIZE = 100; //Size of the chunks of mmr that the mmr average is rounded to, for use with hero match granularity
     const FORMAT_DATETIME = "Y:m:d H:i:s"; //The format of the datatime strings
     const DATABASE_CHARSET = "utf8mb4";
