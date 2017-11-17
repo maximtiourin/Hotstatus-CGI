@@ -27,6 +27,7 @@ $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
 //Constants and qol
 const MYSQL_ERROR_SLEEP_DURATION = 60; //seconds
+const NORMAL_EXECUTION_SLEEP_DURATION = 250000; //microseconds
 const SLEEP_DURATION = 5; //seconds
 const MINI_SLEEP_DURATION = 1; //seconds
 const UNLOCK_DEFAULT_DURATION = 5; //Must be unlocked for atleast 5 seconds
@@ -1064,6 +1065,9 @@ while (true) {
     }
 
     $db->freeResult($result);
+
+    //Default sleep
+    $sleep->add(NORMAL_EXECUTION_SLEEP_DURATION, true, true);
 
     $sleep->execute();
 }
