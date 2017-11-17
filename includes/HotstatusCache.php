@@ -7,6 +7,7 @@ use Fizzik\Database\RedisDatabase;
 class HotstatusCache {
     const CACHE_DEFAULT_DATABASE_INDEX = 0; //The default index of the database used for caching in redis
     const CACHE_PLAYERSEARCH_DATABASE_INDEX = 1; //The index of the databse used for caching player searches
+    const CACHE_RATELIMITING_DATABASE_INDEX = 2; //The index of the database used for caching and tracking rate limiting for certain actions
     const CACHE_DEFAULT_TTL = PHP_INT_MAX; //The default TTL of stored cache values, keys with a TTL are subject to the volatile-lru cache policy
     const CACHE_PLAYERSEARCH_TTL = 300; //The TTL of stored playersearch cache values.
     const CACHE_PLAYER_HIT_TTL = 3600; //TTL of player caching when valid result
@@ -59,9 +60,9 @@ class HotstatusCache {
     /*
      * Cache Request - Per Function Response Caching
      */
-    const CACHE_REQUEST_TYPE_DATATABLE = "DataTable_";
-    const CACHE_REQUEST_TYPE_PAGEDATA = "PageData_";
-    const CACHE_REQUEST_PREFIX = "Cache_Request_";
+    const CACHE_REQUEST_TYPE_DATATABLE = "DataTable:";
+    const CACHE_REQUEST_TYPE_PAGEDATA = "PageData:";
+    const CACHE_REQUEST_PREFIX = "Cache_Request:";
 
     public static function writeCacheRequest(RedisDatabase $redis, $cache_request_type = "", $functionId, $functionVersion, $value, $ttl = self::CACHE_DEFAULT_TTL) {
         if ($redis !== NULL && $redis !== FALSE) {
@@ -83,5 +84,84 @@ class HotstatusCache {
 
     public static function buildCacheRequestKey($cache_request_type = "", $functionId) {
         return self::CACHE_REQUEST_PREFIX . $cache_request_type . $functionId;
+    }
+
+    /*
+     * Activity - Per Function Activity caching
+     */
+    const CACHE_ACTIVITY_TYPE = "UserIP:";
+    const CACHE_ACTIVITY_PREFIX = "Cache_Activity:";
+
+    /*
+     * Rate limits an activity based on activity type and activity id, with a supplied limit amount and time range in seconds.
+     * Will store only the incremental value
+     *
+     * Return TRUE if the activity should be rate limited, FALSE if it is still under the rate limit
+     */
+    public static function rateLimitActivity(RedisDatabase $redis, $cache_activity_type = "", $activityId, $limitAmount, $limitTimeRangeInSeconds) {
+        $client = $redis->connection();
+
+        $key = self::buildActivityKey($cache_activity_type, $activityId);
+
+        $amount = $client->get($key);
+
+        if ($amount !== NULL && $amount >= $limitAmount) {
+            return TRUE;
+        }
+        else if ($amount == NULL) {
+            //Set initial expiration range
+            $client->multi();
+
+            $client->incr($key);
+            $client->expire($key, $limitTimeRangeInSeconds);
+
+            $client->exec();
+
+            return FALSE;
+        }
+        else {
+            //Simply increment and let it continue expiring
+            $client->incr($key);
+
+            return FALSE;
+        }
+    }
+
+    /*
+     * Rate limits an activity based on activity type and activity id, with a supplied limit amount and time range in seconds.
+     * Will store the limitValues as a list in the generated activity key in case they need to be accessed.
+     * (IE: get list of IPs that performed activity within expiring time range)
+     *
+     * Return TRUE if the activity should be rate limited, FALSE if it is still under the rate limit
+     */
+    public static function rateLimitActivityList(RedisDatabase $redis, $cache_activity_type = "", $activityId, $limitValue, $limitAmount, $limitTimeRangeInSeconds) {
+        $client = $redis->connection();
+
+        $key = self::buildActivityKey($cache_activity_type, $activityId);
+
+        $current = $client->llen($key);
+
+        if ($current >= $limitAmount) {
+            return TRUE;
+        }
+        else {
+            if (!$client->exists($key)) {
+                //$client->multi();
+
+                $client->rpush($key, $limitValue);
+                $client->expire($key, $limitTimeRangeInSeconds);
+
+                //$client->exec();
+            }
+            else {
+                $client->rpushx($key, $limitValue);
+            }
+
+            return FALSE;
+        }
+    }
+
+    public static function buildActivityKey($cache_activity_type = "", $activityId) {
+        return self::CACHE_ACTIVITY_PREFIX . $cache_activity_type . $activityId;
     }
 }
