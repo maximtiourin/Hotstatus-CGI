@@ -105,7 +105,7 @@ class HotstatusCache {
 
         $amount = $client->get($key);
 
-        if ($amount !== NULL && $amount >= $limitAmount) {
+        if ($amount != NULL && $amount >= $limitAmount) {
             return TRUE;
         }
         else if ($amount == NULL) {
@@ -146,12 +146,12 @@ class HotstatusCache {
         }
         else {
             if (!$client->exists($key)) {
-                //$client->multi();
+                $client->multi();
 
                 $client->rpush($key, $limitValue);
                 $client->expire($key, $limitTimeRangeInSeconds);
 
-                //$client->exec();
+                $client->exec();
             }
             else {
                 $client->rpushx($key, $limitValue);
