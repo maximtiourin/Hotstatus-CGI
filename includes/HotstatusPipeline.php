@@ -187,6 +187,7 @@ class HotstatusPipeline {
      * Filter Informations
      * All preset data for hotstatus filters, using subsets of data such as maps, leagues, gameTypes, etc.
      */
+    const FILTER_KEY_SEASON = "season";
     const FILTER_KEY_DATE = "date";
     const FILTER_KEY_GAMETYPE = "gameType";
     const FILTER_KEY_MAP = "map";
@@ -196,6 +197,10 @@ class HotstatusPipeline {
     const FILTER_KEY_HERO = "hero";
 
     public static $filter = [
+        /*
+         * Season filter must be generated at runtime, so call filter_generate_season before referencing
+         */
+        self::FILTER_KEY_SEASON => [],
         /*
          * Date filter must be generated at runtime, so call filter_generate_date before referencing
          */
@@ -1074,6 +1079,25 @@ class HotstatusPipeline {
             ],
         ],
     ];
+
+    /*
+     * Generates the dynamic values for the filter season
+     * ["SeasonProperName"] => [
+     *      "min" => DateTimeRangeStartInclusive
+     *      "max" => DateTimeRangeEndInclusive
+     *      "selected" => WhetherOrNotThisFilterOptionStartsSelected
+     * ]
+     */
+    public static function filter_generate_season() {
+        foreach (self::$SEASONS as $season => $sobj) {
+            if ($season !== self::SEASON_UNKNOWN)
+            self::$filter[self::FILTER_KEY_SEASON][$season] = [
+                "min" => $sobj['start'],
+                "max" => $sobj['end'],
+                "selected" => $season === self::SEASON_CURRENT,
+            ];
+        }
+    }
 
     /*
      * Generates the dynamic values for the filter date
