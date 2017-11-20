@@ -33,6 +33,7 @@ if ($result_rows > 0) {
     while ($row = $db->fetchArray($result)) {
         echo '"'.$row['name'].'" => ['.E
             ."\t".'"name_sort" => "'.$row['name_sort'].'",'.E
+            ."\t".'"name_attribute" => "'.$row['name_attribute'].'",'.E
             ."\t".'"image_hero" => "'.$row['image_hero'].'",'.E
             ."\t".'"image_minimap" => "'.$row['image_minimap'].'",'.E
             ."\t".'"role_blizzard" => "'.$row['role_blizzard'].'",'.E

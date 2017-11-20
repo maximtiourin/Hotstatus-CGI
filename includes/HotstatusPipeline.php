@@ -46,6 +46,7 @@ class HotstatusPipeline {
      */
     const SEASON_UNKNOWN = "Legacy"; //This is the season to use when no season dates are defined for a given date time
     const SEASON_NONE = "None"; //This is the value of NO previous season
+    const SEASON_CURRENT = "2017 Season 3";
     public static $SEASONS = [
         "2017 Season 3" => [
             "start" =>  "2017-09-05 07:00:00",
@@ -404,6 +405,7 @@ class HotstatusPipeline {
         self::FILTER_KEY_HERO => [
             "Abathur" => [
                 "name_sort" => "Abathur",
+                "name_attribute" => "Abat",
                 "image_hero" => "ui_targetportrait_hero_abathur",
                 "image_minimap" => "storm_ui_minimapicon_heros_infestor",
                 "role_blizzard" => "Specialist",
@@ -412,6 +414,7 @@ class HotstatusPipeline {
             ],
             "Alarak" => [
                 "name_sort" => "Alarak",
+                "name_attribute" => "Alar",
                 "image_hero" => "ui_targetportrait_hero_alarak",
                 "image_minimap" => "storm_ui_minimapicon_alarak",
                 "role_blizzard" => "Assassin",
@@ -420,6 +423,7 @@ class HotstatusPipeline {
             ],
             "Alexstrasza" => [
                 "name_sort" => "Alexstrasza",
+                "name_attribute" => "Alex",
                 "image_hero" => "ui_targetportrait_hero_alexstrasza",
                 "image_minimap" => "storm_ui_minimapicon_alexstrasza",
                 "role_blizzard" => "Support",
@@ -428,6 +432,7 @@ class HotstatusPipeline {
             ],
             "Ana" => [
                 "name_sort" => "Ana",
+                "name_attribute" => "HANA",
                 "image_hero" => "ui_targetportrait_hero_ana",
                 "image_minimap" => "storm_ui_minimapicon_ana",
                 "role_blizzard" => "Support",
@@ -436,6 +441,7 @@ class HotstatusPipeline {
             ],
             "Anub'arak" => [
                 "name_sort" => "Anubarak",
+                "name_attribute" => "Anub",
                 "image_hero" => "ui_targetportrait_hero_anubarak",
                 "image_minimap" => "storm_ui_minimapicon_anubarak",
                 "role_blizzard" => "Warrior",
@@ -444,6 +450,7 @@ class HotstatusPipeline {
             ],
             "Artanis" => [
                 "name_sort" => "Artanis",
+                "name_attribute" => "Arts",
                 "image_hero" => "ui_targetportrait_hero_artanis",
                 "image_minimap" => "storm_ui_minimapicon_artanis",
                 "role_blizzard" => "Warrior",
@@ -452,6 +459,7 @@ class HotstatusPipeline {
             ],
             "Arthas" => [
                 "name_sort" => "Arthas",
+                "name_attribute" => "Arth",
                 "image_hero" => "ui_targetportrait_hero_arthas",
                 "image_minimap" => "storm_ui_minimapicon_arthas",
                 "role_blizzard" => "Warrior",
@@ -460,6 +468,7 @@ class HotstatusPipeline {
             ],
             "Auriel" => [
                 "name_sort" => "Auriel",
+                "name_attribute" => "Auri",
                 "image_hero" => "ui_targetportrait_hero_auriel",
                 "image_minimap" => "storm_ui_minimapicon_auriel",
                 "role_blizzard" => "Support",
@@ -468,6 +477,7 @@ class HotstatusPipeline {
             ],
             "Azmodan" => [
                 "name_sort" => "Azmodan",
+                "name_attribute" => "Azmo",
                 "image_hero" => "ui_targetportrait_hero_azmodan",
                 "image_minimap" => "storm_ui_minimapicon_heros_azmodan",
                 "role_blizzard" => "Specialist",
@@ -476,6 +486,7 @@ class HotstatusPipeline {
             ],
             "Brightwing" => [
                 "name_sort" => "Brightwing",
+                "name_attribute" => "Faer",
                 "image_hero" => "ui_targetportrait_hero_faeriedragon",
                 "image_minimap" => "storm_ui_minimapicon_heros_faeriedragon",
                 "role_blizzard" => "Support",
@@ -484,6 +495,7 @@ class HotstatusPipeline {
             ],
             "The Butcher" => [
                 "name_sort" => "Butcher",
+                "name_attribute" => "Butc",
                 "image_hero" => "ui_targetportrait_hero_butcher",
                 "image_minimap" => "storm_ui_minimapicon_butcher",
                 "role_blizzard" => "Assassin",
@@ -492,6 +504,7 @@ class HotstatusPipeline {
             ],
             "Cassia" => [
                 "name_sort" => "Cassia",
+                "name_attribute" => "Amaz",
                 "image_hero" => "ui_targetportrait_hero_d2amazonf",
                 "image_minimap" => "storm_ui_minimapicon_d2amazonf",
                 "role_blizzard" => "Assassin",
@@ -500,6 +513,7 @@ class HotstatusPipeline {
             ],
             "Chen" => [
                 "name_sort" => "Chen",
+                "name_attribute" => "Chen",
                 "image_hero" => "ui_targetportrait_hero_chen",
                 "image_minimap" => "storm_ui_minimapicon_heros_chen",
                 "role_blizzard" => "Warrior",
@@ -508,6 +522,7 @@ class HotstatusPipeline {
             ],
             "Cho" => [
                 "name_sort" => "Cho",
+                "name_attribute" => "CCho",
                 "image_hero" => "ui_targetportrait_hero_cho",
                 "image_minimap" => "storm_ui_minimapicon_cho",
                 "role_blizzard" => "Warrior",
@@ -516,6 +531,7 @@ class HotstatusPipeline {
             ],
             "Chromie" => [
                 "name_sort" => "Chromie",
+                "name_attribute" => "Chro",
                 "image_hero" => "ui_targetportrait_hero_chromie",
                 "image_minimap" => "storm_ui_minimapicon_chromie",
                 "role_blizzard" => "Assassin",
@@ -524,6 +540,7 @@ class HotstatusPipeline {
             ],
             "Dehaka" => [
                 "name_sort" => "Dehaka",
+                "name_attribute" => "Deha",
                 "image_hero" => "ui_targetportrait_hero_dehaka",
                 "image_minimap" => "storm_ui_minimapicon_dehaka",
                 "role_blizzard" => "Warrior",
@@ -532,6 +549,7 @@ class HotstatusPipeline {
             ],
             "Diablo" => [
                 "name_sort" => "Diablo",
+                "name_attribute" => "Diab",
                 "image_hero" => "ui_targetportrait_hero_diablo",
                 "image_minimap" => "storm_ui_minimapicon_heros_diablo",
                 "role_blizzard" => "Warrior",
@@ -540,6 +558,7 @@ class HotstatusPipeline {
             ],
             "D.Va" => [
                 "name_sort" => "DVa",
+                "name_attribute" => "DVA0",
                 "image_hero" => "ui_targetportrait_hero_dva",
                 "image_minimap" => "storm_ui_minimapicon_dva",
                 "role_blizzard" => "Warrior",
@@ -548,6 +567,7 @@ class HotstatusPipeline {
             ],
             "E.T.C." => [
                 "name_sort" => "ETC",
+                "name_attribute" => "L90E",
                 "image_hero" => "ui_targetportrait_hero_l90etc",
                 "image_minimap" => "storm_ui_minimapicon_etc",
                 "role_blizzard" => "Warrior",
@@ -556,6 +576,7 @@ class HotstatusPipeline {
             ],
             "Falstad" => [
                 "name_sort" => "Falstad",
+                "name_attribute" => "Fals",
                 "image_hero" => "ui_targetportrait_hero_falstad",
                 "image_minimap" => "storm_ui_minimapicon_gryphon_rider",
                 "role_blizzard" => "Assassin",
@@ -564,6 +585,7 @@ class HotstatusPipeline {
             ],
             "Gall" => [
                 "name_sort" => "Gall",
+                "name_attribute" => "Gall",
                 "image_hero" => "ui_targetportrait_hero_gall",
                 "image_minimap" => "storm_ui_minimapicon_gall",
                 "role_blizzard" => "Assassin",
@@ -572,6 +594,7 @@ class HotstatusPipeline {
             ],
             "Garrosh" => [
                 "name_sort" => "Garrosh",
+                "name_attribute" => "Garr",
                 "image_hero" => "ui_targetportrait_hero_garrosh",
                 "image_minimap" => "storm_ui_minimapicon_garrosh",
                 "role_blizzard" => "Warrior",
@@ -580,6 +603,7 @@ class HotstatusPipeline {
             ],
             "Gazlowe" => [
                 "name_sort" => "Gazlowe",
+                "name_attribute" => "Tink",
                 "image_hero" => "ui_targetportrait_hero_gazlowe",
                 "image_minimap" => "storm_ui_minimapicon_heros_gazlowe",
                 "role_blizzard" => "Specialist",
@@ -588,6 +612,7 @@ class HotstatusPipeline {
             ],
             "Genji" => [
                 "name_sort" => "Genji",
+                "name_attribute" => "Genj",
                 "image_hero" => "ui_targetportrait_hero_genji",
                 "image_minimap" => "storm_ui_minimapicon_genji",
                 "role_blizzard" => "Assassin",
@@ -596,6 +621,7 @@ class HotstatusPipeline {
             ],
             "Greymane" => [
                 "name_sort" => "Greymane",
+                "name_attribute" => "Genn",
                 "image_hero" => "ui_targetportrait_hero_genngreymane",
                 "image_minimap" => "storm_ui_minimapicon_genngreymane",
                 "role_blizzard" => "Assassin",
@@ -604,6 +630,7 @@ class HotstatusPipeline {
             ],
             "Gul'dan" => [
                 "name_sort" => "Guldan",
+                "name_attribute" => "Guld",
                 "image_hero" => "ui_targetportrait_hero_guldan",
                 "image_minimap" => "storm_ui_minimapicon_guldan",
                 "role_blizzard" => "Assassin",
@@ -612,6 +639,7 @@ class HotstatusPipeline {
             ],
             "Illidan" => [
                 "name_sort" => "Illidan",
+                "name_attribute" => "Illi",
                 "image_hero" => "ui_targetportrait_hero_illidan",
                 "image_minimap" => "storm_ui_minimapicon_illidan",
                 "role_blizzard" => "Assassin",
@@ -620,6 +648,7 @@ class HotstatusPipeline {
             ],
             "Jaina" => [
                 "name_sort" => "Jaina",
+                "name_attribute" => "Jain",
                 "image_hero" => "ui_targetportrait_hero_jaina",
                 "image_minimap" => "storm_ui_minimapicon_heros_jaina",
                 "role_blizzard" => "Assassin",
@@ -628,6 +657,7 @@ class HotstatusPipeline {
             ],
             "Johanna" => [
                 "name_sort" => "Johanna",
+                "name_attribute" => "Crus",
                 "image_hero" => "ui_targetportrait_hero_johanna",
                 "image_minimap" => "storm_ui_minimapicon_heros_johanna",
                 "role_blizzard" => "Warrior",
@@ -636,6 +666,7 @@ class HotstatusPipeline {
             ],
             "Junkrat" => [
                 "name_sort" => "Junkrat",
+                "name_attribute" => "Junk",
                 "image_hero" => "ui_targetportrait_hero_junkrat",
                 "image_minimap" => "storm_ui_minimapicon_junkrat",
                 "role_blizzard" => "Assassin",
@@ -644,6 +675,7 @@ class HotstatusPipeline {
             ],
             "Kael'thas" => [
                 "name_sort" => "Kaelthas",
+                "name_attribute" => "Kael",
                 "image_hero" => "ui_targetportrait_hero_kaelthas",
                 "image_minimap" => "storm_ui_minimapicon_heros_kaelthas",
                 "role_blizzard" => "Assassin",
@@ -652,6 +684,7 @@ class HotstatusPipeline {
             ],
             "Kel'Thuzad" => [
                 "name_sort" => "KelThuzad",
+                "name_attribute" => "KelT",
                 "image_hero" => "ui_targetportrait_hero_kelthuzad",
                 "image_minimap" => "storm_ui_minimapicon_kelthuzad",
                 "role_blizzard" => "Assassin",
@@ -660,6 +693,7 @@ class HotstatusPipeline {
             ],
             "Kerrigan" => [
                 "name_sort" => "Kerrigan",
+                "name_attribute" => "Kerr",
                 "image_hero" => "ui_targetportrait_hero_kerrigan",
                 "image_minimap" => "storm_ui_minimapicon_kerrigan",
                 "role_blizzard" => "Assassin",
@@ -668,6 +702,7 @@ class HotstatusPipeline {
             ],
             "Kharazim" => [
                 "name_sort" => "Kharazim",
+                "name_attribute" => "Monk",
                 "image_hero" => "ui_targetportrait_hero_monk",
                 "image_minimap" => "storm_ui_minimapicon_monk",
                 "role_blizzard" => "Support",
@@ -676,6 +711,7 @@ class HotstatusPipeline {
             ],
             "Leoric" => [
                 "name_sort" => "Leoric",
+                "name_attribute" => "Leor",
                 "image_hero" => "ui_targetportrait_hero_leoric",
                 "image_minimap" => "storm_ui_minimapicon_leoric",
                 "role_blizzard" => "Warrior",
@@ -684,6 +720,7 @@ class HotstatusPipeline {
             ],
             "Li Li" => [
                 "name_sort" => "LiLi",
+                "name_attribute" => "LiLi",
                 "image_hero" => "ui_targetportrait_hero_lili",
                 "image_minimap" => "storm_ui_minimapicon_heros_lili",
                 "role_blizzard" => "Support",
@@ -692,6 +729,7 @@ class HotstatusPipeline {
             ],
             "Li-Ming" => [
                 "name_sort" => "LiMing",
+                "name_attribute" => "Wiza",
                 "image_hero" => "ui_targetportrait_hero_wizard",
                 "image_minimap" => "storm_ui_minimapicon_wizard",
                 "role_blizzard" => "Assassin",
@@ -700,6 +738,7 @@ class HotstatusPipeline {
             ],
             "The Lost Vikings" => [
                 "name_sort" => "Lost Vikings",
+                "name_attribute" => "Lost",
                 "image_hero" => "ui_targetportrait_hero_lostvikings",
                 "image_minimap" => "storm_ui_minimapicon_heros_erik",
                 "role_blizzard" => "Specialist",
@@ -708,6 +747,7 @@ class HotstatusPipeline {
             ],
             "Lt. Morales" => [
                 "name_sort" => "LtMorales",
+                "name_attribute" => "Medi",
                 "image_hero" => "ui_targetportrait_hero_medic",
                 "image_minimap" => "storm_ui_minimapicon_medic",
                 "role_blizzard" => "Support",
@@ -716,6 +756,7 @@ class HotstatusPipeline {
             ],
             "Lúcio" => [
                 "name_sort" => "Lucio",
+                "name_attribute" => "Luci",
                 "image_hero" => "ui_targetportrait_hero_lucio",
                 "image_minimap" => "storm_ui_minimapicon_lucio",
                 "role_blizzard" => "Support",
@@ -724,6 +765,7 @@ class HotstatusPipeline {
             ],
             "Lunara" => [
                 "name_sort" => "Lunara",
+                "name_attribute" => "Drya",
                 "image_hero" => "ui_targetportrait_hero_lunara",
                 "image_minimap" => "storm_ui_minimapicon_lunara",
                 "role_blizzard" => "Assassin",
@@ -732,6 +774,7 @@ class HotstatusPipeline {
             ],
             "Malfurion" => [
                 "name_sort" => "Malfurion",
+                "name_attribute" => "Malf",
                 "image_hero" => "ui_targetportrait_hero_malfurion",
                 "image_minimap" => "storm_ui_minimapicon_heros_malfurion",
                 "role_blizzard" => "Support",
@@ -740,6 +783,7 @@ class HotstatusPipeline {
             ],
             "Malthael" => [
                 "name_sort" => "Malthael",
+                "name_attribute" => "MALT",
                 "image_hero" => "ui_targetportrait_hero_malthael",
                 "image_minimap" => "storm_ui_minimapicon_malthael",
                 "role_blizzard" => "Assassin",
@@ -748,6 +792,7 @@ class HotstatusPipeline {
             ],
             "Medivh" => [
                 "name_sort" => "Medivh",
+                "name_attribute" => "Mdvh",
                 "image_hero" => "ui_targetportrait_hero_medivh",
                 "image_minimap" => "storm_ui_minimapicon_medivh",
                 "role_blizzard" => "Specialist",
@@ -756,6 +801,7 @@ class HotstatusPipeline {
             ],
             "Muradin" => [
                 "name_sort" => "Muradin",
+                "name_attribute" => "Mura",
                 "image_hero" => "ui_targetportrait_hero_muradin",
                 "image_minimap" => "storm_ui_minimapicon_muradin",
                 "role_blizzard" => "Warrior",
@@ -764,6 +810,7 @@ class HotstatusPipeline {
             ],
             "Murky" => [
                 "name_sort" => "Murky",
+                "name_attribute" => "Murk",
                 "image_hero" => "ui_targetportrait_hero_murky",
                 "image_minimap" => "storm_ui_minimapicon_heros_murky",
                 "role_blizzard" => "Specialist",
@@ -772,6 +819,7 @@ class HotstatusPipeline {
             ],
             "Nazeebo" => [
                 "name_sort" => "Nazeebo",
+                "name_attribute" => "Witc",
                 "image_hero" => "ui_targetportrait_hero_witchdoctor",
                 "image_minimap" => "storm_ui_minimapicon_witchdoctor",
                 "role_blizzard" => "Specialist",
@@ -780,6 +828,7 @@ class HotstatusPipeline {
             ],
             "Nova" => [
                 "name_sort" => "Nova",
+                "name_attribute" => "Nova",
                 "image_hero" => "ui_targetportrait_hero_nova",
                 "image_minimap" => "storm_ui_minimapicon_nova",
                 "role_blizzard" => "Assassin",
@@ -788,6 +837,7 @@ class HotstatusPipeline {
             ],
             "Probius" => [
                 "name_sort" => "Probius",
+                "name_attribute" => "Prob",
                 "image_hero" => "ui_targetportrait_hero_probius",
                 "image_minimap" => "storm_ui_minimapicon_probius",
                 "role_blizzard" => "Specialist",
@@ -796,6 +846,7 @@ class HotstatusPipeline {
             ],
             "Ragnaros" => [
                 "name_sort" => "Ragnaros",
+                "name_attribute" => "Ragn",
                 "image_hero" => "ui_targetportrait_hero_ragnaros",
                 "image_minimap" => "storm_ui_minimapicon_ragnaros",
                 "role_blizzard" => "Assassin",
@@ -804,6 +855,7 @@ class HotstatusPipeline {
             ],
             "Raynor" => [
                 "name_sort" => "Raynor",
+                "name_attribute" => "Rayn",
                 "image_hero" => "ui_targetportrait_hero_raynor",
                 "image_minimap" => "storm_ui_minimapicon_raynor",
                 "role_blizzard" => "Assassin",
@@ -812,6 +864,7 @@ class HotstatusPipeline {
             ],
             "Rehgar" => [
                 "name_sort" => "Rehgar",
+                "name_attribute" => "Rehg",
                 "image_hero" => "ui_targetportrait_hero_rehgar",
                 "image_minimap" => "storm_ui_minimapicon_rehgar",
                 "role_blizzard" => "Support",
@@ -820,6 +873,7 @@ class HotstatusPipeline {
             ],
             "Rexxar" => [
                 "name_sort" => "Rexxar",
+                "name_attribute" => "Rexx",
                 "image_hero" => "ui_targetportrait_hero_rexxar",
                 "image_minimap" => "storm_ui_minimapicon_heros_rexxar",
                 "role_blizzard" => "Warrior",
@@ -828,6 +882,7 @@ class HotstatusPipeline {
             ],
             "Samuro" => [
                 "name_sort" => "Samuro",
+                "name_attribute" => "Samu",
                 "image_hero" => "ui_targetportrait_hero_samuro",
                 "image_minimap" => "storm_ui_minimapicon_samuro",
                 "role_blizzard" => "Assassin",
@@ -836,6 +891,7 @@ class HotstatusPipeline {
             ],
             "Sgt. Hammer" => [
                 "name_sort" => "SgtHammer",
+                "name_attribute" => "Sgth",
                 "image_hero" => "ui_targetportrait_hero_sgthammer",
                 "image_minimap" => "storm_ui_minimapicon_warfield",
                 "role_blizzard" => "Specialist",
@@ -844,6 +900,7 @@ class HotstatusPipeline {
             ],
             "Sonya" => [
                 "name_sort" => "Sonya",
+                "name_attribute" => "Barb",
                 "image_hero" => "ui_targetportrait_hero_barbarian",
                 "image_minimap" => "storm_ui_minimapicon_heros_femalebarbarian",
                 "role_blizzard" => "Warrior",
@@ -852,6 +909,7 @@ class HotstatusPipeline {
             ],
             "Stitches" => [
                 "name_sort" => "Stitches",
+                "name_attribute" => "Stit",
                 "image_hero" => "ui_targetportrait_hero_stitches",
                 "image_minimap" => "storm_ui_minimapicon_heros_stitches",
                 "role_blizzard" => "Warrior",
@@ -860,6 +918,7 @@ class HotstatusPipeline {
             ],
             "Stukov" => [
                 "name_sort" => "Stukov",
+                "name_attribute" => "STUK",
                 "image_hero" => "ui_targetportrait_hero_stukov",
                 "image_minimap" => "storm_ui_minimapicon_stukov",
                 "role_blizzard" => "Support",
@@ -868,6 +927,7 @@ class HotstatusPipeline {
             ],
             "Sylvanas" => [
                 "name_sort" => "Sylvanas",
+                "name_attribute" => "Sylv",
                 "image_hero" => "ui_targetportrait_hero_sylvanas",
                 "image_minimap" => "storm_ui_minimapicon_sylvanas",
                 "role_blizzard" => "Specialist",
@@ -876,6 +936,7 @@ class HotstatusPipeline {
             ],
             "Tassadar" => [
                 "name_sort" => "Tassadar",
+                "name_attribute" => "Tass",
                 "image_hero" => "ui_targetportrait_hero_tassadar",
                 "image_minimap" => "storm_ui_minimapicon_tassadar",
                 "role_blizzard" => "Support",
@@ -884,6 +945,7 @@ class HotstatusPipeline {
             ],
             "Thrall" => [
                 "name_sort" => "Thrall",
+                "name_attribute" => "Thra",
                 "image_hero" => "ui_targetportrait_hero_thrall",
                 "image_minimap" => "storm_ui_minimapicon_thrall",
                 "role_blizzard" => "Assassin",
@@ -892,6 +954,7 @@ class HotstatusPipeline {
             ],
             "Tracer" => [
                 "name_sort" => "Tracer",
+                "name_attribute" => "Tra0",
                 "image_hero" => "ui_targetportrait_hero_tracer",
                 "image_minimap" => "storm_ui_minimapicon_tracer",
                 "role_blizzard" => "Assassin",
@@ -900,6 +963,7 @@ class HotstatusPipeline {
             ],
             "Tychus" => [
                 "name_sort" => "Tychus",
+                "name_attribute" => "Tych",
                 "image_hero" => "ui_targetportrait_hero_tychus",
                 "image_minimap" => "storm_ui_minimapicon_tychus",
                 "role_blizzard" => "Assassin",
@@ -908,6 +972,7 @@ class HotstatusPipeline {
             ],
             "Tyrael" => [
                 "name_sort" => "Tyrael",
+                "name_attribute" => "Tyrl",
                 "image_hero" => "ui_targetportrait_hero_tyrael",
                 "image_minimap" => "storm_ui_minimapicon_heros_tyrael",
                 "role_blizzard" => "Warrior",
@@ -916,6 +981,7 @@ class HotstatusPipeline {
             ],
             "Tyrande" => [
                 "name_sort" => "Tyrande",
+                "name_attribute" => "Tyrd",
                 "image_hero" => "ui_targetportrait_hero_tyrande",
                 "image_minimap" => "storm_ui_minimapicon_heros_tyrande",
                 "role_blizzard" => "Support",
@@ -924,6 +990,7 @@ class HotstatusPipeline {
             ],
             "Uther" => [
                 "name_sort" => "Uther",
+                "name_attribute" => "Uthe",
                 "image_hero" => "ui_targetportrait_hero_uther",
                 "image_minimap" => "storm_ui_minimapicon_uther",
                 "role_blizzard" => "Support",
@@ -932,6 +999,7 @@ class HotstatusPipeline {
             ],
             "Valeera" => [
                 "name_sort" => "Valeera",
+                "name_attribute" => "VALE",
                 "image_hero" => "ui_targetportrait_hero_valeera",
                 "image_minimap" => "storm_ui_minimapicon_valeera",
                 "role_blizzard" => "Assassin",
@@ -940,6 +1008,7 @@ class HotstatusPipeline {
             ],
             "Valla" => [
                 "name_sort" => "Valla",
+                "name_attribute" => "Demo",
                 "image_hero" => "ui_targetportrait_hero_demonhunter",
                 "image_minimap" => "storm_ui_minimapicon_demonhunter",
                 "role_blizzard" => "Assassin",
@@ -948,6 +1017,7 @@ class HotstatusPipeline {
             ],
             "Varian" => [
                 "name_sort" => "Varian",
+                "name_attribute" => "Vari",
                 "image_hero" => "ui_targetportrait_hero_varian",
                 "image_minimap" => "storm_ui_minimapicon_varian",
                 "role_blizzard" => "Multiclass",
@@ -956,6 +1026,7 @@ class HotstatusPipeline {
             ],
             "Xul" => [
                 "name_sort" => "Xul",
+                "name_attribute" => "Necr",
                 "image_hero" => "ui_targetportrait_hero_necromancer",
                 "image_minimap" => "storm_ui_minimapicon_necromancer",
                 "role_blizzard" => "Specialist",
@@ -964,6 +1035,7 @@ class HotstatusPipeline {
             ],
             "Zagara" => [
                 "name_sort" => "Zagara",
+                "name_attribute" => "Zaga",
                 "image_hero" => "ui_targetportrait_hero_zagara",
                 "image_minimap" => "storm_ui_minimapicon_zagara",
                 "role_blizzard" => "Specialist",
@@ -972,6 +1044,7 @@ class HotstatusPipeline {
             ],
             "Zarya" => [
                 "name_sort" => "Zarya",
+                "name_attribute" => "Zary",
                 "image_hero" => "ui_targetportrait_hero_zarya",
                 "image_minimap" => "storm_ui_minimapicon_zarya",
                 "role_blizzard" => "Warrior",
@@ -980,6 +1053,7 @@ class HotstatusPipeline {
             ],
             "Zeratul" => [
                 "name_sort" => "Zeratul",
+                "name_attribute" => "Zera",
                 "image_hero" => "ui_targetportrait_hero_zeratul",
                 "image_minimap" => "storm_ui_minimapicon_zeratul",
                 "role_blizzard" => "Assassin",
@@ -988,6 +1062,7 @@ class HotstatusPipeline {
             ],
             "Zul'jin" => [
                 "name_sort" => "Zuljin",
+                "name_attribute" => "ZULJ",
                 "image_hero" => "ui_targetportrait_hero_zuljin",
                 "image_minimap" => "storm_ui_minimapicon_zuljin",
                 "role_blizzard" => "Assassin",

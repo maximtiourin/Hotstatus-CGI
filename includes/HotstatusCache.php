@@ -12,6 +12,7 @@ class HotstatusCache {
     const CACHE_PLAYERSEARCH_TTL = 300; //The TTL of stored playersearch cache values.
     const CACHE_PLAYER_HIT_TTL = 3600; //TTL of player caching when valid result
     const CACHE_PLAYER_MISS_TTL = 300; //TTL of player caching when invalid result
+    const CACHE_PLAYER_UPDATE_TTL = 900; //TTL of player caching on player page response
     const HTTPCACHE_DEFAULT_TIMEZONE = "GMT"; //Default timezone used for http headers
     const HTTPCACHE_DEFAULT_RECALCULATION_TIME = ["hours" => 11, "minutes" => 0, "seconds" => 0]; //What time of day to expire all http cached dynamic data, should be after bulk data processing is done.
 
