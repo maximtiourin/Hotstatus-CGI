@@ -36,6 +36,9 @@ class HotstatusPipeline {
     const FORMAT_DATETIME = "Y:m:d H:i:s"; //The format of the datatime strings
     const DATABASE_CHARSET = "utf8mb4";
 
+    //QOL
+    const UNKNOWN = "Unknown";
+
     //Enums
     public static $ENUM_REGIONS_VALID = [false, true, true, true, false, true]; //Flags for whether or not regions at that index are currently tracked
     public static $ENUM_REGIONS = ['PTR', 'US', 'EU', 'KR', '??', 'CN']; //Regen indexes for use with converting replay data
@@ -1149,6 +1152,19 @@ class HotstatusPipeline {
                 ];
             }
         }
+    }
+
+    /*
+     * Returns the hero name associated with the hero attribute, returning const UNKNOWN if no matching hero found.
+     */
+    public static function filter_getHeroNameFromHeroAttribute($attr) {
+        foreach (self::$filter[self::FILTER_KEY_HERO] as $hname => $hero) {
+            if ($hero['name_attribute'] === $attr) {
+                return $hname;
+            }
+        }
+
+        return self::UNKNOWN;
     }
 
     /*
