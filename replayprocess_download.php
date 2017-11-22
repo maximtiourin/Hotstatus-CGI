@@ -62,8 +62,11 @@ $db->prepare("CountDownloadedReplays",
 "SELECT COUNT(id) AS replay_count FROM replays WHERE status = '" . HotstatusPipeline::REPLAY_STATUS_DOWNLOADED . "'");
 
 $db->prepare("SelectNextReplayWithStatus-Unlocked",
-    "SELECT * FROM replays WHERE status = ? AND lastused <= ? ORDER BY match_date ASC, id ASC LIMIT 1");
-$db->bind("SelectNextReplayWithStatus-Unlocked", "si", $r_status, $r_timestamp);
+    "SELECT * FROM `replays` WHERE `match_date` >= ? AND `status` = ? AND `lastused` <= ? ORDER BY `match_date` ASC, `id` ASC LIMIT 1");
+$db->bind("SelectNextReplayWithStatus-Unlocked", "ssi", $replaymindate, $r_status, $r_timestamp);
+
+//Mininum Date Inclusive for replays to process
+$replaymindate = HotstatusPipeline::$SEASONS["2017 Season 3"]["start"]; //Season 3 Start
 
 //Helper functions
 

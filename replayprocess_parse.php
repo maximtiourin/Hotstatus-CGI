@@ -57,8 +57,8 @@ $db->prepare("UpdateReplayParsedError",
 $db->bind("UpdateReplayParsedError", "issii", $r_match_id, $r_error, $r_status, $r_timestamp, $r_id);
 
 $db->prepare("SelectNextReplayWithStatus-Unlocked",
-    "SELECT * FROM replays WHERE status = ? AND lastused <= ? ORDER BY match_date ASC, id ASC LIMIT 1");
-$db->bind("SelectNextReplayWithStatus-Unlocked", "si", $r_status, $r_timestamp);
+    "SELECT * FROM `replays` WHERE `match_date` >= ? AND `status` = ? AND `lastused` <= ? ORDER BY `match_date` ASC, `id` ASC LIMIT 1");
+$db->bind("SelectNextReplayWithStatus-Unlocked", "ssi", $replaymindate, $r_status, $r_timestamp);
 
 $db->prepare("DoesHeroNameExist",
     "SELECT `name` FROM herodata_heroes WHERE `name` = ?");
@@ -213,6 +213,9 @@ $db->bind("ensurePlayerParty", "iss", $r_player_id, $r_party, $r_players);
 /*$db->prepare("CountPlayerMatchesForHero",
     "SELECT COALESCE(SUM(`played`), 0) AS `count` FROM `players_matches_total` WHERE `id` = ? AND `hero` = ?");
 $db->bind("CountPlayerMatchesForHero", "is", $r_player_id, $r_hero);*/
+
+//Mininum Date Inclusive for replays to process
+$replaymindate = HotstatusPipeline::$SEASONS["2017 Season 3"]["start"]; //Season 3 Start
 
 //Helper functions
 
