@@ -54,16 +54,11 @@ class HotstatusPipeline {
         "2017 Season 3" => [
             "start" =>  "2017-09-05 07:00:00",
             "end" =>    "2017-12-12 06:59:59",
-            "previous" => "2017 Season 2"
-        ],
-        "2017 Season 2" => [
-            "start" =>  "2017-06-13 07:00:00",
-            "end" =>    "2017-09-05 06:59:59",
             "previous" => self::SEASON_UNKNOWN
         ],
         self::SEASON_UNKNOWN => [
             "start" =>  "2010-01-01 07:00:00",
-            "end" =>    "2017-06-13 06:59:59",
+            "end" =>    "2017-09-05 06:59:59",
             "previous" => self::SEASON_NONE
         ]
     ];
@@ -1282,12 +1277,13 @@ class HotstatusPipeline {
      */
     public static function filter_generate_season() {
         foreach (self::$SEASONS as $season => $sobj) {
-            if ($season !== self::SEASON_UNKNOWN)
-            self::$filter[self::FILTER_KEY_SEASON][$season] = [
-                "min" => $sobj['start'],
-                "max" => $sobj['end'],
-                "selected" => $season === self::SEASON_CURRENT,
-            ];
+            if ($season !== self::SEASON_UNKNOWN) {
+                self::$filter[self::FILTER_KEY_SEASON][$season] = [
+                    "min" => $sobj['start'],
+                    "max" => $sobj['end'],
+                    "selected" => $season === self::SEASON_CURRENT,
+                ];
+            }
         }
     }
 

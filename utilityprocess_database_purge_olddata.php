@@ -20,8 +20,8 @@ $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 //Constants and qol
 const E = PHP_EOL;
 
-//Mininum cutoff Date Exclusive for replays to purge
-$replaymindate = HotstatusPipeline::$SEASONS["2017 Season 3"]["start"]; //Season 3 Start
+//Mininum Date Inclusive for replays to process
+$replaymindate = HotstatusPipeline::$SEASONS[HotstatusPipeline::SEASON_UNKNOWN]["end"];
 
 //Purge old data
 $db->transaction_begin();
