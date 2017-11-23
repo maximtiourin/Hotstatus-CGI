@@ -112,30 +112,6 @@ class HotstatusPipeline {
             "version" => "2.27.3",
             "type" => "Kel'Thuzad",
         ],
-        "2.27.2" => [
-            "start" => "2017-08-23 00:00:00",
-            "end" => "2017-09-04 23:59:59",
-            "version" => "2.27.2",
-            "type" => "Balance",
-        ],
-        "2.27.0" => [
-            "start" => "2017-08-08 00:00:00",
-            "end" => "2017-08-22 23:59:59",
-            "version" => "2.27.0",
-            "type" => "Garrosh",
-        ],
-        "2.26.4" => [
-            "start" => "2017-07-26 00:00:00",
-            "end" => "2017-08-07 23:59:59",
-            "version" => "2.26.4",
-            "type" => "Balance",
-        ],
-        "2.26.3" => [
-            "start" => "2017-07-11 00:00:00",
-            "end" => "2017-07-25 23:59:59",
-            "version" => "2.26.3",
-            "type" => "Stukov",
-        ],
     ];
 
     /*
@@ -1495,7 +1471,7 @@ class HotstatusPipeline {
         $startiso->setTime(0, 0, 0);
 
         $interval = $startiso->diff($endiso);
-        return $interval->days;
+        return $interval->days + 1; //Have to add one default day to account for same day
     }
 
     /*
