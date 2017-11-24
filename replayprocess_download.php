@@ -58,8 +58,8 @@ $db->prepare("UpdateReplayDownloaded",
 "UPDATE replays SET file = ?, status = ?, lastused = ? WHERE id = ?");
 $db->bind("UpdateReplayDownloaded", "ssii", $r_filepath, $r_status, $r_timestamp, $r_id);
 
-$db->prepare("CountDownloadedReplays",
-"SELECT COUNT(id) AS replay_count FROM replays WHERE status = '" . HotstatusPipeline::REPLAY_STATUS_DOWNLOADED . "'");
+$db->prepare("CountDownloadedReplaysUpToLimit",
+"SELECT COUNT(id) AS replay_count FROM replays WHERE status = '" . HotstatusPipeline::REPLAY_STATUS_DOWNLOADED . "' LIMIT ".HotstatusPipeline::REPLAY_DOWNLOAD_LIMIT);
 
 $db->prepare("SelectNextReplayWithStatus-Unlocked",
     "SELECT * FROM `replays` WHERE `match_date` > ? AND `status` = ? AND `lastused` <= ? ORDER BY `match_date` ASC, `id` ASC LIMIT 1");
@@ -77,7 +77,7 @@ echo '--------------------------------------'.E
 
 //Look for replays to download and handle
 while (true) {
-    $result = $db->execute("CountDownloadedReplays");
+    $result = $db->execute("CountDownloadedReplaysUpToLimit");
     $resrows = $db->countResultRows($result);
     $downloadCount = 0;
     if ($resrows > 0) {
