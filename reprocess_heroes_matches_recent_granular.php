@@ -19,7 +19,7 @@ date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
 
 $db = new MysqlDatabase();
 $creds = Credentials::getCredentialsForUser(Credentials::USER_REPLAYPROCESS);
-$db->connect($creds[Credentials::KEY_DB_HOSTNAME], $creds[Credentials::KEY_DB_USER], $creds[Credentials::KEY_DB_PASSWORD], $creds[Credentials::KEY_DB_DATABASE]);
+HotstatusPipeline::hotstatus_mysql_connect($db, $creds);
 $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
 //Constants and qol

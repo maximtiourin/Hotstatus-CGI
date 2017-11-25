@@ -2,6 +2,8 @@
 
 namespace Fizzik;
 
+use Fizzik\Database\MySqlDatabase;
+
 class HotstatusPipeline {
     //General constants
     const STATS_WEEK_RANGE = 15; //How many weeks of match data to keep alive in the database
@@ -1826,5 +1828,21 @@ class HotstatusPipeline {
         $ret['date_end'] = $weekenddate->format(self::FORMAT_DATETIME);
 
         return $ret;
+    }
+
+    /*
+     * Abstracts the connection to the mysql database to allow for easy changing of connection requirements, such as ssl
+     */
+    public static function hotstatus_mysql_connect(MySqlDatabase &$db, $creds) {
+        return $db->ssl_connect(
+            $creds[Credentials::KEY_DB_HOSTNAME],
+            $creds[Credentials::KEY_DB_USER],
+            $creds[Credentials::KEY_DB_PASSWORD],
+            $creds[Credentials::KEY_DB_DATABASE],
+            $creds[Credentials::KEY_DB_SSL_CLIENTKEY],
+            $creds[Credentials::KEY_DB_SSL_CLIENTCERT],
+            $creds[Credentials::KEY_DB_SSL_CACERT],
+            false //Google SQL ssl requires verification to be off, since server is connected to by ip, but verification uses name
+        );
     }
 }

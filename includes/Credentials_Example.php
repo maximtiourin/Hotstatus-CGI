@@ -19,6 +19,9 @@ class Credentials {
     const KEY_DB_USER = "db_user";
     const KEY_DB_PASSWORD = "db_password";
     const KEY_DB_DATABASE = "db_database";
+    const KEY_DB_SSL_CLIENTKEY = "db_ssl_clientkey";
+    const KEY_DB_SSL_CLIENTCERT = "db_ssl_clientcert";
+    const KEY_DB_SSL_CACERT = "db_ssl_cacert";
     const KEY_REDIS_URI = "redis_uri";
     const KEY_AWS_KEY = "aws_key";
     const KEY_AWS_SECRET = "aws_secret";
@@ -35,6 +38,9 @@ class Credentials {
                 self::KEY_DB_USER => "",
                 self::KEY_DB_PASSWORD => "",
                 self::KEY_DB_DATABASE => "",
+                self::KEY_DB_SSL_CLIENTKEY => "", //EX: __DIR__ . "/certs/mycert.pem",
+                self::KEY_DB_SSL_CLIENTCERT => "", //EX: __DIR__ . "/certs/mycert.pem",
+                self::KEY_DB_SSL_CACERT => "", //EX: __DIR__ . "/certs/mycert.pem",
                 self::KEY_REDIS_URI => "",
                 self::KEY_AWS_KEY => "",
                 self::KEY_AWS_SECRET => "",
@@ -50,6 +56,9 @@ class Credentials {
                 self::KEY_DB_USER => "",
                 self::KEY_DB_PASSWORD => "",
                 self::KEY_DB_DATABASE => "",
+                self::KEY_DB_SSL_CLIENTKEY => "", //EX: __DIR__ . "/certs/mycert.pem",
+                self::KEY_DB_SSL_CLIENTCERT => "", //EX: __DIR__ . "/certs/mycert.pem",
+                self::KEY_DB_SSL_CACERT => "", //EX: __DIR__ . "/certs/mycert.pem",
                 self::KEY_REDIS_URI => ""
             ]
         ]
