@@ -1551,7 +1551,7 @@ $validargs = [
 
                 //Setup and connext to database
                 $db = new MysqlDatabase();
-                $db->connect($creds[Credentials::KEY_DB_HOSTNAME], $creds[Credentials::KEY_DB_USER], $creds[Credentials::KEY_DB_PASSWORD], $creds[Credentials::KEY_DB_DATABASE]);
+                HotstatusPipeline::hotstatus_mysql_connect($db, $creds);
                 $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
                 /*

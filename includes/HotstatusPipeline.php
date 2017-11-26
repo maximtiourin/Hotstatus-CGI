@@ -1842,7 +1842,7 @@ class HotstatusPipeline {
             $creds[Credentials::KEY_DB_SSL_CLIENTKEY],
             $creds[Credentials::KEY_DB_SSL_CLIENTCERT],
             $creds[Credentials::KEY_DB_SSL_CACERT],
-            false //Google SQL ssl requires verification to be off, since server is connected to by ip, but verification uses name
+            false //Google SQL ssl requires verification to be off, since server is connected to by ip, but verification uses name, and Cloud SQL gives an impossible CN name for the instance
         );
     }
 }
