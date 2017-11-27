@@ -467,7 +467,7 @@ class HotstatusPipeline {
          *
          * min/max are match distributions for ranks (based on average match mmr) -- useful for filtering hero statistics
          *
-         * player min/max are player rank distributions (based on distributions of ranks for all players) -- useful for filtering players
+         * players min/max are player rank distributions (based on distributions of ranks for all players) -- useful for filtering players
          *
          * [Rank Distributions are manually filled out by data generated with utilityprocess_rankdistribution variants]
          */
@@ -1719,6 +1719,20 @@ class HotstatusPipeline {
      */
     public static function getFixedMMRStep($rating, $stepsize) {
         return intval(round($rating / $stepsize)) * $stepsize;
+    }
+
+    /*
+     * Returns the proper name of the rank for a given player rating
+     * Returns UNKNOWN if no rank is found
+     */
+    public static function getRankNameForPlayerRating($rating) {
+        if (is_numeric($rating)) {
+            foreach (self::$filter[self::FILTER_KEY_RANK] as $rname => $robj) {
+                if ($rating >= $robj['players']['min'] && $rating <= $robj['players']['max']) return $rname;
+            }
+        }
+
+        return self::UNKNOWN;
     }
 
     /*
