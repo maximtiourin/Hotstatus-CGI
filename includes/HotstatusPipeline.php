@@ -464,36 +464,36 @@ class HotstatusPipeline {
          * ["RankProperName"] => [
          *      "selected" => TRUE/FALSE (can be modified as needed)
          * ]
-         * TODO Temporary Rank distributions, actual distribution must be analyzed down the line
+         * [Rank Distributions are manually filled out by data generated with utilityprocess_rankdistribution]
          */
         self::FILTER_KEY_RANK => [
             "Bronze" => [
-                "min" => 0,
-                "max" => 799,
+                "min" => PHP_INT_MIN,
+                "max" => 0,
                 "selected" => TRUE
             ],
             "Silver" => [
-                "min" => 800,
-                "max" => 1599,
+                "min" => 1,
+                "max" => 151,
                 "selected" => TRUE
             ],
             "Gold" => [
-                "min" => 1600,
-                "max" => 2399,
+                "min" => 152,
+                "max" => 420,
                 "selected" => TRUE
             ],
             "Platinum" => [
-                "min" => 2400,
-                "max" => 3199,
+                "min" => 421,
+                "max" => 1006,
                 "selected" => TRUE
             ],
             "Diamond" => [
-                "min" => 3200,
-                "max" => 3599,
+                "min" => 1007,
+                "max" => 1584,
                 "selected" => TRUE
             ],
             "Master" => [
-                "min" => 3600,
+                "min" => 1585,
                 "max" => PHP_INT_MAX,
                 "selected" => TRUE
             ]
@@ -1682,7 +1682,14 @@ class HotstatusPipeline {
     public static function getFixedAverageMMRForMatch($team0OldRating, $team1OldRating) {
         $avg = ($team0OldRating + $team1OldRating) / 2.0;
 
-        return intval(round($avg / self::MMR_AVERAGE_FIXED_CHUNK_SIZE)) * self::MMR_AVERAGE_FIXED_CHUNK_SIZE;
+        return self::getFixedMMRStep($avg, self::MMR_AVERAGE_FIXED_CHUNK_SIZE);
+    }
+
+    /*
+     * Returns the fixed mmr step for a given rating use a step size
+     */
+    public static function getFixedMMRStep($rating, $stepsize) {
+        return intval(round($rating / $stepsize)) * $stepsize;
     }
 
     /*
