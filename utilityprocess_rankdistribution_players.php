@@ -22,11 +22,12 @@ $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 const E = PHP_EOL;
 
 //Prepare statements
-$db->prepare("GetRatings", "SELECT `rating` FROM `players_mmr` WHERE `season` = ? ORDER BY `rating` ASC");
+
+//Player Rank Distribution
+$db->prepare("GetRatings", "SELECT `rating` FROM `players_mmr` WHERE `season` = ?");
 $db->bind("GetRatings", "s", $r_season);
 
 $r_season = "2017 Season 3";
-$r_league = "Quick Match";
 
 $stepsize = 1;
 $ratings = [];
@@ -61,6 +62,8 @@ $ratingsarr = [];
 foreach ($ratings as $rkey => $robj) {
     $ratingsarr[] = $rkey;
 }
+
+sort($ratingsarr);
 
 //top function
 $toppercent = function(&$arr, $ratingcount, &$ratingsassoc, $percent, $name) {

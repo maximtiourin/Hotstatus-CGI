@@ -464,37 +464,66 @@ class HotstatusPipeline {
          * ["RankProperName"] => [
          *      "selected" => TRUE/FALSE (can be modified as needed)
          * ]
-         * [Rank Distributions are manually filled out by data generated with utilityprocess_rankdistribution]
+         *
+         * min/max are match distributions for ranks (based on average match mmr) -- useful for filtering hero statistics
+         *
+         * player min/max are player rank distributions (based on distributions of ranks for all players) -- useful for filtering players
+         *
+         * [Rank Distributions are manually filled out by data generated with utilityprocess_rankdistribution variants]
          */
         self::FILTER_KEY_RANK => [
             "Bronze" => [
                 "min" => PHP_INT_MIN,
-                "max" => 0,
+                "max" => 99,
+                "players" => [
+                    "min" => PHP_INT_MIN,
+                    "max" => 0,
+                ],
                 "selected" => TRUE
             ],
             "Silver" => [
-                "min" => 1,
-                "max" => 151,
+                "min" => 100,
+                "max" => 199,
+                "players" => [
+                    "min" => 1,
+                    "max" => 151,
+                ],
                 "selected" => TRUE
             ],
             "Gold" => [
-                "min" => 152,
-                "max" => 420,
+                "min" => 200,
+                "max" => 499,
+                "players" => [
+                    "min" => 152,
+                    "max" => 420,
+                ],
                 "selected" => TRUE
             ],
             "Platinum" => [
-                "min" => 421,
-                "max" => 1006,
+                "min" => 500,
+                "max" => 799,
+                "players" => [
+                    "min" => 421,
+                    "max" => 1006,
+                ],
                 "selected" => TRUE
             ],
             "Diamond" => [
-                "min" => 1007,
-                "max" => 1584,
+                "min" => 800,
+                "max" => 1099,
+                "players" => [
+                    "min" => 1007,
+                    "max" => 1584,
+                ],
                 "selected" => TRUE
             ],
             "Master" => [
-                "min" => 1585,
+                "min" => 1100,
                 "max" => PHP_INT_MAX,
+                "players" => [
+                    "min" => 1585,
+                    "max" => PHP_INT_MAX,
+                ],
                 "selected" => TRUE
             ]
         ],
