@@ -57,8 +57,8 @@ $db->prepare("UpdateReplayParsedError",
 $db->bind("UpdateReplayParsedError", "issii", $r_match_id, $r_error, $r_status, $r_timestamp, $r_id);
 
 $db->prepare("SelectNextReplayWithStatus-Unlocked",
-    "SELECT * FROM `replays` WHERE `match_date` > ? AND `status` = ? AND `lastused` <= ? ORDER BY `match_date` ASC, `id` ASC LIMIT 1");
-$db->bind("SelectNextReplayWithStatus-Unlocked", "ssi", $replaymindate, $r_status, $r_timestamp);
+    "SELECT * FROM `replays` WHERE `status` = ? AND `lastused` <= ? ORDER BY `match_date` ASC, `id` ASC LIMIT 1");
+$db->bind("SelectNextReplayWithStatus-Unlocked", "si", $r_status, $r_timestamp);
 
 $db->prepare("DoesHeroNameExist",
     "SELECT `name` FROM herodata_heroes WHERE `name` = ?");
@@ -215,9 +215,8 @@ $db->bind("ensurePlayerParty", "iss", $r_player_id, $r_party, $r_players);
 $db->bind("CountPlayerMatchesForHero", "is", $r_player_id, $r_hero);*/
 
 //Mininum Date Inclusive for replays to process
-$replaymindate = HotstatusPipeline::$SEASONS[HotstatusPipeline::SEASON_UNKNOWN]["end"];
-
-//Helper functions
+//DEPRECATED from selectReplay, now download process is the authority on which matches are valid for processing, and replay process will parse ANY replays that are downloaded, to minimize db reads
+//$replaymindate = HotstatusPipeline::$SEASONS[HotstatusPipeline::SEASON_UNKNOWN]["end"];
 
 /*
  * Inserts match into 'matches' collection

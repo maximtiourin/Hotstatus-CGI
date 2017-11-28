@@ -95,7 +95,7 @@ while (true) {
         if ($replaylen > 0) {
             $out_of_replays_count = 0;
 
-            $relevant_replays = Hotsapi::getReplaysGreaterThanEqualToId($replays, $pageindex, true);
+            $relevant_replays = Hotsapi::getReplaysGreaterThanEqualToId($replays, $pageindex, true); //FilterByDays excluded due to new functionality of using a mindate for download/parse
             if (count($relevant_replays) > 0) {
                 foreach ($relevant_replays as $replay) {
                     $r_id = $replay['id'];

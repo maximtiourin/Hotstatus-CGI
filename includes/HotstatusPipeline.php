@@ -1895,4 +1895,14 @@ class HotstatusPipeline {
             false //Google SQL ssl requires verification to be off, since server is connected to by ip, but verification uses name, and Cloud SQL gives an impossible CN name for the instance
         );
     }
+
+    /*
+     * Pipeline configuration
+     */
+    const PIPELINE_CONFIG_DEFAULT = "default";
+    public static $pipeline_config = [
+        self::PIPELINE_CONFIG_DEFAULT => [
+            "id" => 1,
+        ],
+    ];
 }
