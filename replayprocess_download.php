@@ -63,12 +63,19 @@ $db->prepare("UpdateReplayDownloaded",
 "UPDATE replays SET file = ?, status = ?, lastused = ? WHERE id = ?");
 $db->bind("UpdateReplayDownloaded", "ssii", $r_filepath, $r_status, $r_timestamp, $r_id);
 
-$db->prepare("CountDownloadedReplaysUpToLimit",
-"SELECT COUNT(id) AS replay_count FROM replays WHERE status = '" . HotstatusPipeline::REPLAY_STATUS_DOWNLOADED . "' LIMIT ".HotstatusPipeline::REPLAY_DOWNLOAD_LIMIT);
+/*$db->prepare("CountDownloadedReplaysUpToLimit",
+"SELECT COUNT(id) AS replay_count FROM replays WHERE status = '" . HotstatusPipeline::REPLAY_STATUS_DOWNLOADED . "' LIMIT ".HotstatusPipeline::REPLAY_DOWNLOAD_LIMIT);*/
 
 $db->prepare("SelectNextReplayWithStatus-Unlocked",
     "SELECT * FROM `replays` WHERE `match_date` > ? AND `match_date` < ? AND `status` = ? AND `lastused` <= ? ORDER BY `match_date` ASC, `id` ASC LIMIT 1");
 $db->bind("SelectNextReplayWithStatus-Unlocked", "sssi", $replaymindate, $replaymaxdate, $r_status, $r_timestamp);
+
+$db->prepare("read_semaphore_replays_downloaded",
+    "SELECT `value` FROM `pipeline_semaphores` WHERE `name` = \"replays_downloaded\" LIMIT 1");
+
+$db->prepare("semaphore_replays_downloaded",
+    "UPDATE `pipeline_semaphores` SET `value` = `value` + ? WHERE `name` = \"replays_downloaded\"");
+$db->bind("semaphore_replays_downloaded", "i", $r_replays_downloaded);
 
 //Begin main script
 echo '--------------------------------------'.E
@@ -90,12 +97,12 @@ while (true) {
         $db->freeResult($pipeconfigresult);
 
         //Count Downloaded Replays
-        $result = $db->execute("CountDownloadedReplaysUpToLimit");
+        $result = $db->execute("read_semaphore_replays_downloaded");
         $resrows = $db->countResultRows($result);
         $downloadCount = 0;
         if ($resrows > 0) {
             $countrow = $db->fetchArray($result);
-            $downloadCount = $countrow['replay_count'];
+            $downloadCount = $countrow['value'];
 
             $db->freeResult($result);
         }
@@ -167,6 +174,10 @@ while (true) {
                             $r_timestamp = time();
 
                             $db->execute("UpdateReplayDownloaded");
+
+                            //Increment Semaphore
+                            $r_replays_downloaded = 1;
+                            $db->execute("semaphore_replays_downloaded");
                         }
                         else {
                             //Error with downloading the replay

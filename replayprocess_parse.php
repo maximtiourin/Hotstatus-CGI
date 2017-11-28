@@ -60,6 +60,10 @@ $db->prepare("SelectNextReplayWithStatus-Unlocked",
     "SELECT * FROM `replays` WHERE `status` = ? AND `lastused` <= ? ORDER BY `match_date` ASC, `id` ASC LIMIT 1");
 $db->bind("SelectNextReplayWithStatus-Unlocked", "si", $r_status, $r_timestamp);
 
+$db->prepare("semaphore_replays_downloaded",
+    "UPDATE `pipeline_semaphores` SET `value` = `value` + ? WHERE `name` = \"replays_downloaded\"");
+$db->bind("semaphore_replays_downloaded", "i", $r_replays_downloaded);
+
 $db->prepare("DoesHeroNameExist",
     "SELECT `name` FROM herodata_heroes WHERE `name` = ?");
 $db->bind("DoesHeroNameExist", "s", $r_name);
@@ -1049,6 +1053,10 @@ while (true) {
 
                 //Release lock
                 $db->unlock($replayLockId);
+
+                //Decrement Semaphore
+                $r_replays_downloaded = -1;
+                $db->execute("semaphore_replays_downloaded");
             }
             else {
                 //Could not attain lock on replay, immediately continue
