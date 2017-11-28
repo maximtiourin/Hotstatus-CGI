@@ -108,7 +108,8 @@ while (true) {
         }
         if ($downloadCount >= HotstatusPipeline::REPLAY_DOWNLOAD_LIMIT) {
             //Reached download limit
-            echo 'Reached replay download limit of ' . HotstatusPipeline::REPLAY_DOWNLOAD_LIMIT . ', waiting for downloaded replays to be processed...' . E . E;
+            $dots = $console->animateDotDotDot();
+            echo "Reached replay download limit of  ". HotstatusPipeline::REPLAY_DOWNLOAD_LIMIT ."$dots                           \r";
             $sleep->add(DOWNLOADLIMIT_SLEEP_DURATION);
         }
         else {
