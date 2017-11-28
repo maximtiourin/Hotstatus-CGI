@@ -274,6 +274,8 @@ function insertMatch(&$parse, $mapMapping, $heroNameMappings, &$mmrcalc, &$old_m
                 'sigma' => $new_mmrs['team'.$player['team']][$player['id'].""]['sigma'],
             ]
         ];
+
+        echo "preparse account level (".$player['id']."): " . $player['account_level'] . E; //TODO
     }
 
     //Begin inserting match
@@ -362,7 +364,7 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
             $r_region = $match['region'];
             $r_account_level = $player['account_level'];
 
-            //echo 'player account ('.$r_player_id.'): ' . $player['account_level'] . E;
+            //echo 'player account ('.$r_player_id.'): ' . $player['account_level'] . E; //TODO
 
             $db->execute("+=:players");
 
@@ -912,7 +914,7 @@ while (true) {
 
                                         echo 'Successfully parsed replay #' . $r_id . '...' . E . E;
 
-                                        echo json_encode($parse);
+                                        //echo json_encode($parse); //TODO
                                     }
                                     else {
                                         //Rollback Transaction
