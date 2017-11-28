@@ -362,6 +362,8 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
             $r_region = $match['region'];
             $r_account_level = $player['account_level'];
 
+            echo 'player account ('.$r_player_id.'): ' . $r_account_level . E;
+
             $db->execute("+=:players");
 
             /*
