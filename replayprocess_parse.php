@@ -362,7 +362,7 @@ function updatePlayersAndHeroes(&$match, $seasonid, &$new_mmrs, &$bannedHeroes) 
             $r_region = $match['region'];
             $r_account_level = $player['account_level'];
 
-            echo 'player account ('.$r_player_id.'): ' . $r_account_level . E;
+            //echo 'player account ('.$r_player_id.'): ' . $player['account_level'] . E;
 
             $db->execute("+=:players");
 
@@ -911,6 +911,8 @@ while (true) {
                                         $db->transaction_commit();
 
                                         echo 'Successfully parsed replay #' . $r_id . '...' . E . E;
+
+                                        echo json_encode($parse);
                                     }
                                     else {
                                         //Rollback Transaction
