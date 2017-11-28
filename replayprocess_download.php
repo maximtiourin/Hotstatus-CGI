@@ -36,7 +36,7 @@ $s3 = $sdk->createS3();
 
 //Constants and qol
 const DOWNLOADLIMIT_SLEEP_DURATION = 5; //seconds
-const NORMAL_EXECUTION_SLEEP_DURATION = 250000; //microseconds (1ms = 1000)
+const NORMAL_EXECUTION_SLEEP_DURATION = 1000; //microseconds (1ms = 1000)
 const SLEEP_DURATION = 5; //seconds
 const CONFIG_ERROR_SLEEP_DURATION = 60; //seconds
 const MINI_SLEEP_DURATION = 1; //seconds
