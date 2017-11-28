@@ -473,10 +473,10 @@ class HotstatusPipeline {
          */
         self::FILTER_KEY_RANK => [
             "Bronze" => [
-                "min" => PHP_INT_MIN,
+                "min" => 0,
                 "max" => 99,
                 "players" => [
-                    "min" => PHP_INT_MIN,
+                    "min" => 0,
                     "max" => 0,
                 ],
                 "selected" => TRUE
@@ -1733,6 +1733,46 @@ class HotstatusPipeline {
         }
 
         return self::UNKNOWN;
+    }
+
+    /*
+     * Returns a rank tier : [V, IV, III, II, I] for the rank that the rating falls into. Unknown returns "?", Highest Rank returns "*".
+     */
+    public static function getRankTierForPlayerRating($rating) {
+        if (is_numeric($rating)) {
+            foreach (self::$filter[self::FILTER_KEY_RANK] as $rname => $robj) {
+                if ($rating >= $robj['players']['min'] && $rating <= $robj['players']['max']) {
+                    if ($rname === "Master") {
+                        return "*";
+                    }
+                    else {
+                        //Split min/max of rating into 5 pieces, return the first section that the rating falls into
+                        $min = $robj['players']['min'] * 1.00;
+                        $max = $robj['players']['max'] * 1.00;
+
+                        $diff = $max - $min;
+
+                        $sectionsize = $diff / 5.0;
+
+                        $sections = ["V", "IV", "III", "II", "I"];
+
+                        $t = 0;
+                        for ($i = $min; $i <= $max; $i += $sectionsize) {
+                            $newmin = $i;
+                            $newmax = $i + $sectionsize;
+
+                            if ($rating >= $newmin && $rating <= $newmax) {
+                                return $sections[$t];
+                            }
+
+                            $t++;
+                        }
+                    }
+                }
+            }
+        }
+
+        return "?";
     }
 
     /*
