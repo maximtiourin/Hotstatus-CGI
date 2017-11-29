@@ -41,47 +41,47 @@ $linux = OS::getOS() == OS::OS_LINUX;
 
 
 $db->prepare("UpdateReplayStatus",
-    "UPDATE replays SET status = ?, lastused = ? WHERE id = ?");
-$db->bind("UpdateReplayStatus", "sii", $r_status, $r_timestamp, $r_id);
+    "UPDATE replays SET status = ?, lastused = ? WHERE id = ? LIMIT 1");
+$db->bind("UpdateReplayStatus", "iii", $r_status, $r_timestamp, $r_id);
 
 $db->prepare("UpdateReplayStatusError",
-    "UPDATE replays SET file = NULL, error = ?, status = ?, lastused = ? WHERE id = ?");
-$db->bind("UpdateReplayStatusError", "ssii", $r_error, $r_status, $r_timestamp, $r_id);
+    "UPDATE replays SET file = NULL, error = ?, status = ?, lastused = ? WHERE id = ? LIMIT 1");
+$db->bind("UpdateReplayStatusError", "siii", $r_error, $r_status, $r_timestamp, $r_id);
 
 $db->prepare("UpdateReplayParsed",
-    "UPDATE replays SET match_id = ?, file = NULL, status = ?, lastused = ? WHERE id = ?");
-$db->bind("UpdateReplayParsed", "isii", $r_match_id, $r_status, $r_timestamp, $r_id);
+    "UPDATE replays SET match_id = ?, file = NULL, status = ?, lastused = ? WHERE id = ? LIMIT 1");
+$db->bind("UpdateReplayParsed", "iiii", $r_match_id, $r_status, $r_timestamp, $r_id);
 
 $db->prepare("UpdateReplayParsedError",
-    "UPDATE replays SET match_id = ?, file = NULL, error = ?, status = ?, lastused = ? WHERE id = ?");
-$db->bind("UpdateReplayParsedError", "issii", $r_match_id, $r_error, $r_status, $r_timestamp, $r_id);
+    "UPDATE replays SET match_id = ?, file = NULL, error = ?, status = ?, lastused = ? WHERE id = ? LIMIT 1");
+$db->bind("UpdateReplayParsedError", "isiii", $r_match_id, $r_error, $r_status, $r_timestamp, $r_id);
 
 $db->prepare("SelectNextReplayWithStatus-Unlocked",
-    "SELECT * FROM `replays` WHERE `status` = ? AND `lastused` <= ? ORDER BY `match_date` ASC, `id` ASC LIMIT 1");
-$db->bind("SelectNextReplayWithStatus-Unlocked", "si", $r_status, $r_timestamp);
+    "SELECT `id`, `fingerprint`, `file` FROM `replays` WHERE `status` = ? AND `lastused` <= ? ORDER BY `match_date` ASC, `id` ASC LIMIT 1");
+$db->bind("SelectNextReplayWithStatus-Unlocked", "ii", $r_status, $r_timestamp);
 
 $db->prepare("semaphore_replays_downloaded",
-    "UPDATE `pipeline_semaphores` SET `value` = `value` + ? WHERE `name` = \"replays_downloaded\"");
+    "UPDATE `pipeline_semaphores` SET `value` = `value` + ? WHERE `name` = \"replays_downloaded\" LIMIT 1");
 $db->bind("semaphore_replays_downloaded", "i", $r_replays_downloaded);
 
 $db->prepare("DoesHeroNameExist",
-    "SELECT `name` FROM herodata_heroes WHERE `name` = ?");
+    "SELECT `name` FROM herodata_heroes WHERE `name` = ? LIMIT 1");
 $db->bind("DoesHeroNameExist", "s", $r_name);
 
 $db->prepare("DoesMapNameExist",
-    "SELECT `name` FROM herodata_maps WHERE `name` = ?");
+    "SELECT `name` FROM herodata_maps WHERE `name` = ? LIMIT 1");
 $db->bind("DoesMapNameExist", "s", $r_name);
 
 $db->prepare("GetHeroNameFromAttribute",
-    "SELECT `name` FROM herodata_heroes WHERE name_attribute = ?");
+    "SELECT `name` FROM herodata_heroes WHERE name_attribute = ? LIMIT 1");
 $db->bind("GetHeroNameFromAttribute", "s", $r_name_attribute);
 
 $db->prepare("GetHeroNameFromHeroNameTranslation",
-    "SELECT `name` FROM herodata_heroes_translations WHERE name_translation = ?");
+    "SELECT `name` FROM herodata_heroes_translations WHERE name_translation = ? LIMIT 1");
 $db->bind("GetHeroNameFromHeroNameTranslation", "s", $r_name_translation);
 
 $db->prepare("GetMapNameFromMapNameTranslation",
-    "SELECT `name` FROM herodata_maps_translations WHERE name_translation = ?");
+    "SELECT `name` FROM herodata_maps_translations WHERE name_translation = ? LIMIT 1");
 $db->bind("GetMapNameFromMapNameTranslation", "s", $r_name_translation);
 
 $db->prepare("GetMMRForPlayer",

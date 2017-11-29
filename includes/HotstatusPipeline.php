@@ -16,24 +16,6 @@ class HotstatusPipeline {
     const REPLAY_EXECUTABLE_DIRECTORY = "/bin/"; //Where the executables for processing replays are located
     const REPLAY_EXECUTABLE_ID_REPLAYPARSER = "ReplayParser.exe"; //String id of the replay parser executable, relative to exec dir
     const REPLAY_EXECUTABLE_ID_MMRCALCULATOR = "MMRCalculator.exe"; //String id of the mmr calculator executable, relative to exec dir
-    const REPLAY_STATUS_QUEUED = "queued"; //status value for when a replay is queued to be downloaded
-    const REPLAY_STATUS_DOWNLOADING = "downloading"; //status value for when a replay is in the process of being downloaded
-    const REPLAY_STATUS_DOWNLOADED = "downloaded"; //status value for when a replay has been downloaded
-    const REPLAY_STATUS_DOWNLOAD_ERROR = "download_error"; //status value for when a replay could not be downloaded due to an error
-    const REPLAY_STATUS_PARSING = "parsing"; //status value for when a replay is being parsed
-    const REPLAY_STATUS_PARSED = "parsed"; //status value for when a replay is done being parsed
-    const REPLAY_STATUS_REPARSING = "reparsing"; //status value for a when a replay is being reparsed
-    const REPLAY_STATUS_REPARSED = "reparsed"; //status value for when a replay is done being reparsed
-    const REPLAY_STATUS_REPARSE_ERROR = "reparse_error"; //status value for when a replay had an unknown error during reparsing
-    const REPLAY_STATUS_PARSE_MMR_ERROR = "parse_mmr_error"; //status value for when a replay had an unknown error during mmr parsing
-    const REPLAY_STATUS_PARSE_REPLAY_ERROR = "parse_replay_error"; //status value for when a replay had an unknown error during mmr parsing
-    const REPLAY_STATUS_PARSE_TRANSLATE_ERROR = "parse_translate_error"; //status value for when a replay had hero or map names that couldnt be translated
-    const REPLAY_STATUS_MONGODB_MATCH_WRITE_ERROR = "mongodb_match_write_error"; //status value for when a repaly had an unknown mongodb bulkwrite error during match insertion
-    const REPLAY_STATUS_MONGODB_MATCHDATA_WRITE_ERROR = "mongodb_matchdata_write_error"; //status value for when a repaly had an unknown mongodb bulkwrite error during match data insertion
-    const REPLAY_STATUS_MYSQL_ERROR = "mysql_error"; //status value for when a replay had a generic unknown mysql error, possibly from manipulating empty result objects
-    const REPLAY_STATUS_MYSQL_MATCH_WRITE_ERROR = "mysql_match_write_error"; //status value for when a replay had an unknown mysql write error during match insertion
-    const REPLAY_STATUS_MYSQL_MATCHDATA_WRITE_ERROR = "mysql_matchdata_write_error"; //status value for when a repaly had an unknown mysql write error during match data insertion
-    const REPLAY_STORAGE_CATALOG = "hotsapi"; //The replay is currently stored on hotsapi s3
     const MMR_AVERAGE_FIXED_CHUNK_SIZE = 100; //Size of the chunks of mmr that the mmr average is rounded to, for use with hero match granularity
     const FORMAT_DATETIME = "Y:m:d H:i:s"; //The format of the datatime strings
     const DATABASE_CHARSET = "utf8mb4";
@@ -1945,4 +1927,25 @@ class HotstatusPipeline {
             "id" => 1,
         ],
     ];
+
+    const REPLAY_STORAGE_INVALID = 0; //Default value of flag, for invalid storage states
+    const REPLAY_STORAGE_CATALOG = 1; //"hotsapi"; //The replay is currently stored on hotsapi s3
+
+    const REPLAY_STATUS_INVALID = 0; //Default value of flag, for invalid replays
+    const REPLAY_STATUS_QUEUED = 1; //"queued"; //status value for when a replay is queued to be downloaded
+    const REPLAY_STATUS_DOWNLOADING = 2; //"downloading"; //status value for when a replay is in the process of being downloaded
+    const REPLAY_STATUS_DOWNLOADED = 3; //"downloaded"; //status value for when a replay has been downloaded
+    const REPLAY_STATUS_DOWNLOAD_ERROR = 4; //"download_error"; //status value for when a replay could not be downloaded due to an error
+    const REPLAY_STATUS_PARSING = 5; //"parsing"; //status value for when a replay is being parsed
+    const REPLAY_STATUS_PARSED = 6; //"parsed"; //status value for when a replay is done being parsed
+    const REPLAY_STATUS_REPARSING = 7; //"reparsing"; //status value for a when a replay is being reparsed
+    const REPLAY_STATUS_REPARSED = 8; //"reparsed"; //status value for when a replay is done being reparsed
+    const REPLAY_STATUS_REPARSE_ERROR = 9; //"reparse_error"; //status value for when a replay had an unknown error during reparsing
+    const REPLAY_STATUS_PARSE_MMR_ERROR = 10; //"parse_mmr_error"; //status value for when a replay had an unknown error during mmr parsing
+    const REPLAY_STATUS_PARSE_REPLAY_ERROR = 11; //"parse_replay_error"; //status value for when a replay had an unknown error during mmr parsing
+    const REPLAY_STATUS_PARSE_TRANSLATE_ERROR = 12; //"parse_translate_error";
+    const REPLAY_STATUS_MYSQL_ERROR = 13; //"mysql_error"; //status value for when a replay had a generic unknown mysql error, possibly from manipulating empty result objects
+    const REPLAY_STATUS_MYSQL_MATCH_WRITE_ERROR = 14; //"mysql_match_write_error"; //status value for when a replay had an unknown mysql write error during match insertion
+    const REPLAY_STATUS_MYSQL_MATCHDATA_WRITE_ERROR = 15; //"mysql_matchdata_write_error"; //status value for when a repaly had an unknown mysql write error during match data insertion
+    const REPLAY_STATUS_OUTOFDATE = 16; //"replay_out_of_date"; //Replay is older than our minimum cutoff for dataset, seperate it from queued replays to improve query speeds
 }

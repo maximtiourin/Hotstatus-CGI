@@ -28,7 +28,7 @@ $sleep = new SleepHandler();
 
 //Prepare statements
 $db->prepare("CountDownloadedReplaysUpToLimit",
-"SELECT COUNT(id) AS replay_count FROM replays WHERE status = '" . HotstatusPipeline::REPLAY_STATUS_DOWNLOADED . "' LIMIT ".HotstatusPipeline::REPLAY_DOWNLOAD_LIMIT);
+"SELECT COUNT(id) AS replay_count FROM replays WHERE status = " . HotstatusPipeline::REPLAY_STATUS_DOWNLOADED . " LIMIT ".HotstatusPipeline::REPLAY_DOWNLOAD_LIMIT);
 
 $db->prepare("set_semaphore_replays_downloaded",
     "UPDATE `pipeline_semaphores` SET `value` = ? WHERE `name` = \"replays_downloaded\" LIMIT 1");

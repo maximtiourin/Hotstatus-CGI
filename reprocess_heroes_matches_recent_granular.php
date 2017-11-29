@@ -1,5 +1,6 @@
 <?php
 /*
+ * @DEPRECATED - OUT OF DATE ACCESS PATTERNS AND QUERIES //TODO
  * Replay Reprocess heroes_matches_recent_granular 
  */
 

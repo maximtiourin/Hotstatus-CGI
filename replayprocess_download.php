@@ -52,23 +52,20 @@ $db->prepare("GetPipelineConfig",
 $db->bind("GetPipelineConfig", "i", $r_pipeline_config_id);
 
 $db->prepare("UpdateReplayStatus",
-"UPDATE replays SET status = ?, lastused = ? WHERE id = ?");
-$db->bind("UpdateReplayStatus", "sii", $r_status, $r_timestamp, $r_id);
+"UPDATE replays SET status = ?, lastused = ? WHERE id = ? LIMIT 1");
+$db->bind("UpdateReplayStatus", "iii", $r_status, $r_timestamp, $r_id);
 
 $db->prepare("UpdateReplayStatusError",
-    "UPDATE replays SET error = ?, status = ?, lastused = ? WHERE id = ?");
-$db->bind("UpdateReplayStatusError", "ssii", $r_error, $r_status, $r_timestamp, $r_id);
+    "UPDATE replays SET error = ?, status = ?, lastused = ? WHERE id = ? LIMIT 1");
+$db->bind("UpdateReplayStatusError", "siii", $r_error, $r_status, $r_timestamp, $r_id);
 
 $db->prepare("UpdateReplayDownloaded",
-"UPDATE replays SET file = ?, status = ?, lastused = ? WHERE id = ?");
-$db->bind("UpdateReplayDownloaded", "ssii", $r_filepath, $r_status, $r_timestamp, $r_id);
-
-/*$db->prepare("CountDownloadedReplaysUpToLimit",
-"SELECT COUNT(id) AS replay_count FROM replays WHERE status = '" . HotstatusPipeline::REPLAY_STATUS_DOWNLOADED . "' LIMIT ".HotstatusPipeline::REPLAY_DOWNLOAD_LIMIT);*/
+"UPDATE replays SET file = ?, status = ?, lastused = ? WHERE id = ? LIMIT 1");
+$db->bind("UpdateReplayDownloaded", "siii", $r_filepath, $r_status, $r_timestamp, $r_id);
 
 $db->prepare("SelectNextReplayWithStatus-Unlocked",
-    "SELECT * FROM `replays` WHERE `match_date` > ? AND `match_date` < ? AND `status` = ? AND `lastused` <= ? ORDER BY `match_date` ASC, `id` ASC LIMIT 1");
-$db->bind("SelectNextReplayWithStatus-Unlocked", "sssi", $replaymindate, $replaymaxdate, $r_status, $r_timestamp);
+    "SELECT `id`, `fingerprint`, `storage_id` FROM `replays` WHERE `match_date` > ? AND `match_date` < ? AND `status` = ? AND `lastused` <= ? ORDER BY `match_date` ASC, `id` ASC LIMIT 1");
+$db->bind("SelectNextReplayWithStatus-Unlocked", "ssii", $replaymindate, $replaymaxdate, $r_status, $r_timestamp);
 
 $db->prepare("read_semaphore_replays_downloaded",
     "SELECT `value` FROM `pipeline_semaphores` WHERE `name` = \"replays_downloaded\" LIMIT 1");

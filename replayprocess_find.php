@@ -34,9 +34,14 @@ $out_of_replays_count = 0; //Count how many times we ran out of replays to proce
 $sleep = new SleepHandler();
 
 //Prepare statements
-$db->prepare("SelectNewestReplay", "SELECT * FROM replays ORDER BY hotsapi_page DESC, hotsapi_idinpage DESC LIMIT 1");
+$db->prepare("GetPipelineConfig",
+    "SELECT `min_replay_date` FROM `pipeline_config` WHERE `id` = ? LIMIT 1");
+$db->bind("GetPipelineConfig", "i", $r_pipeline_config_id);
+
+$db->prepare("SelectNewestReplay", "SELECT `hotsapi_page`, `hotsapi_idinpage` FROM replays ORDER BY hotsapi_page DESC, hotsapi_idinpage DESC LIMIT 1");
+
 $db->prepare("InsertNewReplay", "INSERT INTO replays (hotsapi_id, hotsapi_page, hotsapi_idinpage, match_date, fingerprint, storage_id, status, storage_state, lastused) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-$db->bind("InsertNewReplay", "iiisssssi", $r_id, $r_page, $r_idinpage, $r_match_date, $r_fingerprint, $r_s3url, $r_status, $r_storage_state, $r_timestamp);
+$db->bind("InsertNewReplay", "iiisssiii", $r_id, $r_page, $r_idinpage, $r_match_date, $r_fingerprint, $r_s3url, $r_status, $r_storage_state, $r_timestamp);
 
 //Helper functions
 function addToPageIndex($amount) {
@@ -82,70 +87,96 @@ $db->freeResult($result);
 
 //Look for replays to download and handle
 while (true) {
-    echo 'Requesting page '.$pagenum.' from hotsapi, starting at page index '.$pageindex.'...'.E;
+    //Get pipeline configuration
+    $r_pipeline_config_id = HotstatusPipeline::$pipeline_config[HotstatusPipeline::PIPELINE_CONFIG_DEFAULT]['id'];
+    $pipeconfigresult = $db->execute("GetPipelineConfig");
+    $pipeconfigresrows = $db->countResultRows($pipeconfigresult);
+    if ($pipeconfigresrows > 0) {
+        $pipeconfig = $db->fetchArray($pipeconfigresult);
 
-    $api = Hotsapi::getPagedReplays($pagenum);
+        $replaymindate = $pipeconfig['min_replay_date'];
+        $datetime_min = new \DateTime($replaymindate);
 
-    $prevpage = $pagenum;
+        $db->freeResult($pipeconfigresult);
 
-    if ($api['code'] == Hotsapi::HTTP_OK) {
-        //Process json data and put it in the database
-        $replays = $api['json']['replays'];
-        $replaylen = count($replays);
-        if ($replaylen > 0) {
-            $out_of_replays_count = 0;
+        //Begin Finding
+        echo 'Requesting page ' . $pagenum . ' from hotsapi, starting at page index ' . $pageindex . '...' . E;
 
-            $relevant_replays = Hotsapi::getReplaysGreaterThanEqualToId($replays, $pageindex, true); //FilterByDays excluded due to new functionality of using a mindate for download/parse
-            if (count($relevant_replays) > 0) {
-                foreach ($relevant_replays as $replay) {
-                    $r_id = $replay['id'];
-                    $r_page = $pagenum;
-                    $r_idinpage = $replay['page_index'];
-                    $r_match_date = $replay['game_date'];
-                    $r_fingerprint = $replay['fingerprint'];
-                    $r_s3url = $replay['url'];
-                    $r_status = HotstatusPipeline::REPLAY_STATUS_QUEUED;
-                    $r_storage_state = HotstatusPipeline::REPLAY_STORAGE_CATALOG;
-                    $r_timestamp = time();
+        $api = Hotsapi::getPagedReplays($pagenum);
 
-                    $db->execute("InsertNewReplay");
+        $prevpage = $pagenum;
+
+        if ($api['code'] == Hotsapi::HTTP_OK) {
+            //Process json data and put it in the database
+            $replays = $api['json']['replays'];
+            $replaylen = count($replays);
+            if ($replaylen > 0) {
+                $out_of_replays_count = 0;
+
+                $relevant_replays = Hotsapi::getReplaysGreaterThanEqualToId($replays, $pageindex, true); //FilterByDays excluded due to new functionality of using a mindate for download/parse
+                if (count($relevant_replays) > 0) {
+                    foreach ($relevant_replays as $replay) {
+                        $r_id = $replay['id'];
+                        $r_page = $pagenum;
+                        $r_idinpage = $replay['page_index'];
+                        $r_match_date = $replay['game_date'];
+                        $r_fingerprint = $replay['fingerprint'];
+                        $r_s3url = $replay['url'];
+                        $r_status = HotstatusPipeline::REPLAY_STATUS_QUEUED;
+                        $r_storage_state = HotstatusPipeline::REPLAY_STORAGE_CATALOG;
+                        $r_timestamp = time();
+
+                        // Determine outofdate status
+                        //
+                        // This allows us to catalog replays that are older than our dataset's min start date, without having them
+                        // clog up the status=queued select queries
+                        $datetime_match = new \DateTime($r_match_date);
+                        if ($datetime_match <= $datetime_min) {
+                            $r_status = HotstatusPipeline::REPLAY_STATUS_OUTOFDATE;
+                        }
+
+                        $db->execute("InsertNewReplay");
+                    }
+                    addToPageIndex($replaylen); //Finished with page, rollover page index
+                    echo 'Page #' . $prevpage . ' processed (' . count($relevant_replays) . ' relevant replays).' . E . E;
+                    $sleep->add(REQUEST_SPREADOUT_SLEEP_DURATION);
                 }
-                addToPageIndex($replaylen); //Finished with page, rollover page index
-                echo 'Page #' . $prevpage . ' processed (' . count($relevant_replays) . ' relevant replays).'.E.E;
-                $sleep->add(REQUEST_SPREADOUT_SLEEP_DURATION);
+                else {
+                    //No relevant replays found here, set next replayid to be greater than the highest id in the replayset
+                    addToPageIndex($replaylen); //Finished with page, rollover page index
+                    echo 'Page #' . $prevpage . ' had no more relevant replays.' . E . E;
+                    $sleep->add(REQUEST_SPREADOUT_SLEEP_DURATION);
+                }
             }
             else {
-                //No relevant replays found here, set next replayid to be greater than the highest id in the replayset
-                addToPageIndex($replaylen); //Finished with page, rollover page index
-                echo 'Page #' . $prevpage . ' had no more relevant replays.'.E.E;
-                $sleep->add(REQUEST_SPREADOUT_SLEEP_DURATION);
+                $out_of_replays_count++;
+
+                if ($out_of_replays_count >= OUT_OF_REPLAYS_COUNT_LIMIT) {
+                    //No more replay pages to process! Long sleep
+                    $out_of_replays_count = 0;
+
+                    echo timestamp() . 'Out of replays to process! Waiting for new hotsapi replay at page index #' . $pageindex . '...' . E;
+                    $sleep->add(OUT_OF_REPLAYS_SLEEP_DURATION);
+                }
+                else {
+                    //Potentially no more replay pages to process, try a few more times after a minute to make sure it's not just the API bugging out.
+                    echo timestamp() . 'Received empty replays result...' . E . E;
+                    $sleep->add(OUT_OF_REPLAYS_COUNT_DURATION);
+                }
             }
+        }
+        else if ($api['code'] == Hotsapi::HTTP_RATELIMITED) {
+            //Error too many requests, wait awhile before trying again
+            echo timestamp() . 'Error: HTTP Code ' . $api['code'] . '. Rate limited.' . E . E;
+            $sleep->add(TOO_MANY_REQUEST_SLEEP_DURATION);
         }
         else {
-            $out_of_replays_count++;
-
-            if ($out_of_replays_count >= OUT_OF_REPLAYS_COUNT_LIMIT) {
-               //No more replay pages to process! Long sleep
-               $out_of_replays_count = 0;
-
-               echo timestamp() . 'Out of replays to process! Waiting for new hotsapi replay at page index #' . $pageindex . '...'.E;
-               $sleep->add(OUT_OF_REPLAYS_SLEEP_DURATION);
-            }
-            else {
-               //Potentially no more replay pages to process, try a few more times after a minute to make sure it's not just the API bugging out.
-               echo timestamp() . 'Received empty replays result...'.E.E;
-               $sleep->add(OUT_OF_REPLAYS_COUNT_DURATION);
-            }
+            echo timestamp() . 'Error: HTTP Code ' . $api['code'] . '.' . E . E;
+            $sleep->add(UNKNOWN_ERROR_CODE);
         }
     }
-    else if ($api['code'] == Hotsapi::HTTP_RATELIMITED) {
-        //Error too many requests, wait awhile before trying again
-        echo timestamp() . 'Error: HTTP Code ' . $api['code'] . '. Rate limited.'.E.E;
-        $sleep->add(TOO_MANY_REQUEST_SLEEP_DURATION);
-    }
     else {
-        echo timestamp() . 'Error: HTTP Code ' . $api['code'].'.'.E.E;
-        $sleep->add(UNKNOWN_ERROR_CODE);
+
     }
 
     $sleep->execute();
