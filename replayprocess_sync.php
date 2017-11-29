@@ -44,6 +44,7 @@ while (true) {
     if (time() % SYNC_REPLAYS_DOWNLOADED_INTERVAL == 0) {
         $countResult = $db->execute("CountDownloadedReplaysUpToLimit");
         $r_replays_downloaded = $db->fetchArray($countResult)['replay_count'];
+        $db->freeResult($countResult);
         $db->execute("set_semaphore_replays_downloaded");
         echo "Sync: Semaphore - Replays Downloaded".E;
     }
