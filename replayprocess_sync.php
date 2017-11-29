@@ -38,7 +38,7 @@ $db->bind("set_semaphore_replays_downloaded", "i", $r_replays_downloaded);
 function log($str) {
     $datetime = new \DateTime("now");
     $datestr = $datetime->format(HotstatusPipeline::FORMAT_DATETIME);
-    echo "[$datestr] str".E;
+    echo "[$datestr] $str".E;
 }
 
 //Begin main script
