@@ -74,7 +74,7 @@ $db->prepare("read_semaphore_replays_downloaded",
     "SELECT `value` FROM `pipeline_semaphores` WHERE `name` = \"replays_downloaded\" LIMIT 1");
 
 $db->prepare("semaphore_replays_downloaded",
-    "UPDATE `pipeline_semaphores` SET `value` = `value` + ? WHERE `name` = \"replays_downloaded\"");
+    "UPDATE `pipeline_semaphores` SET `value` = `value` + ? WHERE `name` = \"replays_downloaded\" LIMIT 1");
 $db->bind("semaphore_replays_downloaded", "i", $r_replays_downloaded);
 
 //Begin main script

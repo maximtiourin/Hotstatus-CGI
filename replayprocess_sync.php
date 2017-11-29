@@ -31,8 +31,8 @@ $db->prepare("CountDownloadedReplaysUpToLimit",
 "SELECT COUNT(id) AS replay_count FROM replays WHERE status = '" . HotstatusPipeline::REPLAY_STATUS_DOWNLOADED . "' LIMIT ".HotstatusPipeline::REPLAY_DOWNLOAD_LIMIT);
 
 $db->prepare("set_semaphore_replays_downloaded",
-    "UPDATE `pipeline_semaphores` SET `value` = ? WHERE `name` = \"replays_downloaded\"");
-$db->bind("semaphore_replays_downloaded", "i", $r_replays_downloaded);
+    "UPDATE `pipeline_semaphores` SET `value` = ? WHERE `name` = \"replays_downloaded\" LIMIT 1");
+$db->bind("set_semaphore_replays_downloaded", "i", $r_replays_downloaded);
 
 //Begin main script
 echo '--------------------------------------'.E
