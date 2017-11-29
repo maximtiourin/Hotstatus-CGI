@@ -1051,12 +1051,12 @@ while (true) {
                     FileHandling::deleteAllFilesMatchingPattern($r_filepath);
                 }
 
-                //Release lock
-                $db->unlock($replayLockId);
-
                 //Decrement Semaphore
                 $r_replays_downloaded = -1;
                 $db->execute("semaphore_replays_downloaded");
+
+                //Release lock
+                $db->unlock($replayLockId);
             }
             else {
                 //Could not attain lock on replay, immediately continue
