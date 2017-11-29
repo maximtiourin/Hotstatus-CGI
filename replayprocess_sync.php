@@ -34,6 +34,13 @@ $db->prepare("set_semaphore_replays_downloaded",
     "UPDATE `pipeline_semaphores` SET `value` = ? WHERE `name` = \"replays_downloaded\" LIMIT 1");
 $db->bind("set_semaphore_replays_downloaded", "i", $r_replays_downloaded);
 
+//Helper Functions
+function log($str) {
+    $datetime = new \DateTime("now");
+    $datestr = $datetime->format(HotstatusPipeline::FORMAT_DATETIME);
+    echo "[$datestr] str".E;
+}
+
 //Begin main script
 echo '--------------------------------------'.E
     .'Replay process <<SYNC>> has started'.E
@@ -46,7 +53,7 @@ while (true) {
         $r_replays_downloaded = $db->fetchArray($countResult)['replay_count'];
         $db->freeResult($countResult);
         $db->execute("set_semaphore_replays_downloaded");
-        echo "Sync: Semaphore - Replays Downloaded".E;
+        log("Sync: Semaphore - Replays Downloaded");
     }
 
     $sleep->add(PROCESS_GRANULARITY);
