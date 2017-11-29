@@ -113,6 +113,8 @@ while (true) {
             if ($replaylen > 0) {
                 $out_of_replays_count = 0;
 
+                $outofdate_replays_count = 0;
+
                 $relevant_replays = Hotsapi::getReplaysGreaterThanEqualToId($replays, $pageindex, true); //FilterByDays excluded due to new functionality of using a mindate for download/parse
                 if (count($relevant_replays) > 0) {
                     foreach ($relevant_replays as $replay) {
@@ -133,12 +135,13 @@ while (true) {
                         $datetime_match = new \DateTime($r_match_date);
                         if ($datetime_match <= $datetime_min) {
                             $r_status = HotstatusPipeline::REPLAY_STATUS_OUTOFDATE;
+                            $outofdate_replays_count++;
                         }
 
                         $db->execute("InsertNewReplay");
                     }
                     addToPageIndex($replaylen); //Finished with page, rollover page index
-                    echo 'Page #' . $prevpage . ' processed (' . count($relevant_replays) . ' relevant replays).' . E . E;
+                    echo 'Page #' . $prevpage . ' processed (' . count($relevant_replays) . ' relevant replays -> '. $outofdate_replays_count .' out-of-date).' . E . E;
                     $sleep->add(REQUEST_SPREADOUT_SLEEP_DURATION);
                 }
                 else {
