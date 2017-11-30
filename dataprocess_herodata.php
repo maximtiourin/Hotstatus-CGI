@@ -4,10 +4,9 @@ namespace Fizzik;
 
 require_once 'includes/include.php';
 
-use Fizzik\Database\RedisDatabase;
 use Fizzik\Utility\FileHandling;
 use Fizzik\Database\MySqlDatabase;
-use MongoDB\GridFS\ReadableStream;
+use Fizzik\Utility\SleepHandler;
 
 set_time_limit(0);
 date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
@@ -22,6 +21,9 @@ $creds = Credentials::getCredentialsForUser(Credentials::USER_REPLAYPROCESS);
 $global_json = [];
 $global_json['build'] = 0;
 $global_json['heroes'] = [];
+
+//Objects
+$sleep = new SleepHandler();
 
 //General QoL constants
 const NOIMAGE = 'NoImage';
@@ -73,6 +75,7 @@ $stormDataNames = [
     "Artanis" => TRUE,
     "Azmodan" => TRUE,
     "Butcher" => TRUE,
+    "Brightwing" => TRUE,
     "Chen" => TRUE,
     "Crusader" => TRUE,
     "DemonHunter" => TRUE,
@@ -81,12 +84,15 @@ $stormDataNames = [
     "Genn" => TRUE,
     "Jaina" => TRUE,
     "Kaelthas" => TRUE,
+    "L90ETC" => TRUE,
     "Leoric" => TRUE,
+    "Lili" => TRUE,
     "LostVikings" => TRUE,
     "Medic" => TRUE,
     "Monk" => TRUE,
     "Murky" => TRUE,
     "Necromancer" => TRUE,
+    "Raynor" => TRUE,
     "Rexxar" => TRUE,
     "SgtHammer" => TRUE,
     "Stitches" => TRUE,
@@ -94,6 +100,8 @@ $stormDataNames = [
     "Tassadar" => TRUE,
     "Thrall" => TRUE,
     "Tinker" => TRUE,
+    "Tyrael" => TRUE,
+    "Tyrande" => TRUE,
     "Uther" => TRUE,
     "WitchDoctor" => TRUE,
     "Wizard" => TRUE,
@@ -472,7 +480,13 @@ function extractTalents($filepath) {
     if ($xml !== FALSE) {
         foreach ($xml->CTalent as $talent) {
             $name_internal = $talent->attributes()->id;
-            $gamestringkey = $talent->Face['value'];
+
+            if ($talent->Face) {
+                $gamestringkey = $talent->Face['value'];
+            }
+            else {
+                $gamestringkey = $name_internal;
+            }
 
             $talentMappings[strval($name_internal)] = $gamestringkey;
         }
@@ -1526,7 +1540,7 @@ $validargs = [
             . "[clean] : --mode=clean : Clears all herodata in the database before updating it with newly parsed data. Should really only be used for development.\n"
             . "[upsert] : --mode=upsert : Attempts to insert newly parsed data to the database, if unique keys already exist for that data, only non-unique fields are updated.\n",
         "exec" => function (...$args) {
-            global $validargs, $creds, $global_json, $awardMappings;
+            global $sleep, $validargs, $creds, $global_json, $awardMappings;
 
             if (count($args) == 1) {
                 //Init logging info
@@ -1555,18 +1569,30 @@ $validargs = [
                 $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
                 /*
+                 * Upsert implementation to get around the bug for ON DUPLICATE KEY UPDATE of text blobs, bug was fixed in 5.7.19+
+                 * but Google Cloud SQL Mysql5.7 is only on version 5.7.14
+                 */
+                /*$upsert = function(MySqlDatabase &$db, $select, $insert, $update) {
+                    $result = $db->execute($select);
+                    $result_rows = $db->countResultRows($result);
+                    if ($result_rows > 0) {
+
+                    }
+                };*/
+
+                /*
                  * Prepare statements
                  */
                 // UpsertHero
-                $db->prepare("UpsertHero",
-                    "INSERT INTO herodata_heroes "
-                . "(name, name_internal, name_sort, name_attribute, difficulty, role_blizzard, role_specific, universe, title, desc_tagline, desc_bio, rarity, image_hero, image_minimap, rating_damage, rating_utility, rating_survivability, rating_complexity) "
-                . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
-                . "ON DUPLICATE KEY UPDATE "
-                . "name_internal = VALUES(name_internal), name_sort = VALUES(name_sort), name_attribute = VALUES(name_attribute), difficulty = VALUES(difficulty), "
-                . "role_blizzard = VALUES(role_blizzard), role_specific = VALUES(role_specific), universe = VALUES(universe), title = VALUES(title), desc_tagline = VALUES(desc_tagline), "
-                . "desc_bio = VALUES(desc_bio), rarity = VALUES(rarity), image_hero = VALUES(image_hero), image_minimap = VALUES(image_minimap), rating_damage = VALUES(rating_damage), "
-                . "rating_utility = VALUES(rating_utility), rating_survivability = VALUES(rating_survivability), rating_complexity = VALUES(rating_complexity)");
+                /*$db->prepare("UpsertHero",
+                    "INSERT INTO `herodata_heroes` "
+                    . "(`name`, `name_internal`, `name_sort`, `name_attribute`, `difficulty`, `role_blizzard`, `role_specific`, `universe`, `title`, `desc_tagline`, `desc_bio`, `rarity`, `image_hero`, `image_minimap`, `rating_damage`, `rating_utility`, `rating_survivability`, `rating_complexity`) "
+                    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+                    . "ON DUPLICATE KEY UPDATE "
+                    . "`name_internal` = VALUES(`name_internal`), `name_sort` = VALUES(`name_sort`), `name_attribute` = VALUES(`name_attribute`), `difficulty` = VALUES(`difficulty`), "
+                    . "`role_blizzard` = VALUES(`role_blizzard`), `role_specific` = VALUES(`role_specific`), `universe` = VALUES(`universe`), `title` = VALUES(`title`), `desc_tagline` = VALUES(`desc_tagline`), "
+                    . "`desc_bio` = VALUES(`desc_bio`), `rarity` = VALUES(`rarity`), `image_hero` = VALUES(`image_hero`), `image_minimap` = VALUES(`image_minimap`), `rating_damage` = VALUES(`rating_damage`), "
+                    . "`rating_utility` = VALUES(`rating_utility`), `rating_survivability` = VALUES(`rating_survivability`), `rating_complexity` = VALUES(`rating_complexity`)");
                 $db->bind("UpsertHero",
                     "ssssssssssssssiiii",
                     $r_name, $r_name_internal, $r_name_sort, $r_name_attribute, $r_difficulty, $r_role_blizzard, $r_role_specific, $r_universe, $r_title, $r_desc_tagline,
@@ -1574,65 +1600,172 @@ $validargs = [
 
                 // UpsertAbility
                 $db->prepare("UpsertAbility",
-                    "INSERT INTO herodata_abilities "
-                    . "(hero, name, name_internal, desc_simple, image, type) "
+                    "INSERT INTO `herodata_abilities` "
+                    . "(`hero`, `name`, `name_internal`, `desc_simple`, `image`, `type`) "
                     . "VALUES (?, ?, ?, ?, ?, ?) "
                     . "ON DUPLICATE KEY UPDATE "
-                    . "name = VALUES(name), desc_simple = VALUES(desc_simple), image = VALUES(image), type = VALUES(type)");
+                    . "`name` = VALUES(`name`), `desc_simple` = VALUES(`desc_simple`), `image` = VALUES(`image`), `type` = VALUES(`type`)");
                 $db->bind("UpsertAbility",
                     "ssssss",
                     $r_hero, $r_name, $r_name_internal, $r_desc_simple, $r_image, $r_type);
 
                 // UpsertTalent
                 $db->prepare("UpsertTalent",
-                    "INSERT INTO herodata_talents "
-                    . "(hero, name, name_internal, desc_simple, image, tier_row, tier_column) "
+                    "INSERT INTO `herodata_talents` "
+                    . "(`hero`, `name`, `name_internal`, `desc_simple`, `image`, `tier_row`, `tier_column`) "
                     . "VALUES (?, ?, ?, ?, ?, ?, ?) "
                     . "ON DUPLICATE KEY UPDATE "
-                    . "name = VALUES(name), desc_simple = VALUES(desc_simple), image = VALUES(image), tier_row = VALUES(tier_row), tier_column = VALUES(tier_column)");
+                    . "`name` = VALUES(`name`), `desc_simple` = VALUES(`desc_simple`), `image` = VALUES(`image`), `tier_row` = VALUES(`tier_row`), `tier_column` = VALUES(`tier_column`)");
                 $db->bind("UpsertTalent",
                     "sssssii",
                     $r_hero, $r_name, $r_name_internal, $r_desc_simple, $r_image, $r_tier_row, $r_tier_column);
+
                 // UpsertMap
                 $db->prepare("UpsertMap",
-                    "INSERT INTO herodata_maps "
-                    . "(name, name_sort) "
+                    "INSERT INTO `herodata_maps` "
+                    . "(`name`, `name_sort`) "
                     . "VALUES (?, ?) "
                     . "ON DUPLICATE KEY UPDATE "
-                    . "name_sort = VALUES(name_sort)");
+                    . "`name_sort` = VALUES(`name_sort`)");
                 $db->bind("UpsertMap",
                     "ss",
                     $r_name, $r_name_sort);
+
                 // UpsertAward
                 $db->prepare("UpsertAward",
-                    "INSERT INTO herodata_awards "
-                    . "(id, name, desc_simple, image) "
+                    "INSERT INTO `herodata_awards` "
+                    . "(`id`, `name`, `desc_simple`, `image`) "
                     . "VALUES (?, ?, ?, ?) "
                     . "ON DUPLICATE KEY UPDATE "
-                    . "name = VALUES(name), desc_simple = VALUES(desc_simple), image = VALUES(image)");
+                    . "`name` = VALUES(`name`), `desc_simple` = VALUES(`desc_simple`), `image` = VALUES(`image`)");
                 $db->bind("UpsertAward",
                     "ssss",
                     $r_id, $r_name, $r_desc_simple, $r_image);
+
                 // UpsertMapTranslation
                 $db->prepare("UpsertMapTranslation",
-                    "INSERT INTO herodata_maps_translations "
-                    . "(name, name_translation) "
+                    "INSERT INTO `herodata_maps_translations` "
+                    . "(`name`, `name_translation`) "
                     . "VALUES (?, ?) "
                     . "ON DUPLICATE KEY UPDATE "
-                    . "name_translation = VALUES(name_translation)");
+                    . "`name_translation` = VALUES(`name_translation`)");
                 $db->bind("UpsertMapTranslation",
                     "ss",
                     $r_name, $r_name_translation);
+
                 // UpsertHeroTranslation
                 $db->prepare("UpsertHeroTranslation",
-                    "INSERT INTO herodata_heroes_translations "
-                    . "(name, name_translation) "
+                    "INSERT INTO `herodata_heroes_translations` "
+                    . "(`name`, `name_translation`) "
                     . "VALUES (?, ?) "
                     . "ON DUPLICATE KEY UPDATE "
-                    . "name_translation = VALUES(name_translation)");
+                    . "`name_translation` = VALUES(`name_translation`)");
                 $db->bind("UpsertHeroTranslation",
                     "ss",
-                    $r_name, $r_name_translation);
+                    $r_name, $r_name_translation);*/
+
+
+                /*
+                 * Secondary Upsert implementations to get around the bug for ON DUPLICATE KEY UPDATE of text blobs when referencing their columns in VALUES(), bug was fixed in 5.7.19+
+                 * but Google Cloud SQL Mysql5.7 is only on version 5.7.14 with no option for updating to newer version
+                 */
+                // UpsertHero
+                $db->prepare("UpsertHero",
+                    "INSERT INTO `herodata_heroes` "
+                    . "(`name`, `name_internal`, `name_sort`, `name_attribute`, `difficulty`, `role_blizzard`, `role_specific`, `universe`, `title`, `desc_tagline`, `desc_bio`, `rarity`, `image_hero`, `image_minimap`, `rating_damage`, `rating_utility`, `rating_survivability`, `rating_complexity`) "
+                    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+                    . "ON DUPLICATE KEY UPDATE "
+                    . "`name_internal` = ?, `name_sort` = ?, `name_attribute` = ?, `difficulty` = ?, "
+                    . "`role_blizzard` = ?, `role_specific` = ?, `universe` = ?, `title` = ?, `desc_tagline` = ?, "
+                    . "`desc_bio` = ?, `rarity` = ?, `image_hero` = ?, `image_minimap` = ?, `rating_damage` = ?, "
+                    . "`rating_utility` = ?, `rating_survivability` = ?, `rating_complexity` = ?");
+                $db->bind("UpsertHero",
+                    "ssssssssssssssiiiisssssssssssssiiii",
+                    $r_name, $r_name_internal, $r_name_sort, $r_name_attribute, $r_difficulty, $r_role_blizzard, $r_role_specific, $r_universe, $r_title, $r_desc_tagline,
+                    $r_desc_bio, $r_rarity, $r_image_hero, $r_image_minimap, $r_rating_damage, $r_rating_utility, $r_rating_survivability, $r_rating_complexity,
+
+                    $r_name_internal, $r_name_sort, $r_name_attribute, $r_difficulty, $r_role_blizzard, $r_role_specific, $r_universe, $r_title, $r_desc_tagline,
+                    $r_desc_bio, $r_rarity, $r_image_hero, $r_image_minimap, $r_rating_damage, $r_rating_utility, $r_rating_survivability, $r_rating_complexity);
+
+                // UpsertAbility
+                $db->prepare("UpsertAbility",
+                    "INSERT INTO `herodata_abilities` "
+                    . "(`hero`, `name`, `name_internal`, `desc_simple`, `image`, `type`) "
+                    . "VALUES (?, ?, ?, ?, ?, ?) "
+                    . "ON DUPLICATE KEY UPDATE "
+                    . "`name` = ?, `desc_simple` = ?, `image` = ?, `type` = ?");
+                $db->bind("UpsertAbility",
+                    "ssssssssss",
+                    $r_hero, $r_name, $r_name_internal, $r_desc_simple, $r_image, $r_type,
+
+                    $r_name, $r_desc_simple, $r_image, $r_type);
+
+                // UpsertTalent
+                $db->prepare("UpsertTalent",
+                    "INSERT INTO `herodata_talents` "
+                    . "(`hero`, `name`, `name_internal`, `desc_simple`, `image`, `tier_row`, `tier_column`) "
+                    . "VALUES (?, ?, ?, ?, ?, ?, ?) "
+                    . "ON DUPLICATE KEY UPDATE "
+                    . "`name` = ?, `desc_simple` = ?, `image` = ?, `tier_row` = ?, `tier_column` = ?");
+                $db->bind("UpsertTalent",
+                    "sssssiisssii",
+                    $r_hero, $r_name, $r_name_internal, $r_desc_simple, $r_image, $r_tier_row, $r_tier_column,
+
+                    $r_name, $r_desc_simple, $r_image, $r_tier_row, $r_tier_column);
+
+                // UpsertMap
+                $db->prepare("UpsertMap",
+                    "INSERT INTO `herodata_maps` "
+                    . "(`name`, `name_sort`) "
+                    . "VALUES (?, ?) "
+                    . "ON DUPLICATE KEY UPDATE "
+                    . "`name_sort` = ?");
+                $db->bind("UpsertMap",
+                    "sss",
+                    $r_name, $r_name_sort,
+
+                    $r_name_sort);
+
+                // UpsertAward
+                $db->prepare("UpsertAward",
+                    "INSERT INTO `herodata_awards` "
+                    . "(`id`, `name`, `desc_simple`, `image`) "
+                    . "VALUES (?, ?, ?, ?) "
+                    . "ON DUPLICATE KEY UPDATE "
+                    . "`name` = ?, `desc_simple` = ?, `image` = ?");
+                $db->bind("UpsertAward",
+                    "sssssss",
+                    $r_id, $r_name, $r_desc_simple, $r_image,
+
+                    $r_name, $r_desc_simple, $r_image);
+
+                // UpsertMapTranslation
+                $db->prepare("UpsertMapTranslation",
+                    "INSERT INTO `herodata_maps_translations` "
+                    . "(`name`, `name_translation`) "
+                    . "VALUES (?, ?) "
+                    . "ON DUPLICATE KEY UPDATE "
+                    . "`name_translation` = ?");
+                $db->bind("UpsertMapTranslation",
+                    "sss",
+                    $r_name, $r_name_translation,
+
+                    $r_name_translation);
+
+                // UpsertHeroTranslation
+                $db->prepare("UpsertHeroTranslation",
+                    "INSERT INTO `herodata_heroes_translations` "
+                    . "(`name`, `name_translation`) "
+                    . "VALUES (?, ?) "
+                    . "ON DUPLICATE KEY UPDATE "
+                    . "`name_translation` = ?");
+                $db->bind("UpsertHeroTranslation",
+                    "sss",
+                    $r_name, $r_name_translation,
+
+                    $r_name_translation);
+
+
 
                 /*
                  * Empty tables if specified
@@ -1721,7 +1854,7 @@ $validargs = [
                     }
                 }
                 else {
-                    $log("[--dbout $mode] Could not find map data file (" . $filepath . ")...".E);
+                    $log("[--dbout $mode] Could not find map data file (" . $filepath . ")..." . E);
                 }
 
                 //Upsert Hero Translations
@@ -1742,22 +1875,25 @@ $validargs = [
                     }
                 }
                 else {
-                    $log("[--dbout $mode] Could not find hero data file (" . $filepath . ")...".E);
+                    $log("[--dbout $mode] Could not find hero data file (" . $filepath . ")..." . E);
                 }
 
                 //Upsert Awards
                 if (count($awardMappings) > 0) {
                     foreach ($awardMappings as $awardid => $award) {
                         $r_id = $awardid;
-                        $r_name =$award['name'];
+                        $r_name = $award['name'];
                         $r_desc_simple = $award['desc'];
                         $r_image = $award['image'];
+
                         $db->execute("UpsertAward");
                     }
                 }
                 else {
-                    $log("[--dbout $mode] No award mappings were found...".E);
+                    $log("[--dbout $mode] No award mappings were found..." . E);
                 }
+
+                $db->close();
 
                 //@DEPRECATED -- Cache is now more complex, let it expire itself rather than depending on this process
                 //Invalidate any cached requests that made use of data generated from this operation
