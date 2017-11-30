@@ -80,6 +80,7 @@ function trackStatDifference($getkey, $setkey, &$stat) {
     $statdiff = $newstat - $stat;
     setStatInt($setkey, $statdiff);
     $stat = $newstat;
+    return $statdiff;
 }
 
 //Stats Tracking
@@ -106,10 +107,12 @@ while (true) {
     //Per Minute
     if (time() % 60 == 0) {
         //stats_replays_processed_per_minute
-        trackStatDifference("replays_processed_total", "replays_processed_per_minute", $stat_replays_processed_total);
+        $d = trackStatDifference("replays_processed_total", "replays_processed_per_minute", $stat_replays_processed_total);
+        log("Stat: Replays Processed - Per Minute: $d");
 
         //stats_replays_errors_per_minute
-        trackStatDifference("replays_errors_total", "replays_errors_per_minute", $stat_replays_processed_total);
+        $d = trackStatDifference("replays_errors_total", "replays_errors_per_minute", $stat_replays_processed_total);
+        log("Stat: Replays Errors - Per Minute: $d");
     }
 
     $sleep->add(PROCESS_GRANULARITY);
