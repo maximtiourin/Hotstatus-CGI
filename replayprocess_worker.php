@@ -72,9 +72,21 @@ $db->prepare("UpdateReplayParsedError",
     "UPDATE replays SET match_id = ?, file = NULL, error = ?, status = ?, lastused = ? WHERE id = ? LIMIT 1");
 $db->bind("UpdateReplayParsedError", "isiii", $r_match_id, $r_error, $r_status, $r_timestamp, $r_id);
 
+$db->prepare("SelectNextReplayForDownload-Unlocked",
+    "SELECT `id`, `fingerprint`, `storage_id` FROM `replays` WHERE `match_date` > ? AND `match_date` < ? AND `status` = ? AND `lastused` <= ? ORDER BY `match_date` ASC, `id` ASC LIMIT 1");
+$db->bind("SelectNextReplayForDownload-Unlocked", "ssii", $replaymindate, $replaymaxdate, $r_status, $r_timestamp);
+
 $db->prepare("SelectNextReplayWithStatus-Unlocked",
     "SELECT `id`, `fingerprint`, `file` FROM `replays` WHERE `status` = ? AND `lastused` <= ? ORDER BY `match_date` ASC, `id` ASC LIMIT 1");
 $db->bind("SelectNextReplayWithStatus-Unlocked", "ii", $r_status, $r_timestamp);
+
+$db->prepare("stats_replays_processed_total",
+    "UPDATE `pipeline_analytics` SET `val_int` = `val_int` + ? WHERE `key_name` = 'replays_processed_total' LIMIT 1");
+$db->bind("stats_replays_processed_total", "i", $r_replays_processed_total);
+
+$db->prepare("stats_replays_errors_total",
+    "UPDATE `pipeline_analytics` SET `val_int` = `val_int` + ? WHERE `key_name` = 'replays_errors_total' LIMIT 1");
+$db->bind("stats_replays_errors_total", "i", $r_replays_errors_total);
 
 $db->prepare("DoesHeroNameExist",
     "SELECT `name` FROM herodata_heroes WHERE `name` = ? LIMIT 1");
@@ -225,14 +237,6 @@ $db->bind("ensureTalentBuild", "sss", $r_hero, $r_build, $r_build_talents);
 $db->prepare("ensurePlayerParty",
     "INSERT INTO players_parties (id, party, players) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE id = id");
 $db->bind("ensurePlayerParty", "iss", $r_player_id, $r_party, $r_players);
-
-/*$db->prepare("CountPlayerMatchesForHero",
-    "SELECT COALESCE(SUM(`played`), 0) AS `count` FROM `players_matches_total` WHERE `id` = ? AND `hero` = ?");
-$db->bind("CountPlayerMatchesForHero", "is", $r_player_id, $r_hero);*/
-
-//Mininum Date Inclusive for replays to process
-//DEPRECATED from selectReplay, now download process is the authority on which matches are valid for processing, and replay process will parse ANY replays that are downloaded, to minimize db reads
-//$replaymindate = HotstatusPipeline::$SEASONS[HotstatusPipeline::SEASON_UNKNOWN]["end"];
 
 /*
  * Inserts match into 'matches' collection
@@ -658,10 +662,10 @@ while (true) {
             //No Worker Processing previously failed, look for unlocked queued replay to process
             $r_status = HotstatusPipeline::REPLAY_STATUS_QUEUED;
             $r_timestamp = time() - UNLOCK_DEFAULT_DURATION;
-            $queuedResult = $db->execute("SelectNextReplayWithStatus-Unlocked");
+            $queuedResult = $db->execute("SelectNextReplayForDownload-Unlocked");
             $queuedResultRows = $db->countResultRows($queuedResult);
             if ($queuedResultRows > 0) {
-                //Found a queued unlocked replay, softlock for processing and process it
+                //Found a queued unlocked replay for download, softlock for processing and process it
                 $row = $db->fetchArray($queuedResult);
 
                 $r_id = $row['id'];
@@ -920,6 +924,10 @@ while (true) {
 
                                             $db->execute("UpdateReplayStatusError");
 
+                                            //Track stats
+                                            $r_replays_errors_total = 1;
+                                            $db->execute("stats_replays_errors_total");
+
                                             $sleep->add(MYSQL_ERROR_SLEEP_DURATION);
                                         }
                                         else {
@@ -943,6 +951,10 @@ while (true) {
                                                 //Commit Transaction
                                                 $db->transaction_commit();
 
+                                                //Track stats
+                                                $r_replays_processed_total = 1;
+                                                $db->execute("stats_replays_processed_total");
+
                                                 echo 'Successfully processed replay #' . $r_id . '...' . E . E;
                                             }
                                             else {
@@ -956,6 +968,10 @@ while (true) {
                                                 $r_error = "Semi-Parsed, Missed: " . $errorstr;
 
                                                 $db->execute("UpdateReplayStatusError");
+
+                                                //Track stats
+                                                $r_replays_errors_total = 1;
+                                                $db->execute("stats_replays_errors_total");
 
                                                 echo 'Could not successfully parse replay #' . $r_id . '. Mysql had trouble with portions of : ' . $errorstr . '...' . E . E;
                                             }
@@ -997,6 +1013,10 @@ while (true) {
 
                                         $db->execute("UpdateReplayStatusError");
 
+                                        //Track stats
+                                        $r_replays_errors_total = 1;
+                                        $db->execute("stats_replays_errors_total");
+
                                         $sleep->add(MYSQL_ERROR_SLEEP_DURATION);
                                     }
                                 }
@@ -1011,6 +1031,10 @@ while (true) {
                                     $r_error = $mysqlErrorMsg;
 
                                     $db->execute("UpdateReplayStatusError");
+
+                                    //Track stats
+                                    $r_replays_errors_total = 1;
+                                    $db->execute("stats_replays_errors_total");
 
                                     echo 'Mysql threw exception during operations for replay #' . $r_id . ', Error : "' . $mysqlErrorMsg . '"...' . E . E;
 
@@ -1029,6 +1053,10 @@ while (true) {
 
                                 $db->execute("UpdateReplayStatusError");
 
+                                //Track stats
+                                $r_replays_errors_total = 1;
+                                $db->execute("stats_replays_errors_total");
+
                                 echo 'Failed to calculate mmr for replay #' . $r_id . ', Error : "' . $calc['error'] . '"...' . E . E;
 
                                 $sleep->add(MINI_SLEEP_DURATION);
@@ -1045,6 +1073,10 @@ while (true) {
                             $r_error = $parse['error'];
 
                             $db->execute("UpdateReplayStatusError");
+
+                            //Track stats
+                            $r_replays_errors_total = 1;
+                            $db->execute("stats_replays_errors_total");
 
                             echo 'Failed to parse replay #' . $r_id . ', Error : "' . $parse['error'] . '"...' . E . E;
 
@@ -1067,6 +1099,10 @@ while (true) {
                         $r_error = $api['error'];
 
                         $db->execute("UpdateReplayStatusError");
+
+                        //Track stats
+                        $r_replays_errors_total = 1;
+                        $db->execute("stats_replays_errors_total");
 
                         $sleep->add(MINI_SLEEP_DURATION);
                     }
