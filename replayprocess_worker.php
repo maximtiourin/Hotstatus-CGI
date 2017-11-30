@@ -6,7 +6,9 @@
 
 namespace Fizzik;
 
+require_once 'lib/AWS/aws-autoloader.php';
 require_once 'includes/include.php';
+require_once 'includes/Hotsapi.php';
 require_once 'includes/ReplayParser.php';
 require_once 'includes/MMRCalculator.php';
 
