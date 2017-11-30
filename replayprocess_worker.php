@@ -56,7 +56,7 @@ $db->bind("GetPipelineConfig", "i", $r_pipeline_config_id);
 
 $db->prepare("TouchReplay",
     "UPDATE `replays` SET `lastused` = ? WHERE `id` = ?");
-$db->bind("TouchReplay", "i", $r_timestamp, $r_id);
+$db->bind("TouchReplay", "ii", $r_timestamp, $r_id);
 
 $db->prepare("UpdateReplayStatus",
     "UPDATE replays SET status = ?, lastused = ? WHERE id = ? LIMIT 1");
