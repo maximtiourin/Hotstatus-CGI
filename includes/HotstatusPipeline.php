@@ -1948,4 +1948,5 @@ class HotstatusPipeline {
     const REPLAY_STATUS_MYSQL_MATCH_WRITE_ERROR = 14; //"mysql_match_write_error"; //status value for when a replay had an unknown mysql write error during match insertion
     const REPLAY_STATUS_MYSQL_MATCHDATA_WRITE_ERROR = 15; //"mysql_matchdata_write_error"; //status value for when a repaly had an unknown mysql write error during match data insertion
     const REPLAY_STATUS_OUTOFDATE = 16; //"replay_out_of_date"; //Replay is older than our minimum cutoff for dataset, seperate it from queued replays to improve query speeds
+    const REPLAY_STATUS_PROCESSING = 17; //"processing"; //Special container instance processing, handles downloading and parsing replays one at a time without using EFS for dataset storage
 }
