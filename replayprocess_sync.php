@@ -25,9 +25,15 @@ const E = PHP_EOL;
 $out_of_replays_count = 0; //Count how many times we ran out of replays to process, once reaching limit it means the api isn't bugging out and there actually is no more replays.
 $sleep = new SleepHandler();
 
+//SETTINGS
+const SYNC_DOWNLOADED_REPLAYS = FALSE;
+
 //Prepare statements
 $db->prepare("CountDownloadedReplaysUpToLimit",
-"SELECT COUNT(id) AS replay_count FROM replays WHERE status = " . HotstatusPipeline::REPLAY_STATUS_DOWNLOADED . " LIMIT ".HotstatusPipeline::REPLAY_DOWNLOAD_LIMIT);
+"SELECT COUNT(`id`) AS `count` FROM `replays` WHERE `status` = " . HotstatusPipeline::REPLAY_STATUS_DOWNLOADED . " LIMIT ".HotstatusPipeline::REPLAY_DOWNLOAD_LIMIT);
+
+$db->prepare("CountReplaysOfStatus", "SELECT COUNT(`id`) AS `count` FROM `replays` WHERE `status` = ?");
+$db->bind("CountReplaysOfStatus", "i", $r_status);
 
 $db->prepare("set_semaphore_replays_downloaded",
     "UPDATE `pipeline_semaphores` SET `value` = ? WHERE `name` = \"replays_downloaded\" LIMIT 1");
@@ -46,6 +52,13 @@ function log($str) {
     $datetime = new \DateTime("now");
     $datestr = $datetime->format(HotstatusPipeline::FORMAT_DATETIME);
     echo "[$datestr] $str".E;
+}
+
+function getCountResult($key) {
+    $countResult = $db->execute($key);
+    $count = $db->fetchArray($countResult)['count'];
+    $db->freeResult($countResult);
+    return $count;
 }
 
 function getStatInt($key) {
@@ -94,14 +107,19 @@ echo '--------------------------------------'.E
 
 //Sync
 while (true) {
-    //Per 30 Seconds
-    if (time() % 30 == 0) {
-        //Count Downloaded Replays Up To Limit
-        $countResult = $db->execute("CountDownloadedReplaysUpToLimit");
-        $r_replays_downloaded = $db->fetchArray($countResult)['replay_count'];
-        $db->freeResult($countResult);
-        $db->execute("set_semaphore_replays_downloaded");
-        log("Sync: Semaphore - Replays Downloaded");
+    //Per 10 Minutes
+    if (time() % 600 == 0) {
+        //Count replays_queued_total
+        $r_status = 1;
+        $d = getCountResult("CountReplaysOfStatus");
+        setStatInt("replays_queued_total");
+        log("Sync: Replays Queued: $d");
+
+        //Count replays_outofdate_total
+        $r_status = 16;
+        $d = getCountResult("CountReplaysOfStatus");
+        setStatInt("replays_outofdate_total");
+        log("Sync: Replays Out-of-Date: $d");
     }
 
     //Per Minute
@@ -113,6 +131,16 @@ while (true) {
         //stats_replays_errors_per_minute
         $d = trackStatDifference("replays_errors_total", "replays_errors_per_minute", $stat_replays_errors_total);
         log("Stat: Replays Errors - Per Minute: $d");
+    }
+
+    //Per 30 Seconds
+    if (time() % 30 == 0) {
+        //Count Downloaded Replays Up To Limit
+        if (SYNC_DOWNLOADED_REPLAYS) {
+            $r_replays_downloaded = getCountResult("CountDownloadedReplaysUpToLimit");
+            $db->execute("set_semaphore_replays_downloaded");
+            log("Sync: Semaphore - Replays Downloaded");
+        }
     }
 
     $sleep->add(PROCESS_GRANULARITY);
