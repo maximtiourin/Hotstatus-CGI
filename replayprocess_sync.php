@@ -55,6 +55,8 @@ function log($str) {
 }
 
 function getCountResult($key) {
+    global $db;
+
     $countResult = $db->execute($key);
     $count = $db->fetchArray($countResult)['count'];
     $db->freeResult($countResult);
