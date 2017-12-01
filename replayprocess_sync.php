@@ -114,13 +114,13 @@ while (true) {
         //Count replays_queued_total
         $r_status = 1;
         $d = getCountResult("CountReplaysOfStatus");
-        setStatInt("replays_queued_total");
+        setStatInt("replays_queued_total", $d);
         log("Sync: Replays Queued: $d");
 
         //Count replays_outofdate_total
         $r_status = 16;
         $d = getCountResult("CountReplaysOfStatus");
-        setStatInt("replays_outofdate_total");
+        setStatInt("replays_outofdate_total", $d);
         log("Sync: Replays Out-of-Date: $d");
     }
 
