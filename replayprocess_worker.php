@@ -118,15 +118,20 @@ $db->prepare("InsertMatch",
     "INSERT INTO matches (id, type, map, date, match_length, version, region, winner, players, bans, team_level, mmr) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 $db->bind("InsertMatch", "isssisiissss", $r_id, $r_type, $r_map, $r_date, $r_match_length, $r_version, $r_region, $r_winner, $r_players, $r_bans, $r_team_level, $r_mmr);
 
+/*
+ * Use Secondary Binding technique to get around Mysql 5.7.14 Bug when using ON DUPLICATE KEY UPDATE and VALUES() function on text/blob columns
+ */
 $db->prepare("+=:players",
-    "INSERT INTO players "
-    . "(id, name, tag, region, account_level) "
+    "INSERT INTO `players` "
+    . "(`id`, `name`, `tag`, `region`, `account_level`) "
     . "VALUES (?, ?, ?, ?, ?) "
     . "ON DUPLICATE KEY UPDATE "
-    . "account_level = GREATEST(account_level, VALUES(account_level))");
+    . "`name` = ?, `account_level` = GREATEST(`account_level`, VALUES(`account_level`))");
 $db->bind("+=:players",
-    "isiii",
-    $r_player_id, $r_name, $r_tag, $r_region, $r_account_level);
+    "isiiis",
+    $r_player_id, $r_name, $r_tag, $r_region, $r_account_level,
+
+    $r_name);
 
 $db->prepare("+=:players_heroes",
     "INSERT INTO players_heroes "
