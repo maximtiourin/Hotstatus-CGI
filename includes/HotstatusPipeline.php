@@ -55,8 +55,14 @@ class HotstatusPipeline {
     const PATCH_CURRENT = "CURRENT";
     public static $PATCHES = [
         self::PATCH_CURRENT => [
-            "start" => "2017-11-14 00:00:00",
+            "start" => "2017-11-29 00:00:00",
             "end" => null,
+            "version" => "2.29.2",
+            "type" => "Balance",
+        ],
+        "2.29.0" => [
+            "start" => "2017-11-14 00:00:00",
+            "end" => "2017-11-28 23:59:59",
             "version" => "2.29.0",
             "type" => "Alexstrasza",
         ],
@@ -342,6 +348,7 @@ class HotstatusPipeline {
     const FILTER_KEY_HERO_LEVEL = "hero_level";
     const FILTER_KEY_MATCH_LENGTH = "match_length";
     const FILTER_KEY_HERO = "hero";
+    const FILTER_KEY_REGION = "region";
 
     public static $filter = [
         /*
@@ -353,6 +360,27 @@ class HotstatusPipeline {
          */
         self::FILTER_KEY_DATE => [],
         /*
+         * Filter Regions
+         */
+        self::FILTER_KEY_REGION => [
+            "US" => [
+                "index" => 1,
+                "selected" => TRUE
+            ],
+            "EU" => [
+                "index" => 2,
+                "selected" => FALSE
+            ],
+            "KR" => [
+                "index" => 3,
+                "selected" => FALSE
+            ],
+            "CN" => [
+                "index" => 5,
+                "selected" => FALSE
+            ],
+        ],
+        /*
          * Filter Maps
          * ["GameTypeProperName"] => [
          *      ['selected] => TRUE/FALSE (can be modified as needed)
@@ -361,18 +389,34 @@ class HotstatusPipeline {
         self::FILTER_KEY_GAMETYPE => [
             "Hero League" => [
                 "name_sort" => "HeroLeague",
+                "ranking" => [
+                    "matchLimit" => 100,
+                    "rankLimit" => 100,
+                ],
                 "selected" => TRUE
             ],
             "Team League" => [
                 "name_sort" => "TeamLeague",
+                "ranking" => [
+                    "matchLimit" => 25,
+                    "rankLimit" => 25,
+                ],
                 "selected" => FALSE
             ],
             "Unranked Draft" => [
                 "name_sort" => "UnrankedDraft",
+                "ranking" => [
+                    "matchLimit" => 100,
+                    "rankLimit" => 100,
+                ],
                 "selected" => FALSE
             ],
             "Quick Match" => [
                 "name_sort" => "QuickMatch",
+                "ranking" => [
+                    "matchLimit" => 100,
+                    "rankLimit" => 100,
+                ],
                 "selected" => FALSE
             ],
         ],
@@ -456,6 +500,61 @@ class HotstatusPipeline {
         self::FILTER_KEY_RANK => [
             "Bronze" => [
                 "min" => 0,
+                "max" => 199,
+                "players" => [
+                    "min" => 0,
+                    "max" => 0,
+                ],
+                "selected" => TRUE
+            ],
+            "Silver" => [
+                "min" => 200,
+                "max" => 399,
+                "players" => [
+                    "min" => 1,
+                    "max" => 182,
+                ],
+                "selected" => TRUE
+            ],
+            "Gold" => [
+                "min" => 400,
+                "max" => 799,
+                "players" => [
+                    "min" => 183,
+                    "max" => 580,
+                ],
+                "selected" => TRUE
+            ],
+            "Platinum" => [
+                "min" => 800,
+                "max" => 1199,
+                "players" => [
+                    "min" => 581,
+                    "max" => 1301,
+                ],
+                "selected" => TRUE
+            ],
+            "Diamond" => [
+                "min" => 1200,
+                "max" => 1599,
+                "players" => [
+                    "min" => 1302,
+                    "max" => 1860,
+                ],
+                "selected" => TRUE
+            ],
+            "Master" => [
+                "min" => 1600,
+                "max" => PHP_INT_MAX,
+                "players" => [
+                    "min" => 1861,
+                    "max" => PHP_INT_MAX,
+                ],
+                "selected" => TRUE
+            ]
+            //BACKUP - 12/4/2017
+            /*"Bronze" => [
+                "min" => 0,
                 "max" => 99,
                 "players" => [
                     "min" => 0,
@@ -507,7 +606,7 @@ class HotstatusPipeline {
                     "max" => PHP_INT_MAX,
                 ],
                 "selected" => TRUE
-            ]
+            ]*/
         ],
         /*
          * Filter Hero Levels
