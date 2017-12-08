@@ -2,6 +2,7 @@
 
 namespace Fizzik;
 
+use Fizzik\Database\MySqlDatabase;
 use Fizzik\Database\RedisDatabase;
 
 class HotstatusCache {
@@ -9,6 +10,7 @@ class HotstatusCache {
     const CACHE_PLAYERSEARCH_DATABASE_INDEX = 1; //The index of the databse used for caching player searches
     const CACHE_RATELIMITING_DATABASE_INDEX = 2; //The index of the database used for caching and tracking rate limiting for certain actions
     const CACHE_DEFAULT_TTL = PHP_INT_MAX; //The default TTL of stored cache values, keys with a TTL are subject to the volatile-lru cache policy
+    const CACHE_60_MINUTES = 3600;
     const CACHE_PLAYERSEARCH_TTL = 300; //The TTL of stored playersearch cache values.
     const CACHE_PLAYER_HIT_TTL = 3600; //TTL of player caching when valid result
     const CACHE_PLAYER_MISS_TTL = 300; //TTL of player caching when invalid result
@@ -86,6 +88,37 @@ class HotstatusCache {
 
     public static function buildCacheRequestKey($cache_request_type = "", $functionId) {
         return self::CACHE_REQUEST_PREFIX . $cache_request_type . $functionId;
+    }
+
+    const QUEUE_CACHE_STATUS_QUEUED = 1;
+    const QUEUE_CACHE_STATUS_UPDATING = 2;
+    public static function QueueCacheRequestForUpdateOnOldAge($functionId, $cache_id, $creds, $maxage, $lastupdated, $payload = []) {
+        date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
+        //Check if cached value needs to be queued for update
+        $age = time() - $lastupdated;
+        if ($age >= $maxage) {
+            //Queue Cache Value for updating
+            $db = new MySqlDatabase();
+
+            $connected_mysql = HotstatusPipeline::hotstatus_mysql_connect($db, $creds);
+
+            if ($connected_mysql !== FALSE) {
+                $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
+
+                $db->prepare("insert", "INSERT INTO `pipeline_cache_requests` (`action`, `cache_id`, `payload`, `lastused`, `status`) VALUES (?, ?, ?, ?, ?)");
+                $db->bind("insert", "sssii", $r_action, $r_cache_id, $r_payload, $r_lastused, $r_status);
+
+                $r_action = $functionId;
+                $r_cache_id = $cache_id;
+                $r_payload = json_encode($payload);
+                $r_lastused = time();
+                $r_status = self::QUEUE_CACHE_STATUS_QUEUED;
+
+                $db->execute("insert");
+
+                $db->close();
+            }
+        }
     }
 
     /*
