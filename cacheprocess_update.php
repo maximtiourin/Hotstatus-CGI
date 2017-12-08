@@ -317,6 +317,8 @@ $encoded = json_encode($datatable);
 
 HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_DEFAULT_TTL);
 
+$redis->cacheString("testing123", "this is a test");
+
 $redis->close();
 },
 ];
