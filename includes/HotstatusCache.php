@@ -71,7 +71,7 @@ class HotstatusCache {
     public static function writeCacheRequest(RedisDatabase &$redis, $cache_request_type = "", $functionId, $functionVersion, $value, $ttl = self::CACHE_DEFAULT_TTL) {
         if ($redis !== NULL && $redis !== FALSE) {
             $key = self::buildCacheRequestKey($cache_request_type, $functionId);
-            return $redis->cacheString($key, $value, $ttl);
+            return $redis->cacheHash($key, $functionId, $value, $ttl);
         }
 
         return NULL;
@@ -80,7 +80,7 @@ class HotstatusCache {
     public static function readCacheRequest(RedisDatabase &$redis, $cache_request_type = "", $functionId, $functionVersion) {
         if ($redis !== NULL && $redis !== FALSE) {
             $key = self::buildCacheRequestKey($cache_request_type, $functionId);
-            return $redis->getCachedString($key);
+            return $redis->getCachedHash($key, $functionId);
         }
 
         return NULL;
