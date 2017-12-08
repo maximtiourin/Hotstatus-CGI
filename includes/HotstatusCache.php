@@ -68,7 +68,7 @@ class HotstatusCache {
     const CACHE_REQUEST_TYPE_PAGEDATA = "PageData:";
     const CACHE_REQUEST_PREFIX = "Cache_Request:";
 
-    public static function writeCacheRequest(RedisDatabase $redis, $cache_request_type = "", $functionId, $functionVersion, $value, $ttl = self::CACHE_DEFAULT_TTL) {
+    public static function writeCacheRequest(RedisDatabase &$redis, $cache_request_type = "", $functionId, $functionVersion, $value, $ttl = self::CACHE_DEFAULT_TTL) {
         if ($redis !== NULL && $redis !== FALSE) {
             $key = self::buildCacheRequestKey($cache_request_type, $functionId);
             return $redis->cacheString($key, $value, $ttl);
@@ -77,7 +77,7 @@ class HotstatusCache {
         return NULL;
     }
 
-    public static function readCacheRequest(RedisDatabase $redis, $cache_request_type = "", $functionId, $functionVersion) {
+    public static function readCacheRequest(RedisDatabase &$redis, $cache_request_type = "", $functionId, $functionVersion) {
         if ($redis !== NULL && $redis !== FALSE) {
             $key = self::buildCacheRequestKey($cache_request_type, $functionId);
             return $redis->getCachedString($key);

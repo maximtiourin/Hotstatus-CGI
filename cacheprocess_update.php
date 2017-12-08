@@ -21,6 +21,9 @@ $creds = Credentials::getCredentialsForUser(Credentials::USER_REPLAYPROCESS);
 HotstatusPipeline::hotstatus_mysql_connect($db, $creds);
 $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
+$redis = new RedisDatabase();
+$redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusCache::CACHE_DEFAULT_DATABASE_INDEX);
+
 //Constants and qol
 const UNLOCK_UPDATE_DURATION = 900; //Seconds
 const UNLOCK_DEFAULT_DURATION = 5; //Must be unlocked for atleast 5 seconds
@@ -56,7 +59,7 @@ $db->bind("stats_cache_requests_updated_total", "i", $r_cache_requests_updated_t
  * Map actions to functions
  */
 $actionMap = [
-    "getDataTableHeroesStatsListAction" => function($cache_id, $payload, MySqlDatabase &$db, $creds) {
+    "getDataTableHeroesStatsListAction" => function($cache_id, $payload, MySqlDatabase &$db, RedisDatabase &$redis, $creds) {
     $_TYPE = HotstatusCache::CACHE_REQUEST_TYPE_DATATABLE;
 $_ID = "getDataTableHeroesStatsListAction";
 $_VERSION = 0;
@@ -310,14 +313,10 @@ $pagedata['max_age'] = HotstatusCache::getCacheDefaultExpirationTimeInSecondsFor
 $datatable['data'] = $pagedata;
 
 //Store value in cache
-$redis = new RedisDatabase();
-$redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusCache::CACHE_DEFAULT_DATABASE_INDEX);
-
 $encoded = json_encode($datatable);
 
-echo 'hset result: ' . HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_DEFAULT_TTL) . E;
+HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_DEFAULT_TTL);
 
-$redis->close();
 },
 ];
 
@@ -376,7 +375,7 @@ while (true) {
 
                 //Execute request
                 $func = $actionMap[$action];
-                $func($cache_id, $payload, $db, $creds);
+                $func($cache_id, $payload, $db, $redis, $creds);
 
                 //Delete request after update
                 $db->execute("DeleteRequest");
