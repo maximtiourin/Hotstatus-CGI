@@ -41,6 +41,6 @@ $console = new Console();
 //$redis->cacheString("str_cfuncidMAXIMTIOUR", "This is my value #1", 899);
 //$redis->cacheString("str_cfuncidACKACK", "This is my value #1", 788);
 
-$redis->cacheString("str_cfuncid456", "This is my value #1", PHP_INT_MAX);
+$redis->cacheString("str_cfuncid456", "This is my value #1", HotstatusCache::CACHE_DEFAULT_TTL);
 
 ?>
