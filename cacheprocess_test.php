@@ -36,4 +36,9 @@ HotstatusCache::writeCacheRequest($redis, "type123", "cfuncidfdgdfg", 0, "This i
 HotstatusCache::writeCacheRequest($redis, "type123", "cfuncidMAXIMTIOUR", 0, "This is my value #3", PHP_INT_MAX);
 HotstatusCache::writeCacheRequest($redis, "type123", "cfuncidACKACK", 0, "This is my value #4", PHP_INT_MAX);
 
+$redis->cacheString("str_cfuncid456", "This is my value #1", PHP_INT_MAX);
+$redis->cacheString("str_cfuncidfdgdfg", "This is my value #1", PHP_INT_MAX);
+$redis->cacheString("str_cfuncidMAXIMTIOUR", "This is my value #1", PHP_INT_MAX);
+$redis->cacheString("str_cfuncidACKACK", "This is my value #1", PHP_INT_MAX);
+
 ?>
