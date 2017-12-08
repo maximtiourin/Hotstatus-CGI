@@ -315,7 +315,7 @@ $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusCache::CACHE_DEFAUL
 
 $encoded = json_encode($datatable);
 
-HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_DEFAULT_TTL);
+echo 'hset result: ' . HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_DEFAULT_TTL) . E;
 
 $redis->close();
 },
