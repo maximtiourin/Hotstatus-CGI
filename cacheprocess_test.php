@@ -39,6 +39,6 @@ $console = new Console();
 $redis->cacheString("str_cfuncid456", "This is my value #1", 600);
 $redis->cacheString("str_cfuncidfdgdfg", "This is my value #1", 900);
 $redis->cacheString("str_cfuncidMAXIMTIOUR", "This is my value #1", 899);
-//$redis->cacheString("str_cfuncidACKACK", "This is my value #1", 788);
+$redis->cacheString("str_cfuncidACKACK", "This is my value #1", 788);
 
 ?>
