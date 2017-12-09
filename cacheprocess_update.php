@@ -62,6 +62,8 @@ $actionMap = [
         $_ID = GetDataTableHeroesStatsListAction::_ID();
         $_VERSION = GetDataTableHeroesStatsListAction::_VERSION();
 
+        GetDataTableHeroesStatsListAction::generateFilters();
+
         $CACHE_ID = $cache_id;
 
         /*

@@ -2,8 +2,7 @@
 
 namespace Fizzik;
 
-use \Fizzik\HotstatusPipeline;
-use \Fizzik\HotstatusCache;
+use Fizzik\Database\MySqlDatabase;
 
 class GetDataTableHeroesStatsListAction {
     const WINDELTA_MAX_DAYS = 30; //Windeltas are only calculated for time ranges of 30 days or less
@@ -20,10 +19,11 @@ class GetDataTableHeroesStatsListAction {
         return 0;
     }
 
-    public static function execute(&$payload, \Fizzik\Database\MySqlDatabase &$db, &$pagedata) {
-        //Generate necessary filters
+    public static function generateFilters() {
         HotstatusPipeline::filter_generate_date();
+    }
 
+    public static function execute(&$payload, MySqlDatabase &$db, &$pagedata) {
         //Extract payload
         $queryDateKey = $payload['queryDateKey'];
         $querySql = $payload['querySql'];
