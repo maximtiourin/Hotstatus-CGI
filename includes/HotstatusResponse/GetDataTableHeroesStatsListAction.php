@@ -23,7 +23,7 @@ class GetDataTableHeroesStatsListAction {
         HotstatusPipeline::filter_generate_date();
     }
 
-    public static function execute(&$payload, MySqlDatabase &$db, &$pagedata) {
+    public static function execute(&$payload, MySqlDatabase &$db, &$pagedata, $isCacheProcess = false) {
         //Extract payload
         $queryDateKey = $payload['queryDateKey'];
         $querySql = $payload['querySql'];
@@ -62,6 +62,11 @@ class GetDataTableHeroesStatsListAction {
         $filter = HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_HERO];
         foreach ($filter as $heroname => $row) {
             $r_hero = $heroname;
+
+            //Cache Process Logging
+            if ($isCacheProcess) {
+                echo "Querying Hero: $r_hero                                               \r";
+            }
 
             /*
              * Collect hero data

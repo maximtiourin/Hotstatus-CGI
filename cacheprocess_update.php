@@ -74,7 +74,7 @@ $actionMap = [
         $datatable = [];
 
         //Execute response
-        GetDataTableHeroesStatsListAction::execute($payload, $db, $pagedata);
+        GetDataTableHeroesStatsListAction::execute($payload, $db, $pagedata, true);
 
         $datatable['data'] = $pagedata;
 
