@@ -16,7 +16,7 @@ class GetDataTableHeroesStatsListAction {
     }
 
     public static function _VERSION() {
-        return 0;
+        return 1;
     }
 
     public static function generateFilters() {
