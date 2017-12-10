@@ -920,6 +920,15 @@ class HotstatusPipeline {
                 "role_specific" => "Sustained Damage",
                 "selected" => false
             ],
+            "Hanzo" => [
+                "name_sort" => "Hanzo",
+                "name_attribute" => "Hanz",
+                "image_hero" => "ui_targetportrait_hero_hanzo",
+                "image_minimap" => "storm_ui_minimapicon_hanzo",
+                "role_blizzard" => "Assassin",
+                "role_specific" => "Sustained Damage",
+                "selected" => false
+            ],
             "Illidan" => [
                 "name_sort" => "Illidan",
                 "name_attribute" => "Illi",
