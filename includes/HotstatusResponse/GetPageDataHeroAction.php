@@ -40,8 +40,8 @@ class GetPageDataHeroAction {
         //Extract payload
         $queryHero = $payload['queryHero'];
         $querySql = $payload['querySql'];
+        $querySecondaryCache = $payload['querySecondaryCache'];
         $querySecondarySql = $payload['querySecondarySql'];
-        $imgbasepath = $payload['imgbasepath'];
 
         //Define main vars
 
@@ -92,7 +92,7 @@ class GetPageDataHeroAction {
                 "desc_tagline" => $row['desc_tagline'],
                 "desc_bio" => $row['desc_bio'],
                 "rarity" => $row['rarity'],
-                "image_hero" => $imgbasepath . $row['image_hero'] . ".png"
+                "image_hero" => $row['image_hero'],
             ];
         }
         $db->freeResult($heroDataResult);
@@ -440,7 +440,7 @@ class GetPageDataHeroAction {
         /*
          * Get Total Hero StatMatrix stats, and calculate StatMatrix values for hero
          */
-        $totalStats = GetPageDataHeroRequestTotalStatMatrix::specialExecute($db, $connected_mysql, $redis, $connected_redis, $querySecondarySql);
+        $totalStats = GetPageDataHeroRequestTotalStatMatrix::specialExecute($db, $connected_mysql, $redis, $connected_redis, $querySecondaryCache, $querySecondarySql);
 
         //Init matrix
         $statMatrix = [];
@@ -528,7 +528,7 @@ class GetPageDataHeroAction {
             $abilities[$row['type']][] = [
                 "name" => $row['name'],
                 "desc_simple" => $row['desc_simple'], ENT_QUOTES,
-                "image" => $imgbasepath . $row['image'] . ".png"
+                "image" => $row['image']
             ];
         }
         $db->freeResult($heroAbilitiesResult);
@@ -574,7 +574,7 @@ class GetPageDataHeroAction {
                 "name" => $row['name'],
                 "name_internal" => $row['name_internal'],
                 "desc_simple" => $row['desc_simple'],
-                "image" => $imgbasepath . $row['image'] . ".png"
+                "image" => $row['image']
             ];
         }
         $db->freeResult($heroTalentsResult);
@@ -846,8 +846,8 @@ class GetPageDataHeroAction {
 
                 $medal['name'] = $medalobj['name'];
                 $medal['desc_simple'] = $medalobj['desc_simple'];
-                $medal['image_blue'] = $imgbasepath . $medalobj['image'] . "_blue.png";
-                $medal['image_red'] = $imgbasepath . $medalobj['image'] . "_red.png";
+                $medal['image_blue'] = $medalobj['image'] . "_blue";
+                $medal['image_red'] = $medalobj['image'] . "_red";
             }
         }
 
@@ -878,7 +878,7 @@ class GetPageDataHeroAction {
                 $m['role_specific'] = $filter['role_specific'];
 
                 //Image
-                $m['image'] = $imgbasepath . $filter['image_hero'] . ".png";
+                $m['image'] = $filter['image_hero'];
 
                 //Played
                 $m['played'] = $played;
@@ -919,7 +919,7 @@ class GetPageDataHeroAction {
                 $m['role_specific'] = $filter['role_specific'];
 
                 //Image
-                $m['image'] = $imgbasepath . $filter['image_hero'] . ".png";
+                $m['image'] = $filter['image_hero'];
 
                 //Played
                 $m['played'] = $played;

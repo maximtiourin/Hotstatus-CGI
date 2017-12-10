@@ -1425,7 +1425,7 @@ class HotstatusPipeline {
         $rangeoffset = "now";
         $rangelength = self::getLengthInISODaysForDateTimeRange($cpatch['start'], $rangeoffset);
         $range = self::getMinMaxRangeForLastISODaysInclusive($rangelength, $rangeoffset);
-        self::$filter[self::FILTER_KEY_DATE][$cpatch['version']." (Current)"] = [
+        self::$filter[self::FILTER_KEY_DATE][$cpatch['version']." (".$cpatch['type'].")"] = [
             "min" => $range['date_start'],
             "max" => $range['date_end'],
             "offset_date" => $rangeoffset,

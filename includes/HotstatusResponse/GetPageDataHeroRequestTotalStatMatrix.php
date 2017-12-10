@@ -22,7 +22,7 @@ class GetPageDataHeroRequestTotalStatMatrix {
 
     }
 
-    public static function specialExecute(&$mysql, $connected_mysql, &$redis = NULL, $connected_redis = FALSE, $querySql) {
+    public static function specialExecute(&$mysql, $connected_mysql, &$redis = NULL, $connected_redis = FALSE, $queryCache, $querySql) {
         $_TYPE = GetPageDataHeroRequestTotalStatMatrix::_TYPE();
         $_ID = GetPageDataHeroRequestTotalStatMatrix::_ID();
         $_VERSION = GetPageDataHeroRequestTotalStatMatrix::_VERSION();
@@ -31,7 +31,7 @@ class GetPageDataHeroRequestTotalStatMatrix {
         $pagedata = [];
 
         //Determine Cache Id
-        $CACHE_ID = $_ID . ((strlen($querySql) > 0) ? (":" . md5($querySql)) : (""));
+        $CACHE_ID = $_ID . ((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
 
         //Define payload
         $payload = [
