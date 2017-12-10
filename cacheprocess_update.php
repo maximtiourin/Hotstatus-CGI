@@ -119,6 +119,37 @@ $actionMap = [
 
         $redis->close();
     },
+    "getPageDataRankingsAction" => function($cache_id, $payload, MySqlDatabase &$db, $creds) {
+        $_TYPE = GetPageDataRankingsAction::_TYPE();
+        $_ID = GetPageDataRankingsAction::_ID();
+        $_VERSION = GetPageDataRankingsAction::_VERSION();
+
+        GetPageDataRankingsAction::generateFilters();
+
+        $CACHE_ID = $cache_id;
+
+        $redis = new RedisDatabase();
+        $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusCache::CACHE_DEFAULT_DATABASE_INDEX);
+
+        /*
+         * Begin building response
+         */
+        //Set up main vars
+        $pagedata = [];
+        $datatable = [];
+
+        //Execute response
+        GetPageDataRankingsAction::execute($payload, $db, $pagedata, true);
+
+        $datatable['data'] = $pagedata;
+
+        //Store value in cache
+        $encoded = json_encode($datatable);
+
+        HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_DEFAULT_TTL);
+
+        $redis->close();
+    },
 ];
 
 //Begin main script
