@@ -412,7 +412,7 @@ class HotstatusPipeline {
                     "matchLimit" => 25,
                     "rankLimit" => 25,
                 ],
-                "selected" => FALSE
+                "selected" => TRUE
             ],
             "Unranked Draft" => [
                 "name_sort" => "UnrankedDraft",
@@ -420,7 +420,7 @@ class HotstatusPipeline {
                     "matchLimit" => 100,
                     "rankLimit" => 100,
                 ],
-                "selected" => FALSE
+                "selected" => TRUE
             ],
             "Quick Match" => [
                 "name_sort" => "QuickMatch",
@@ -428,7 +428,7 @@ class HotstatusPipeline {
                     "matchLimit" => 100,
                     "rankLimit" => 100,
                 ],
-                "selected" => FALSE
+                "selected" => TRUE
             ],
         ],
         /*
