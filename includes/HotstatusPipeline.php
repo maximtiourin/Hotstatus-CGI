@@ -33,8 +33,13 @@ class HotstatusPipeline {
      */
     const SEASON_UNKNOWN = "Legacy"; //This is the season to use when no season dates are defined for a given date time
     const SEASON_NONE = "None"; //This is the value of NO previous season
-    const SEASON_CURRENT = "2017 Season 3";
+    const SEASON_CURRENT = "2018 Season 1";
     public static $SEASONS = [
+        "2018 Season 1" => [
+            "start" =>  "2017-12-12 07:00:00",
+            "end" =>    "2018-03-06 06:59:59",
+            "previous" => "2017 Season 3"
+        ],
         "2017 Season 3" => [
             "start" =>  "2017-09-05 07:00:00",
             "end" =>    "2017-12-12 06:59:59",
@@ -55,8 +60,14 @@ class HotstatusPipeline {
     const PATCH_CURRENT = "CURRENT";
     public static $PATCHES = [
         self::PATCH_CURRENT => [
-            "start" => "2017-11-29 00:00:00",
+            "start" => "2017-12-12 00:00:00",
             "end" => null,
+            "version" => "2.29.3",
+            "type" => "Hanzo",
+        ],
+        "2.29.2" => [
+            "start" => "2017-11-29 00:00:00",
+            "end" => "2017-12-11 23:59:59",
             "version" => "2.29.2",
             "type" => "Balance",
         ],
