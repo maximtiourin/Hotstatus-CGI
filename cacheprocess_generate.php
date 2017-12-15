@@ -18,7 +18,42 @@ $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 //Constants and qol
 const E = PHP_EOL;
 
+//Prepare statements
+$db->prepare("GetPipelineConfig",
+    "SELECT `rankings_season` FROM `pipeline_config` WHERE `id` = ? LIMIT 1");
+$db->bind("GetPipelineConfig", "i", $r_pipeline_config_id);
+
+$db->prepare("QueueCacheRequest", "INSERT INTO `pipeline_cache_requests` (`action`, `cache_id`, `payload`, `lastused`, `status`) VALUES (?, ?, ?, ?, ?)");
+$db->bind("QueueCacheRequest", "sssii", $r_action, $r_cache_id, $r_payload, $r_lastused, $r_status);
+
 //Functions
+function log_generating($functionId) {
+    echo "Generating $functionId...".E;
+}
+
+function log_currentgeneration($permutationCount) {
+    echo "Queue Cache Request #$permutationCount...                                      \r";
+}
+
+function log_totalgenerated($permutationCount) {
+    echo ($permutationCount - 1) . " Total Cache Requests Queued.          ".E.E;
+}
+
+function queueCacheRequest($functionId, $cache_id, $payload, $permutationCount = null) {
+    global $db, $r_action, $r_cache_id, $r_payload, $r_lastused, $r_status;
+
+    $r_action = $functionId;
+    $r_cache_id = $cache_id;
+    $r_payload = json_encode($payload);
+    $r_lastused = time();
+    $r_status = HotstatusCache::QUEUE_CACHE_STATUS_QUEUED;
+
+    $db->execute("QueueCacheRequest");
+
+    if ($permutationCount !== null) {
+        log_currentgeneration($permutationCount);
+    }
+}
 
 /*
  * Given a filter key (EX: 'gameType'), and an active map, where active map =
@@ -75,11 +110,13 @@ function generateFilterKeyArray(&$filterlist) {
     return $filterKeyArray;
 }
 
-function generateFilterKeyPermutations(&$filterKeyArray) {
+function generateFilterKeyPermutations(&$filterKeyArray, &$query) {
     $filterKeyPermutations = [];
 
     foreach ($filterKeyArray as $fkkey => &$fkobj) {
-        $filterKeyPermutations[$fkkey] => pc_array_power_set($fkobj);
+        if ($query[$fkkey][HotstatusResponse::QUERY_COMBINATORIAL]) {
+            $filterKeyPermutations[$fkkey] = pc_array_power_set($fkobj);
+        }
     }
 
     return $filterKeyPermutations;
@@ -122,8 +159,102 @@ function pc_array_power_set(&$array) {
     return $results;
 }
 
-function generateHeroesStatslist() {
+function generate_getPageDataRankingsAction() {
+    $_TYPE = GetPageDataRankingsAction::_TYPE();
+    $_ID = GetPageDataRankingsAction::_ID();
+    $_VERSION = GetPageDataRankingsAction::_VERSION();
+
+    GetPageDataRankingsAction::generateFilters();
+
+    log_generating($_ID);
+
+    $query = GetPageDataRankingsAction::initQueries();
+
+    //Filter List
+    $filterList = generateFilterList($query);
+
+    //Filter Key Array
+    $filterKeyArray = generateFilterKeyArray($filterList);
+
+    //Loop through all filter permutations and queue responses
+    $permutationCount = 1;
+    foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_REGION] as $regionSelection) {
+        foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_SEASON] as $seasonSelection) {
+            foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_GAMETYPE] as $gameTypeSelection) {
+                //Copy clean filterlist (where everything is unselected)
+                $cleanfilterlist = generateCleanFilterListPartialCopy($filterList);
+
+                //Set selections
+                $cleanfilterlist[HotstatusPipeline::FILTER_KEY_REGION][$regionSelection]['selected'] = true;
+                $cleanfilterlist[HotstatusPipeline::FILTER_KEY_SEASON][$seasonSelection]['selected'] = true;
+                $cleanfilterlist[HotstatusPipeline::FILTER_KEY_GAMETYPE][$gameTypeSelection]['selected'] = true;
+
+                //Generate requestQuery with filter fragments
+                $requestQuery = new HotstatusResponse();
+
+                foreach ($cleanfilterlist as $cfkey => &$cfobj) {
+                    $fragment = generateFilterFragment($cfkey, $cfobj);
+
+                    $requestQuery->addQuery($fragment['key'], $fragment['value']);
+                }
+
+                //Process requestQuery
+                $queryCacheValues = [];
+                $querySqlValues = [];
+
+                //Collect WhereOr strings from all query parameters for cache key
+                foreach ($query as $qkey => &$qobj) {
+                    if ($requestQuery->has($qkey)) {
+                        $qobj[HotstatusResponse::QUERY_ISSET] = true;
+                        $qobj[HotstatusResponse::QUERY_RAWVALUE] = $requestQuery->get($qkey);
+                        $qobj[HotstatusResponse::QUERY_SQLVALUE] = HotstatusResponse::buildQuery_WhereOr_String($qkey, $qobj[HotstatusResponse::QUERY_SQLCOLUMN], $qobj[HotstatusResponse::QUERY_RAWVALUE], $qobj[HotstatusResponse::QUERY_TYPE]);
+                        $queryCacheValues[] = $query[$qkey][HotstatusResponse::QUERY_RAWVALUE];
+                    }
+                }
+
+                $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][HotstatusResponse::QUERY_RAWVALUE];
+                $queryGameType = $query[HotstatusPipeline::FILTER_KEY_GAMETYPE][HotstatusResponse::QUERY_RAWVALUE];
+
+                //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
+                foreach ($query as $qkey => &$qobj) {
+                    if (!$qobj[HotstatusResponse::QUERY_IGNORE_AFTER_CACHE] && $qobj[HotstatusResponse::QUERY_ISSET]) {
+                        $querySqlValues[] = $query[$qkey][HotstatusResponse::QUERY_SQLVALUE];
+                    }
+                }
+
+                //Build WhereAnd string from collected WhereOr strings
+                $queryCache = HotstatusResponse::buildCacheKey($queryCacheValues);
+                $querySql = HotstatusResponse::buildQuery_WhereAnd_String($querySqlValues, TRUE);
+
+                //Determine Cache Id
+                $CACHE_ID = "$_ID:rankings".((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
+
+                //Define Payload
+                $payload = [
+                    "querySeason" => $querySeason,
+                    "queryGameType" => $queryGameType,
+                    "querySql" => $querySql,
+                ];
+
+                //Queue Cache Request
+                queueCacheRequest($_ID, $CACHE_ID, $payload, $permutationCount);
+
+                $permutationCount++;
+            }
+        }
+    }
+
+    log_totalgenerated($permutationCount);
+}
+
+function generate_getDataTableHeroesStatsListAction() {
+    $_TYPE = GetDataTableHeroesStatsListAction::_TYPE();
+    $_ID = GetDataTableHeroesStatsListAction::_ID();
+    $_VERSION = GetDataTableHeroesStatsListAction::_VERSION();
+
     GetDataTableHeroesStatsListAction::generateFilters();
+
+    log_generating($_ID);
 
     $query = GetDataTableHeroesStatsListAction::initQueries();
 
@@ -134,43 +265,210 @@ function generateHeroesStatslist() {
     $filterKeyArray = generateFilterKeyArray($filterList);
 
     //Filter Key Permutations
-    $filterKeyPermutations = generateFilterKeyPermutations($filterKeyArray);
+    $filterKeyPermutations = generateFilterKeyPermutations($filterKeyArray, $query);
 
     //Loop through all filter permutations and queue responses
-    $permutationCount = 0;
+    $permutationCount = 1;
     foreach ($filterKeyPermutations[HotstatusPipeline::FILTER_KEY_GAMETYPE] as $gameTypePermutation) {
         if (count($gameTypePermutation) > 0) {
-            foreach ($filterKeyPermutations[HotstatusPipeline::FILTER_KEY_MAP] as $mapPermutation) {
-                if (count($mapPermutation) > 0) {
-                    foreach ($filterKeyPermutations[HotstatusPipeline::FILTER_KEY_RANK] as $rankPermutation) {
-                        if (count($rankPermutation) > 0) {
-                            foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_DATE] as $dateSelection) {
-                                //Copy clean filterlist (where everything is unselected)
-                                $cleanfilterlist = generateCleanFilterListPartialCopy($filterList);
+            foreach ($filterKeyPermutations[HotstatusPipeline::FILTER_KEY_RANK] as $rankPermutation) {
+                if (count($rankPermutation) > 0) {
+                    foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_DATE] as $dateSelection) {
+                        //Copy clean filterlist (where everything is unselected)
+                        $cleanfilterlist = generateCleanFilterListPartialCopy($filterList);
 
-                                //Loop through chosen permutations and select them in a clean filter list
-                                foreach ($gameTypePermutation as $gameType) {
-                                    $cleanfilterlist[HotstatusPipeline::FILTER_KEY_GAMETYPE][$gameType]['selected'] = true;
-                                }
-                                foreach ($mapPermutation as $map) {
-                                    $cleanfilterlist[HotstatusPipeline::FILTER_KEY_MAP][$map]['selected'] = true;
-                                }
-                                foreach ($rankPermutation as $rank) {
-                                    $cleanfilterlist[HotstatusPipeline::FILTER_KEY_RANK][$rank]['selected'] = true;
-                                }
-                                $cleanfilterlist[HotstatusPipeline::FILTER_KEY_DATE][$dateSelection]['selected'] = true;
+                        //Loop through chosen permutations and select them in a clean filter list
+                        foreach ($gameTypePermutation as $gameType) {
+                            $cleanfilterlist[HotstatusPipeline::FILTER_KEY_GAMETYPE][$gameType]['selected'] = true;
+                        }
+                        foreach ($rankPermutation as $rank) {
+                            $cleanfilterlist[HotstatusPipeline::FILTER_KEY_RANK][$rank]['selected'] = true;
+                        }
 
-                                //
+                        //Set blanket multiselections (Multiselects that are otherwise ignored for permutation generation)
+                        foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_MAP] as $map) {
+                            $cleanfilterlist[HotstatusPipeline::FILTER_KEY_MAP][$map]['selected'] = true;
+                        }
 
+                        //Set selections
+                        $cleanfilterlist[HotstatusPipeline::FILTER_KEY_DATE][$dateSelection]['selected'] = true;
 
-                                $permutationCount++;
+                        //Generate requestQuery with filter fragments
+                        $requestQuery = new HotstatusResponse();
+
+                        foreach ($cleanfilterlist as $cfkey => &$cfobj) {
+                            $fragment = generateFilterFragment($cfkey, $cfobj);
+
+                            $requestQuery->addQuery($fragment['key'], $fragment['value']);
+                        }
+
+                        //Process requestQuery
+                        $queryCacheValues = [];
+                        $querySqlValues = [];
+
+                        //Collect WhereOr strings from all query parameters for cache key
+                        foreach ($query as $qkey => &$qobj) {
+                            if ($requestQuery->has($qkey)) {
+                                $qobj[HotstatusResponse::QUERY_ISSET] = true;
+                                $qobj[HotstatusResponse::QUERY_RAWVALUE] = $requestQuery->get($qkey);
+                                $qobj[HotstatusResponse::QUERY_SQLVALUE] = HotstatusResponse::buildQuery_WhereOr_String($qkey, $qobj[HotstatusResponse::QUERY_SQLCOLUMN], $qobj[HotstatusResponse::QUERY_RAWVALUE], $qobj[HotstatusResponse::QUERY_TYPE]);
+                                $queryCacheValues[] = $query[$qkey][HotstatusResponse::QUERY_RAWVALUE];
                             }
                         }
+
+                        $queryDateKey = $query[HotstatusPipeline::FILTER_KEY_DATE][HotstatusResponse::QUERY_RAWVALUE];
+
+                        //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
+                        foreach ($query as $qkey => &$qobj) {
+                            if (!$qobj[HotstatusResponse::QUERY_IGNORE_AFTER_CACHE] && $qobj[HotstatusResponse::QUERY_ISSET]) {
+                                $querySqlValues[] = $query[$qkey][HotstatusResponse::QUERY_SQLVALUE];
+                            }
+                        }
+
+                        //Build WhereAnd string from collected WhereOr strings
+                        $queryCache = HotstatusResponse::buildCacheKey($queryCacheValues);
+                        $querySql = HotstatusResponse::buildQuery_WhereAnd_String($querySqlValues);
+
+                        //Determine cache id from query parameters
+                        $CACHE_ID = $_ID . ((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
+
+                        //Define payload
+                        $payload = [
+                            "queryDateKey" => $queryDateKey,
+                            "querySql" => $querySql,
+                        ];
+
+                        //Queue Cache Request
+                        queueCacheRequest($_ID, $CACHE_ID, $payload, $permutationCount);
+
+                        $permutationCount++;
                     }
                 }
             }
         }
     }
+
+    log_totalgenerated($permutationCount);
+}
+
+function generate_getPageDataHeroAction() {
+    $_TYPE = GetPageDataHeroAction::_TYPE();
+    $_ID = GetPageDataHeroAction::_ID();
+    $_VERSION = GetPageDataHeroAction::_VERSION();
+
+    GetPageDataHeroAction::generateFilters();
+
+    log_generating($_ID);
+
+    $query = GetPageDataHeroAction::initQueries();
+
+    //Filter List
+    $filterList = generateFilterList($query);
+
+    //Filter Key Array
+    $filterKeyArray = generateFilterKeyArray($filterList);
+
+    //Filter Key Permutations
+    $filterKeyPermutations = generateFilterKeyPermutations($filterKeyArray, $query);
+
+    //Loop through all filter permutations and queue responses
+    $permutationCount = 1;
+    foreach ($filterKeyPermutations[HotstatusPipeline::FILTER_KEY_GAMETYPE] as $gameTypePermutation) {
+        if (count($gameTypePermutation) > 0) {
+            foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_DATE] as $dateSelection) {
+                foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_HERO] as $heroSelection) {
+                    //Copy clean filterlist (where everything is unselected)
+                    $cleanfilterlist = generateCleanFilterListPartialCopy($filterList);
+
+                    //Loop through chosen permutations and select them in a clean filter list
+                    foreach ($gameTypePermutation as $gameType) {
+                        $cleanfilterlist[HotstatusPipeline::FILTER_KEY_GAMETYPE][$gameType]['selected'] = true;
+                    }
+
+                    //Set blanket multiselections (Multiselects that are otherwise ignored for permutation generation)
+                    foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_MAP] as $map) {
+                        $cleanfilterlist[HotstatusPipeline::FILTER_KEY_MAP][$map]['selected'] = true;
+                    }
+                    foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_RANK] as $rank) {
+                        $cleanfilterlist[HotstatusPipeline::FILTER_KEY_RANK][$rank]['selected'] = true;
+                    }
+
+                    //Set selections
+                    $cleanfilterlist[HotstatusPipeline::FILTER_KEY_DATE][$dateSelection]['selected'] = true;
+                    $cleanfilterlist[HotstatusPipeline::FILTER_KEY_HERO][$heroSelection]['selected'] = true;
+
+                    //Generate requestQuery with filter fragments
+                    $requestQuery = new HotstatusResponse();
+
+                    foreach ($cleanfilterlist as $cfkey => &$cfobj) {
+                        $fragment = generateFilterFragment($cfkey, $cfobj);
+
+                        $requestQuery->addQuery($fragment['key'], $fragment['value']);
+                    }
+
+                    //Process requestQuery
+                    $queryCacheValues = [];
+                    $querySqlValues = [];
+                    $querySecondaryCacheValues = [];
+                    $querySecondarySqlValues = [];
+
+                    //Collect WhereOr strings from all query parameters for cache key
+                    foreach ($query as $qkey => &$qobj) {
+                        if ($requestQuery->has($qkey)) {
+                            $qobj[HotstatusResponse::QUERY_ISSET] = true;
+                            $qobj[HotstatusResponse::QUERY_RAWVALUE] = $requestQuery->get($qkey);
+                            $qobj[HotstatusResponse::QUERY_SQLVALUE] = HotstatusResponse::buildQuery_WhereOr_String($qkey, $qobj[HotstatusResponse::QUERY_SQLCOLUMN], $qobj[HotstatusResponse::QUERY_RAWVALUE], $qobj[HotstatusResponse::QUERY_TYPE]);
+                            $queryCacheValues[] = $query[$qkey][HotstatusResponse::QUERY_RAWVALUE];
+
+                            if ($qkey !== HotstatusPipeline::FILTER_KEY_HERO) {
+                                $querySecondaryCacheValues[] = $query[$qkey][HotstatusResponse::QUERY_RAWVALUE];
+                            }
+                        }
+                    }
+
+                    $queryHero = $query[HotstatusPipeline::FILTER_KEY_HERO][HotstatusResponse::QUERY_RAWVALUE];
+
+                    //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
+                    foreach ($query as $qkey => &$qobj) {
+                        if (!$qobj[HotstatusResponse::QUERY_IGNORE_AFTER_CACHE] && $qobj[HotstatusResponse::QUERY_ISSET]) {
+                            $querySqlValues[] = $query[$qkey][HotstatusResponse::QUERY_SQLVALUE];
+                        }
+                    }
+
+                    //Collect WhereOr strings for query parameters for dynamic sql query
+                    foreach ($query as $qkey => &$qobj) {
+                        if ($qobj[HotstatusResponse::QUERY_USE_FOR_SECONDARY] && $qobj[HotstatusResponse::QUERY_ISSET]) {
+                            $querySecondarySqlValues[] = $query[$qkey][HotstatusResponse::QUERY_SQLVALUE];
+                        }
+                    }
+
+                    //Build WhereAnd string from collected WhereOr strings
+                    $queryCache = HotstatusResponse::buildCacheKey($queryCacheValues);
+                    $querySql = HotstatusResponse::buildQuery_WhereAnd_String($querySqlValues, false);
+                    $querySecondaryCache = HotstatusResponse::buildCacheKey($querySecondaryCacheValues);
+                    $querySecondarySql = HotstatusResponse::buildQuery_WhereAnd_String($querySecondarySqlValues, true);
+
+                    //Determine Cache Id
+                    $CACHE_ID = $_ID . ":" . $queryHero . ((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
+
+                    //Define Payload
+                    $payload = [
+                        "queryHero" => $queryHero,
+                        "querySql" => $querySql,
+                        "querySecondaryCache" => $querySecondaryCache,
+                        "querySecondarySql" => $querySecondarySql,
+                    ];
+
+                    //Queue Cache Request
+                    queueCacheRequest($_ID, $CACHE_ID, $payload, $permutationCount);
+
+                    $permutationCount++;
+                }
+            }
+        }
+    }
+
+    log_totalgenerated($permutationCount);
 }
 
 //Test definition
@@ -186,15 +484,10 @@ $test = [
     }
 ];
 
-//Prepare statements
-$db->prepare("GetPipelineConfig",
-    "SELECT `rankings_season` FROM `pipeline_config` WHERE `id` = ? LIMIT 1");
-$db->bind("GetPipelineConfig", "i", $r_pipeline_config_id);
-
 /*
  * Begin generation
  */
-/*echo '--------------------------------------'.E
+echo '--------------------------------------'.E
     .'Cache process <<GENERATE>> has started'.E
     .'--------------------------------------'.E;
 //Get pipeline configuration
@@ -208,11 +501,46 @@ if ($pipeconfigresrows > 0) {
 
     $db->freeResult($pipeconfigresult);
 
-    //Heroes statslist generation
-
+    //Generation
+    //generate_getPageDataRankingsAction();
+    //generate_getDataTableHeroesStatsListAction();
+    generate_getPageDataHeroAction();
 }
 else {
     echo "Unable to get pipeline config...".E;
-}*/
+}
+
+/*
+ * Notes
+ */
+/*
+
+--> PERMUTATION CALCULATIONS
+
+Heroes Statslist
+--------------------
+15 = gameType ***
+16383 = map
+63 = rank ***
+12 = date ***
+TOTAL *** (11340) = ~333MB
+
+Hero Page
+--------------------
+15 = gameType ***
+16383 = map
+63 = rank
+12 = date ***
+75 = hero ***
+TOTAL *** (13500) = ~396MB
+
+Rankings
+--------------------
+4 = region ***
+2 = season ***
+4 = gameType ***
+TOTAL *** (32) = ~1 MB
+
+ */
 
 ?>

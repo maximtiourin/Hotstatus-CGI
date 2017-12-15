@@ -41,6 +41,7 @@ class GetPageDataHeroAction {
                 HotstatusResponse::QUERY_RAWVALUE => null,
                 HotstatusResponse::QUERY_SQLVALUE => null,
                 HotstatusResponse::QUERY_SQLCOLUMN => "hero",
+                HotstatusResponse::QUERY_COMBINATORIAL => false,
                 HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
             ],
             HotstatusPipeline::FILTER_KEY_GAMETYPE => [
@@ -50,6 +51,7 @@ class GetPageDataHeroAction {
                 HotstatusResponse::QUERY_RAWVALUE => null,
                 HotstatusResponse::QUERY_SQLVALUE => null,
                 HotstatusResponse::QUERY_SQLCOLUMN => "gameType",
+                HotstatusResponse::QUERY_COMBINATORIAL => true,
                 HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
             ],
             HotstatusPipeline::FILTER_KEY_MAP => [
@@ -59,6 +61,7 @@ class GetPageDataHeroAction {
                 HotstatusResponse::QUERY_RAWVALUE => null,
                 HotstatusResponse::QUERY_SQLVALUE => null,
                 HotstatusResponse::QUERY_SQLCOLUMN => "map",
+                HotstatusResponse::QUERY_COMBINATORIAL => false, //Map permutations are ignored for generation, due to staggering amount
                 HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
             ],
             HotstatusPipeline::FILTER_KEY_RANK => [
@@ -68,6 +71,7 @@ class GetPageDataHeroAction {
                 HotstatusResponse::QUERY_RAWVALUE => null,
                 HotstatusResponse::QUERY_SQLVALUE => null,
                 HotstatusResponse::QUERY_SQLCOLUMN => "mmr_average",
+                HotstatusResponse::QUERY_COMBINATORIAL => false, //Rank permutations are ignored for hero page, due to increased size caused by hero 'rule of product'
                 HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RANGE
             ],
             HotstatusPipeline::FILTER_KEY_DATE => [
@@ -77,6 +81,7 @@ class GetPageDataHeroAction {
                 HotstatusResponse::QUERY_RAWVALUE => null,
                 HotstatusResponse::QUERY_SQLVALUE => null,
                 HotstatusResponse::QUERY_SQLCOLUMN => "date_end",
+                HotstatusResponse::QUERY_COMBINATORIAL => false,
                 HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RANGE
             ],
         ];

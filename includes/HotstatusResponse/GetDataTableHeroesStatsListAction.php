@@ -40,7 +40,7 @@ class GetDataTableHeroesStatsListAction {
                 HotstatusResponse::QUERY_RAWVALUE => null,
                 HotstatusResponse::QUERY_SQLVALUE => null,
                 HotstatusResponse::QUERY_SQLCOLUMN => "map",
-                HotstatusResponse::QUERY_COMBINATORIAL => true,
+                HotstatusResponse::QUERY_COMBINATORIAL => false, //Map permutations are ignored for generation, due to staggering amount
                 HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
             ],
             HotstatusPipeline::FILTER_KEY_RANK => [

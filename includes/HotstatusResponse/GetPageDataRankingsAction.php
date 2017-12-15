@@ -18,7 +18,40 @@ class GetPageDataRankingsAction {
     }
 
     public static function generateFilters() {
+        HotstatusPipeline::filter_generate_season();
         HotstatusPipeline::filter_generate_date();
+    }
+
+    public static function initQueries() {
+        return [
+            HotstatusPipeline::FILTER_KEY_REGION => [
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "region",
+                HotstatusResponse::QUERY_COMBINATORIAL => false,
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_INDEX
+            ],
+            HotstatusPipeline::FILTER_KEY_SEASON => [
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "season",
+                HotstatusResponse::QUERY_COMBINATORIAL => false,
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
+            ],
+            HotstatusPipeline::FILTER_KEY_GAMETYPE => [
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "gameType",
+                HotstatusResponse::QUERY_COMBINATORIAL => false,
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
+            ],
+        ];
     }
 
     public static function execute(&$payload, MySqlDatabase &$db, &$pagedata, $isCacheProcess = false) {

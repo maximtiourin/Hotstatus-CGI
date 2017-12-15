@@ -33,6 +33,7 @@ class HotstatusPipeline {
      */
     const SEASON_UNKNOWN = "Legacy"; //This is the season to use when no season dates are defined for a given date time
     const SEASON_NONE = "None"; //This is the value of NO previous season
+    const SEASON_OVERRIDE = "2017 Season 3"; //Season override - If override is set, then select the overrided season instead of the current. Useful for when a new season begins and there is not enough data for current season
     const SEASON_CURRENT = "2018 Season 1";
     public static $SEASONS = [
         "2018 Season 1" => [
@@ -1384,17 +1385,12 @@ class HotstatusPipeline {
      * ]
      */
     public static function filter_generate_season() {
-        //Season override - If override is set, then select the overrided season instead of the current.
-        //Useful for when a new season begins and there is not enough data for current season
-        $season_override = "2017 Season 3";
-
-
         foreach (self::$SEASONS as $season => $sobj) {
             if ($season !== self::SEASON_UNKNOWN) {
                 self::$filter[self::FILTER_KEY_SEASON][$season] = [
                     "min" => $sobj['start'],
                     "max" => $sobj['end'],
-                    "selected" => ($season_override === null) ? ($season === self::SEASON_CURRENT) : ($season === $season_override),
+                    "selected" => (self::SEASON_OVERRIDE === null) ? ($season === self::SEASON_CURRENT) : ($season === self::SEASON_OVERRIDE),
                 ];
             }
         }
