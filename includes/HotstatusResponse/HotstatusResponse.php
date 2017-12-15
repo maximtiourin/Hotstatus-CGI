@@ -10,6 +10,7 @@ class HotstatusResponse {
     const QUERY_RAWVALUE = "rawValue";
     const QUERY_SQLVALUE = "sqlValue";
     const QUERY_SQLCOLUMN = "sqlColumn";
+    const QUERY_COMBINATORIAL = "combinatorial";
     const QUERY_TYPE = "mappingType";
     const QUERY_TYPE_RANGE = "range"; //Should look up a range of values from a filter map
     const QUERY_TYPE_RAW = "raw"; //Equality to Raw value should be used for the query

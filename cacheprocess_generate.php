@@ -34,7 +34,7 @@ const E = PHP_EOL;
  *  "value" => '$value' || '$value1,$value2,$value3,...,$valueN'
  * ]
  */
-function generateFilterFragment($key, $activemap) {
+function generateFilterFragment($key, &$activemap) {
     $activevals = [];
 
     foreach ($activemap as $akey => $aobj) {
@@ -55,10 +55,55 @@ function generateFilterFragment($key, $activemap) {
     ];
 }
 
+function generateFilterList(&$query) {
+    $filterlist = [];
+
+    foreach ($query as $qkey => &$qobj) {
+        $filterlist[$qkey] = HotstatusPipeline::$filter[$qkey];
+    }
+
+    return $filterlist;
+}
+
+function generateFilterKeyArray(&$filterlist) {
+    $filterKeyArray = [];
+
+    foreach ($filterlist as $fkey => &$fobj) {
+        $filterKeyArray[$fkey] = getFilterKeyArray($fobj);
+    }
+
+    return $filterKeyArray;
+}
+
+function generateFilterKeyPermutations(&$filterKeyArray) {
+    $filterKeyPermutations = [];
+
+    foreach ($filterKeyArray as $fkkey => &$fkobj) {
+        $filterKeyPermutations[$fkkey] => pc_array_power_set($fkobj);
+    }
+
+    return $filterKeyPermutations;
+}
+
+function generateCleanFilterListPartialCopy(&$filterlist) {
+    $cleanfilterlist = [];
+
+    foreach ($filterlist as $filterType => &$filterObj) {
+        $cleanfilterlist[$filterType] = [];
+        foreach ($filterObj as $filterObjType => &$filterObjObj) {
+            $cleanfilterlist[$filterType][$filterObjType] = [
+                "selected" => false,
+            ];
+        }
+    }
+
+    return $cleanfilterlist;
+}
+
 /*
  * Returns an array of the filter's keys, for use with permutation generation
  */
-function getFilterKeyArray($filter) {
+function getFilterKeyArray(&$filter) {
     $res = [];
     foreach ($filter as $fkey => $fobj) {
         $res[] = $fkey;
@@ -66,7 +111,7 @@ function getFilterKeyArray($filter) {
     return $res;
 }
 
-function pc_array_power_set($array) {
+function pc_array_power_set(&$array) {
     // initialize by adding the empty set
     $results = array(array( ));
 
@@ -77,41 +122,55 @@ function pc_array_power_set($array) {
     return $results;
 }
 
-function filterListSetDefaultUnselected(&$filterList) {
-    foreach ($filterList as $filterType => &$filterObj) {
-        foreach ($filterObj as $filterObjType => &$filterObjObj) {
-            $filterObjObj['selected'] = false;
-        }
-    }
-}
-
 function generateHeroesStatslist() {
     GetDataTableHeroesStatsListAction::generateFilters();
 
-    $filterList = [
-        HotstatusPipeline::FILTER_KEY_GAMETYPE => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_GAMETYPE],
-        HotstatusPipeline::FILTER_KEY_MAP => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_MAP],
-        HotstatusPipeline::FILTER_KEY_RANK => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_RANK],
-        HotstatusPipeline::FILTER_KEY_DATE => HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_DATE],
-    ];
+    $query = GetDataTableHeroesStatsListAction::initQueries();
 
-    //Default all filters to unselected
-    filterListSetDefaultUnselected($filterList);
+    //Filter List
+    $filterList = generateFilterList($query);
 
-    $filterKeyArray = [
-        HotstatusPipeline::FILTER_KEY_GAMETYPE => getFilterKeyArray($filterList[HotstatusPipeline::FILTER_KEY_GAMETYPE]),
-        HotstatusPipeline::FILTER_KEY_MAP => getFilterKeyArray($filterList[HotstatusPipeline::FILTER_KEY_MAP]),
-        HotstatusPipeline::FILTER_KEY_RANK => getFilterKeyArray($filterList[HotstatusPipeline::FILTER_KEY_RANK]),
-        HotstatusPipeline::FILTER_KEY_DATE => getFilterKeyArray($filterList[HotstatusPipeline::FILTER_KEY_DATE]),
-    ];
+    //Filter Key Array
+    $filterKeyArray = generateFilterKeyArray($filterList);
 
-    $filterKeyPermutations = [
-        HotstatusPipeline::FILTER_KEY_GAMETYPE => pc_array_power_set($filterKeyArray[HotstatusPipeline::FILTER_KEY_GAMETYPE]),
-        HotstatusPipeline::FILTER_KEY_MAP => pc_array_power_set($filterKeyArray[HotstatusPipeline::FILTER_KEY_MAP]),
-        HotstatusPipeline::FILTER_KEY_RANK => pc_array_power_set($filterKeyArray[HotstatusPipeline::FILTER_KEY_RANK]),
-    ];
+    //Filter Key Permutations
+    $filterKeyPermutations = generateFilterKeyPermutations($filterKeyArray);
 
-    //Generate all filter permutations
+    //Loop through all filter permutations and queue responses
+    $permutationCount = 0;
+    foreach ($filterKeyPermutations[HotstatusPipeline::FILTER_KEY_GAMETYPE] as $gameTypePermutation) {
+        if (count($gameTypePermutation) > 0) {
+            foreach ($filterKeyPermutations[HotstatusPipeline::FILTER_KEY_MAP] as $mapPermutation) {
+                if (count($mapPermutation) > 0) {
+                    foreach ($filterKeyPermutations[HotstatusPipeline::FILTER_KEY_RANK] as $rankPermutation) {
+                        if (count($rankPermutation) > 0) {
+                            foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_DATE] as $dateSelection) {
+                                //Copy clean filterlist (where everything is unselected)
+                                $cleanfilterlist = generateCleanFilterListPartialCopy($filterList);
+
+                                //Loop through chosen permutations and select them in a clean filter list
+                                foreach ($gameTypePermutation as $gameType) {
+                                    $cleanfilterlist[HotstatusPipeline::FILTER_KEY_GAMETYPE][$gameType]['selected'] = true;
+                                }
+                                foreach ($mapPermutation as $map) {
+                                    $cleanfilterlist[HotstatusPipeline::FILTER_KEY_MAP][$map]['selected'] = true;
+                                }
+                                foreach ($rankPermutation as $rank) {
+                                    $cleanfilterlist[HotstatusPipeline::FILTER_KEY_RANK][$rank]['selected'] = true;
+                                }
+                                $cleanfilterlist[HotstatusPipeline::FILTER_KEY_DATE][$dateSelection]['selected'] = true;
+
+                                //
+
+
+                                $permutationCount++;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 //Test definition
@@ -121,9 +180,9 @@ $test = [
         echo $test['key'] . "=" . $test['value'] .E;
     },
     "generateHeroesStatslist" => function() {
-        $test = generateHeroesStatslist();
+        //$test = generateHeroesStatslist();
 
-        var_dump($test[HotstatusPipeline::FILTER_KEY_GAMETYPE]);
+        //var_dump($test[HotstatusPipeline::FILTER_KEY_GAMETYPE]);
     }
 ];
 
