@@ -502,8 +502,8 @@ if ($pipeconfigresrows > 0) {
     $db->freeResult($pipeconfigresult);
 
     //Generation
-    //generate_getPageDataRankingsAction();
-    //generate_getDataTableHeroesStatsListAction();
+    generate_getPageDataRankingsAction();
+    generate_getDataTableHeroesStatsListAction();
     generate_getPageDataHeroAction();
 }
 else {
