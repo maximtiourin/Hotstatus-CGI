@@ -21,6 +21,10 @@ class RESPONSE_TEMPLATE {
 
     }
 
+    public static function initQueries() {
+
+    }
+
     public static function execute(&$payload, MySqlDatabase &$db, &$pagedata, $isCacheProcess = false) {
         //Extract payload
 

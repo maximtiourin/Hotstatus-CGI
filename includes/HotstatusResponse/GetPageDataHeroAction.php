@@ -32,8 +32,54 @@ class GetPageDataHeroAction {
         HotstatusPipeline::filter_generate_date();
     }
 
-    private static function formatNumber($n, $decimalPlaces = 0) {
-        return number_format($n, $decimalPlaces, '.', ',');
+    public static function initQueries() {
+        return [
+            HotstatusPipeline::FILTER_KEY_HERO => [
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
+                HotstatusResponse::QUERY_USE_FOR_SECONDARY => false,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "hero",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
+            ],
+            HotstatusPipeline::FILTER_KEY_GAMETYPE => [
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
+                HotstatusResponse::QUERY_USE_FOR_SECONDARY => true,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "gameType",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
+            ],
+            HotstatusPipeline::FILTER_KEY_MAP => [
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
+                HotstatusResponse::QUERY_USE_FOR_SECONDARY => true,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "map",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
+            ],
+            HotstatusPipeline::FILTER_KEY_RANK => [
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
+                HotstatusResponse::QUERY_USE_FOR_SECONDARY => true,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "mmr_average",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RANGE
+            ],
+            HotstatusPipeline::FILTER_KEY_DATE => [
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
+                HotstatusResponse::QUERY_USE_FOR_SECONDARY => true,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "date_end",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RANGE
+            ],
+        ];
     }
 
     public static function execute(&$payload, MySqlDatabase &$db, $connected_mysql, RedisDatabase &$redis, $connected_redis, &$pagedata, $isCacheProcess = false) {
@@ -245,8 +291,8 @@ class GetPageDataHeroAction {
             $c_pmin_kills = round($c_pmin_kills_raw, 2);
         }
         $stats['kills'] = [
-            "average" => self::formatNumber($c_avg_kills, 2),
-            "per_minute" => self::formatNumber($c_pmin_kills, 2)
+            "average" => HotstatusResponse::formatNumber($c_avg_kills, 2),
+            "per_minute" => HotstatusResponse::formatNumber($c_pmin_kills, 2)
         ];
 
         //Average Assists (+ Per Minute)
@@ -263,8 +309,8 @@ class GetPageDataHeroAction {
             $c_pmin_assists = round($c_pmin_assists_raw, 2);
         }
         $stats['assists'] = [
-            "average" => self::formatNumber($c_avg_assists, 2),
-            "per_minute" => self::formatNumber($c_pmin_assists, 2)
+            "average" => HotstatusResponse::formatNumber($c_avg_assists, 2),
+            "per_minute" => HotstatusResponse::formatNumber($c_pmin_assists, 2)
         ];
 
         //Average Deaths (+ Per Minute)
@@ -281,8 +327,8 @@ class GetPageDataHeroAction {
             $c_pmin_deaths = round($c_pmin_deaths_raw, 2);
         }
         $stats['deaths'] = [
-            "average" => self::formatNumber($c_avg_deaths, 2),
-            "per_minute" => self::formatNumber($c_pmin_deaths, 2)
+            "average" => HotstatusResponse::formatNumber($c_avg_deaths, 2),
+            "per_minute" => HotstatusResponse::formatNumber($c_pmin_deaths, 2)
         ];
 
         //Average KDA
@@ -291,7 +337,7 @@ class GetPageDataHeroAction {
             $c_avg_kda = round(($c_avg_kda / ($c_avg_deaths_raw * 1.00)), 2);
         }
         $stats['kda'] = [
-            "average" => self::formatNumber($c_avg_kda, 2)
+            "average" => HotstatusResponse::formatNumber($c_avg_kda, 2)
         ];
 
         //Average Siege Damage (+ Per Minute)
@@ -308,8 +354,8 @@ class GetPageDataHeroAction {
             $c_pmin_siege_damage = round($c_pmin_siege_damage_raw, 2);
         }
         $stats['siege_damage'] = [
-            "average" => self::formatNumber($c_avg_siege_damage),
-            "per_minute" => self::formatNumber($c_pmin_siege_damage)
+            "average" => HotstatusResponse::formatNumber($c_avg_siege_damage),
+            "per_minute" => HotstatusResponse::formatNumber($c_pmin_siege_damage)
         ];
 
         //Average Hero Damage (+ Per Minute)
@@ -326,8 +372,8 @@ class GetPageDataHeroAction {
             $c_pmin_hero_damage = round($c_pmin_hero_damage_raw, 2);
         }
         $stats['hero_damage'] = [
-            "average" => self::formatNumber($c_avg_hero_damage),
-            "per_minute" => self::formatNumber($c_pmin_hero_damage)
+            "average" => HotstatusResponse::formatNumber($c_avg_hero_damage),
+            "per_minute" => HotstatusResponse::formatNumber($c_pmin_hero_damage)
         ];
 
         //Average Structure Damage (+ Per Minute)
@@ -344,8 +390,8 @@ class GetPageDataHeroAction {
             $c_pmin_structure_damage = round($c_pmin_structure_damage_raw, 2);
         }
         $stats['structure_damage'] = [
-            "average" => self::formatNumber($c_avg_structure_damage),
-            "per_minute" => self::formatNumber($c_pmin_structure_damage)
+            "average" => HotstatusResponse::formatNumber($c_avg_structure_damage),
+            "per_minute" => HotstatusResponse::formatNumber($c_pmin_structure_damage)
         ];
 
         //Average Healing (+ Per Minute)
@@ -362,8 +408,8 @@ class GetPageDataHeroAction {
             $c_pmin_healing = round($c_pmin_healing_raw, 2);
         }
         $stats['healing'] = [
-            "average" => self::formatNumber($c_avg_healing),
-            "per_minute" => self::formatNumber($c_pmin_healing)
+            "average" => HotstatusResponse::formatNumber($c_avg_healing),
+            "per_minute" => HotstatusResponse::formatNumber($c_pmin_healing)
         ];
 
         //Average Damage Taken (+ Per Minute)
@@ -380,8 +426,8 @@ class GetPageDataHeroAction {
             $c_pmin_damage_taken = round($c_pmin_damage_taken_raw, 2);
         }
         $stats['damage_taken'] = [
-            "average" => self::formatNumber($c_avg_damage_taken),
-            "per_minute" => self::formatNumber($c_pmin_damage_taken)
+            "average" => HotstatusResponse::formatNumber($c_avg_damage_taken),
+            "per_minute" => HotstatusResponse::formatNumber($c_pmin_damage_taken)
         ];
 
         //Average Merc Camps (+ Per Minute)
@@ -398,8 +444,8 @@ class GetPageDataHeroAction {
             $c_pmin_merc_camps = round($c_pmin_merc_camps_raw, 2);
         }
         $stats['merc_camps'] = [
-            "average" => self::formatNumber($c_avg_merc_camps, 2),
-            "per_minute" => self::formatNumber($c_pmin_merc_camps, 2)
+            "average" => HotstatusResponse::formatNumber($c_avg_merc_camps, 2),
+            "per_minute" => HotstatusResponse::formatNumber($c_pmin_merc_camps, 2)
         ];
 
         //Average Exp Contrib (+ Per Minute)
@@ -416,12 +462,12 @@ class GetPageDataHeroAction {
             $c_pmin_exp_contrib = round($c_pmin_exp_contrib_raw, 2);
         }
         $stats['exp_contrib'] = [
-            "average" => self::formatNumber($c_avg_exp_contrib),
-            "per_minute" => self::formatNumber($c_pmin_exp_contrib)
+            "average" => HotstatusResponse::formatNumber($c_avg_exp_contrib),
+            "per_minute" => HotstatusResponse::formatNumber($c_pmin_exp_contrib)
         ];
 
         //Best Killstreak
-        $stats['best_killstreak'] = self::formatNumber($a_best_killstreak);
+        $stats['best_killstreak'] = HotstatusResponse::formatNumber($a_best_killstreak);
 
         //Average Time Spent Dead (in Minutes)
         $c_avg_time_spent_dead = 0;
@@ -431,7 +477,7 @@ class GetPageDataHeroAction {
             $c_avg_time_spent_dead = round($c_avg_time_spent_dead_raw, 1);
         }
         $stats['time_spent_dead'] = [
-            "average" => self::formatNumber($c_avg_time_spent_dead, 1)
+            "average" => HotstatusResponse::formatNumber($c_avg_time_spent_dead, 1)
         ];
 
         //Set pagedata stats

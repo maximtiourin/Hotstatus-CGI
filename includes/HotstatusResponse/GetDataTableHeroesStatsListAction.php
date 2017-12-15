@@ -23,6 +23,43 @@ class GetDataTableHeroesStatsListAction {
         HotstatusPipeline::filter_generate_date();
     }
 
+    public static function initQueries() {
+        return [
+            HotstatusPipeline::FILTER_KEY_GAMETYPE => [
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "gameType",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
+            ],
+            HotstatusPipeline::FILTER_KEY_MAP => [
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "map",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RAW
+            ],
+            HotstatusPipeline::FILTER_KEY_RANK => [
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => false,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "mmr_average",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RANGE
+            ],
+            HotstatusPipeline::FILTER_KEY_DATE => [
+                HotstatusResponse::QUERY_IGNORE_AFTER_CACHE => true,
+                HotstatusResponse::QUERY_ISSET => false,
+                HotstatusResponse::QUERY_RAWVALUE => null,
+                HotstatusResponse::QUERY_SQLVALUE => null,
+                HotstatusResponse::QUERY_SQLCOLUMN => "date_end",
+                HotstatusResponse::QUERY_TYPE => HotstatusResponse::QUERY_TYPE_RANGE
+            ],
+        ];
+    }
+
     public static function execute(&$payload, MySqlDatabase &$db, &$pagedata, $isCacheProcess = false) {
         //Extract payload
         $queryDateKey = $payload['queryDateKey'];

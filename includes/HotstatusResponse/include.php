@@ -1,4 +1,7 @@
 <?php
+//Base
+require_once __DIR__ . '/HotstatusResponse.php';
+
 //Hero
 require_once __DIR__ . '/GetPageDataHeroAction.php';
 require_once __DIR__ . '/GetDataTableHeroesStatsListAction.php';
