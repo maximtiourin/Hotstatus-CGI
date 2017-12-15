@@ -1384,12 +1384,17 @@ class HotstatusPipeline {
      * ]
      */
     public static function filter_generate_season() {
+        //Season override - If override is set, then select the overrided season instead of the current.
+        //Useful for when a new season begins and there is not enough data for current season
+        $season_override = "2017 Season 3";
+
+
         foreach (self::$SEASONS as $season => $sobj) {
             if ($season !== self::SEASON_UNKNOWN) {
                 self::$filter[self::FILTER_KEY_SEASON][$season] = [
                     "min" => $sobj['start'],
                     "max" => $sobj['end'],
-                    "selected" => $season === self::SEASON_CURRENT,
+                    "selected" => ($season_override === null) ? ($season === self::SEASON_CURRENT) : ($season === $season_override),
                 ];
             }
         }
