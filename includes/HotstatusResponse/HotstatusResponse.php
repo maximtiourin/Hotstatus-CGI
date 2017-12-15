@@ -15,6 +15,27 @@ class HotstatusResponse {
     const QUERY_TYPE_RAW = "raw"; //Equality to Raw value should be used for the query
     const QUERY_TYPE_INDEX = "index"; //Value at "index" key inside of the obj should be used as the value
 
+    private $queryMap = [];
+    private $queryList = [];
+
+    public function addQuery($key, $value) {
+        if (!key_exists($key, $this->queryMap)) {
+            $this->queryMap[$key] = $value;
+            $this->queryList[] = [
+                "key" => $key,
+                "value" => $value,
+            ];
+        }
+    }
+
+    public function has($key) {
+        return key_exists($key, $this->queryMap);
+    }
+
+    public function get($key) {
+        return $this->queryMap[$key];
+    }
+
     public static function buildCacheKey($queryRawVals) {
         $str = '';
 
