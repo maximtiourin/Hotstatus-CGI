@@ -91,6 +91,9 @@ $actionMap = [
         HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_DEFAULT_TTL);
 
         $redis->close();
+
+        unset($encored);
+        unset($datatable);
     },
     "getPageDataHeroAction" => function($cache_id, $payload, MySqlDatabase &$db, $creds) {
         $_TYPE = GetPageDataHeroAction::_TYPE();
@@ -122,6 +125,9 @@ $actionMap = [
         HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_DEFAULT_TTL);
 
         $redis->close();
+
+        unset($encored);
+        unset($datatable);
     },
     "getPageDataRankingsAction" => function($cache_id, $payload, MySqlDatabase &$db, $creds) {
         $_TYPE = GetPageDataRankingsAction::_TYPE();
@@ -153,6 +159,9 @@ $actionMap = [
         HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_DEFAULT_TTL);
 
         $redis->close();
+
+        unset($encored);
+        unset($datatable);
     },
 ];
 
