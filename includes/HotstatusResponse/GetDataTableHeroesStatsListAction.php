@@ -106,7 +106,7 @@ class GetDataTableHeroesStatsListAction {
 
             //Cache Process Logging
             if ($isCacheProcess) {
-                echo "Querying Hero: $r_hero                                               \r";
+                echo "[$queryDateKey] Querying Hero: $r_hero                                               \r";
             }
 
             /*

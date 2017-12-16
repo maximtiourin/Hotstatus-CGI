@@ -45,6 +45,10 @@ $db->prepare("SelectNextRequestWithStatus-Unlocked",
     "SELECT `id`, `action`, `cache_id`, `payload` FROM `pipeline_cache_requests` WHERE `lastused` <= ? AND `status` = ? ORDER BY `id` ASC LIMIT 1");
 $db->bind("SelectNextRequestWithStatus-Unlocked", "ii", $r_timestamp, $r_status);
 
+$db->prepare("SelectNextRequestWithStatusPriority-Unlocked",
+    "SELECT `id`, `action`, `cache_id`, `payload` FROM `pipeline_cache_requests` WHERE `lastused` <= ? AND `status` = ? ORDER BY `priority` DESC, `id` ASC LIMIT 1");
+$db->bind("SelectNextRequestWithStatus-Unlocked", "ii", $r_timestamp, $r_status);
+
 $db->prepare("DeleteRequest",
     "DELETE FROM `pipeline_cache_requests` WHERE `id` = ? LIMIT 1");
 $db->bind("DeleteRequest", "i", $r_id);
@@ -180,7 +184,7 @@ while (true) {
         //No Cache Updating previously failed, look for unlocked queued request to update
         $r_timestamp = time() - UNLOCK_DEFAULT_DURATION;
         $r_status = HotstatusCache::QUEUE_CACHE_STATUS_QUEUED;
-        $queuedResult = $db->execute("SelectNextRequestWithStatus-Unlocked");
+        $queuedResult = $db->execute("SelectNextRequestWithStatusPriority-Unlocked");
         $queuedResultRows = $db->countResultRows($queuedResult);
         if ($queuedResultRows > 0) {
             //Found a queued unlocked request for update, softlock for updating and update it

@@ -92,7 +92,7 @@ class HotstatusCache {
 
     const QUEUE_CACHE_STATUS_QUEUED = 1;
     const QUEUE_CACHE_STATUS_UPDATING = 2;
-    public static function QueueCacheRequestForUpdateOnOldAge($functionId, $cache_id, $creds, $maxage, $lastupdated, $payload = []) {
+    public static function QueueCacheRequestForUpdateOnOldAge($functionId, $cache_id, $creds, $maxage, $lastupdated, $payload = [], $priority = null) {
         date_default_timezone_set(HotstatusPipeline::REPLAY_TIMEZONE);
         //Check if cached value needs to be queued for update
         $age = time() - $lastupdated;
@@ -105,14 +105,15 @@ class HotstatusCache {
             if ($connected_mysql !== FALSE) {
                 $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
-                $db->prepare("insert", "INSERT INTO `pipeline_cache_requests` (`action`, `cache_id`, `payload`, `lastused`, `status`) VALUES (?, ?, ?, ?, ?)");
-                $db->bind("insert", "sssii", $r_action, $r_cache_id, $r_payload, $r_lastused, $r_status);
+                $db->prepare("insert", "INSERT INTO `pipeline_cache_requests` (`action`, `cache_id`, `payload`, `lastused`, `status`, `priority`) VALUES (?, ?, ?, ?, ?, ?)");
+                $db->bind("insert", "sssiii", $r_action, $r_cache_id, $r_payload, $r_lastused, $r_status, $r_priority);
 
                 $r_action = $functionId;
                 $r_cache_id = $cache_id;
                 $r_payload = json_encode($payload);
                 $r_lastused = time();
                 $r_status = self::QUEUE_CACHE_STATUS_QUEUED;
+                $r_priority = (is_int($priority)) ? ($priority) : (time()); //Default to youngest manual requests have highest priority
 
                 $db->execute("insert");
 

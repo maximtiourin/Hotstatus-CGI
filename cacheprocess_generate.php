@@ -16,6 +16,8 @@ HotstatusPipeline::hotstatus_mysql_connect($db, $creds);
 $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
 
 //Constants and qol
+const MAX_RANK_SIZE = 6;
+const MAX_GAMETYPE_SIZE = 4;
 const E = PHP_EOL;
 
 //Prepare statements
@@ -23,8 +25,8 @@ $db->prepare("GetPipelineConfig",
     "SELECT `rankings_season` FROM `pipeline_config` WHERE `id` = ? LIMIT 1");
 $db->bind("GetPipelineConfig", "i", $r_pipeline_config_id);
 
-$db->prepare("QueueCacheRequest", "INSERT INTO `pipeline_cache_requests` (`action`, `cache_id`, `payload`, `lastused`, `status`) VALUES (?, ?, ?, ?, ?)");
-$db->bind("QueueCacheRequest", "sssii", $r_action, $r_cache_id, $r_payload, $r_lastused, $r_status);
+$db->prepare("QueueCacheRequest", "INSERT INTO `pipeline_cache_requests` (`action`, `cache_id`, `payload`, `lastused`, `status`, `priority`) VALUES (?, ?, ?, ?, ?, ?)");
+$db->bind("QueueCacheRequest", "sssiii", $r_action, $r_cache_id, $r_payload, $r_lastused, $r_status, $r_priority);
 
 //Functions
 function log_generating($functionId) {
@@ -39,7 +41,7 @@ function log_totalgenerated($permutationCount) {
     echo ($permutationCount - 1) . " Total Cache Requests Queued.          ".E.E;
 }
 
-function queueCacheRequest($functionId, $cache_id, $payload, $permutationCount = null) {
+function queueCacheRequest($functionId, $cache_id, $payload, $priority, $permutationCount = null) {
     global $db, $r_action, $r_cache_id, $r_payload, $r_lastused, $r_status;
 
     $r_action = $functionId;
@@ -47,6 +49,7 @@ function queueCacheRequest($functionId, $cache_id, $payload, $permutationCount =
     $r_payload = json_encode($payload);
     $r_lastused = time();
     $r_status = HotstatusCache::QUEUE_CACHE_STATUS_QUEUED;
+    $r_priority = $priority;
 
     $db->execute("QueueCacheRequest");
 
@@ -181,6 +184,9 @@ function generate_getPageDataRankingsAction() {
     foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_REGION] as $regionSelection) {
         foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_SEASON] as $seasonSelection) {
             foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_GAMETYPE] as $gameTypeSelection) {
+                //Calculate priority (Higher number has higher priority)
+                $priority = 10000;
+
                 //Copy clean filterlist (where everything is unselected)
                 $cleanfilterlist = generateCleanFilterListPartialCopy($filterList);
 
@@ -237,7 +243,7 @@ function generate_getPageDataRankingsAction() {
                 ];
 
                 //Queue Cache Request
-                queueCacheRequest($_ID, $CACHE_ID, $payload, $permutationCount);
+                queueCacheRequest($_ID, $CACHE_ID, $payload, $priority, $permutationCount);
 
                 $permutationCount++;
             }
@@ -274,6 +280,16 @@ function generate_getDataTableHeroesStatsListAction() {
             foreach ($filterKeyPermutations[HotstatusPipeline::FILTER_KEY_RANK] as $rankPermutation) {
                 if (count($rankPermutation) > 0) {
                     foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_DATE] as $dateSelection) {
+                        //Calculate priority (Higher number has higher priority)
+                        $priority = 0;
+                        if (count($rankPermutation) === MAX_RANK_SIZE) {
+                            $priority += 500;
+                        }
+                        if (count($gameTypePermutation) === MAX_GAMETYPE_SIZE) {
+                            $priority += 1000;
+                        }
+                        $priority += $filterList[HotstatusPipeline::FILTER_KEY_DATE][$dateSelection]['generation']['priority'] + 1; //Add 1 to take precedence over equal hero page dates
+
                         //Copy clean filterlist (where everything is unselected)
                         $cleanfilterlist = generateCleanFilterListPartialCopy($filterList);
 
@@ -339,7 +355,7 @@ function generate_getDataTableHeroesStatsListAction() {
                         ];
 
                         //Queue Cache Request
-                        queueCacheRequest($_ID, $CACHE_ID, $payload, $permutationCount);
+                        queueCacheRequest($_ID, $CACHE_ID, $payload, $priority, $permutationCount);
 
                         $permutationCount++;
                     }
@@ -377,6 +393,13 @@ function generate_getPageDataHeroAction() {
         if (count($gameTypePermutation) > 0) {
             foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_DATE] as $dateSelection) {
                 foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_HERO] as $heroSelection) {
+                    //Calculate priority (Higher number has higher priority)
+                    $priority = 0;
+                    if (count($gameTypePermutation) === MAX_GAMETYPE_SIZE) {
+                        $priority += 750;
+                    }
+                    $priority += $filterList[HotstatusPipeline::FILTER_KEY_DATE][$dateSelection]['generation']['priority'];
+
                     //Copy clean filterlist (where everything is unselected)
                     $cleanfilterlist = generateCleanFilterListPartialCopy($filterList);
 
@@ -460,7 +483,7 @@ function generate_getPageDataHeroAction() {
                     ];
 
                     //Queue Cache Request
-                    queueCacheRequest($_ID, $CACHE_ID, $payload, $permutationCount);
+                    queueCacheRequest($_ID, $CACHE_ID, $payload, $priority, $permutationCount);
 
                     $permutationCount++;
                 }

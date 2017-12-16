@@ -60,6 +60,10 @@ class GetPageDataRankingsAction {
         $queryGameType = $payload['queryGameType'];
         $querySql = $payload['querySql'];
 
+        if ($isCacheProcess) {
+            echo "[$querySeason :: $queryGameType] Updating rankings page.\n";
+        }
+
         //Define main vars
 
         //Build Response

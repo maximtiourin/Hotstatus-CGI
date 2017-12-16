@@ -1403,6 +1403,9 @@ class HotstatusPipeline {
      *      "max" => DateTimeRangeEndInclusive
      *      "offset_date" => DateTimeOffsetsAreCalculatedFrom
      *      "offset_amount" => HowManyDaysToCountBackBy
+     *      "generation" => [
+     *          "priority" => PriorityToAddForCacheRequestGeneration
+     *      ]
      *      "selected" => WhetherOrNotThisFilterOptionStartsSelected
      * ]
      */
@@ -1418,6 +1421,9 @@ class HotstatusPipeline {
             "max" => $last7days['date_end'],
             "offset_date" => $date_offset,
             "offset_amount" => 7,
+            "generation" => [
+                "priority" => 99,
+            ],
             "selected" => TRUE
         ];
 
@@ -1428,6 +1434,9 @@ class HotstatusPipeline {
             "max" => $last30days['date_end'],
             "offset_date" => $date_offset,
             "offset_amount" => 30,
+            "generation" => [
+                "priority" => 85,
+            ],
             "selected" => FALSE
         ];
 
@@ -1438,6 +1447,9 @@ class HotstatusPipeline {
             "max" => $last90days['date_end'],
             "offset_date" => $date_offset,
             "offset_amount" => 90,
+            "generation" => [
+                "priority" => 75,
+            ],
             "selected" => FALSE
         ];
 
@@ -1451,10 +1463,14 @@ class HotstatusPipeline {
             "max" => $range['date_end'],
             "offset_date" => $rangeoffset,
             "offset_amount" => $rangelength,
+            "generation" => [
+                "priority" => 90,
+            ],
             "selected" => FALSE,
         ];
 
         //Add non-current patches
+        $priorityDecrement = 30;
         foreach (self::$PATCHES as $patchkey => $patch) {
             if ($patchkey !== self::PATCH_CURRENT) {
                 $version = $patch['version'];
@@ -1469,6 +1485,9 @@ class HotstatusPipeline {
                     "max" => $range['date_end'],
                     "offset_date" => $rangeoffset,
                     "offset_amount" => $rangelength,
+                    "generation" => [
+                        "priority" => $priorityDecrement--,
+                    ],
                     "selected" => FALSE
                 ];
             }
