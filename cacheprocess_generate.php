@@ -42,7 +42,7 @@ function log_totalgenerated($permutationCount) {
 }
 
 function queueCacheRequest($functionId, $cache_id, $payload, $priority, $permutationCount = null) {
-    global $db, $r_action, $r_cache_id, $r_payload, $r_lastused, $r_status;
+    global $db, $r_action, $r_cache_id, $r_payload, $r_lastused, $r_status, $r_priority;
 
     $r_action = $functionId;
     $r_cache_id = $cache_id;
