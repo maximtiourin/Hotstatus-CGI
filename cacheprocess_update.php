@@ -47,7 +47,7 @@ $db->bind("SelectNextRequestWithStatus-Unlocked", "ii", $r_timestamp, $r_status)
 
 $db->prepare("SelectNextRequestWithStatusPriority-Unlocked",
     "SELECT `id`, `action`, `cache_id`, `payload` FROM `pipeline_cache_requests` WHERE `lastused` <= ? AND `status` = ? ORDER BY `priority` DESC, `id` ASC LIMIT 1");
-$db->bind("SelectNextRequestWithStatus-Unlocked", "ii", $r_timestamp, $r_status);
+$db->bind("SelectNextRequestWithStatusPriority-Unlocked", "ii", $r_timestamp, $r_status);
 
 $db->prepare("DeleteRequest",
     "DELETE FROM `pipeline_cache_requests` WHERE `id` = ? LIMIT 1");
