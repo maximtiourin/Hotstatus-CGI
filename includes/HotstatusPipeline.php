@@ -1384,13 +1384,13 @@ class HotstatusPipeline {
      *      "selected" => WhetherOrNotThisFilterOptionStartsSelected
      * ]
      */
-    public static function filter_generate_season() {
+    public static function filter_generate_season($allowOverride = true) {
         foreach (self::$SEASONS as $season => $sobj) {
             if ($season !== self::SEASON_UNKNOWN) {
                 self::$filter[self::FILTER_KEY_SEASON][$season] = [
                     "min" => $sobj['start'],
                     "max" => $sobj['end'],
-                    "selected" => (self::SEASON_OVERRIDE === null) ? ($season === self::SEASON_CURRENT) : ($season === self::SEASON_OVERRIDE),
+                    "selected" => ($allowOverride && self::SEASON_OVERRIDE !== null) ? ($season === self::SEASON_OVERRIDE) : ($season === self::SEASON_CURRENT),
                 ];
             }
         }
