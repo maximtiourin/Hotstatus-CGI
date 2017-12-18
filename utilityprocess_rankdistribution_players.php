@@ -27,7 +27,7 @@ const E = PHP_EOL;
 $db->prepare("GetRatings", "SELECT `rating` FROM `players_mmr` WHERE `season` = ?");
 $db->bind("GetRatings", "s", $r_season);
 
-$r_season = "2017 Season 3";
+$r_season = "2018 Season 1";
 
 $stepsize = 1;
 $ratings = [];

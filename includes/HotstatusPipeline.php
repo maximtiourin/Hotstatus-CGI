@@ -514,8 +514,14 @@ class HotstatusPipeline {
                 "min" => 0,
                 "max" => 199,
                 "players" => [
-                    "min" => 0,
-                    "max" => 0,
+                    "2018 Season 1" => [
+                        "min" => 0,
+                        "max" => 0,
+                    ],
+                    "2017 Season 3" => [
+                        "min" => 0,
+                        "max" => 0,
+                    ],
                 ],
                 "selected" => TRUE
             ],
@@ -523,8 +529,14 @@ class HotstatusPipeline {
                 "min" => 200,
                 "max" => 399,
                 "players" => [
-                    "min" => 1,
-                    "max" => 182,
+                    "2018 Season 1" => [
+                        "min" => 1,
+                        "max" => 86,
+                    ],
+                    "2017 Season 3" => [
+                        "min" => 1,
+                        "max" => 182,
+                    ],
                 ],
                 "selected" => TRUE
             ],
@@ -532,8 +544,14 @@ class HotstatusPipeline {
                 "min" => 400,
                 "max" => 799,
                 "players" => [
-                    "min" => 183,
-                    "max" => 580,
+                    "2018 Season 1" => [
+                        "min" => 87,
+                        "max" => 226,
+                    ],
+                    "2017 Season 3" => [
+                        "min" => 183,
+                        "max" => 580,
+                    ],
                 ],
                 "selected" => TRUE
             ],
@@ -541,8 +559,14 @@ class HotstatusPipeline {
                 "min" => 800,
                 "max" => 1199,
                 "players" => [
-                    "min" => 581,
-                    "max" => 1301,
+                    "2018 Season 1" => [
+                        "min" => 227,
+                        "max" => 498,
+                    ],
+                    "2017 Season 3" => [
+                        "min" => 581,
+                        "max" => 1301,
+                    ],
                 ],
                 "selected" => TRUE
             ],
@@ -550,8 +574,14 @@ class HotstatusPipeline {
                 "min" => 1200,
                 "max" => 1599,
                 "players" => [
-                    "min" => 1302,
-                    "max" => 1860,
+                    "2018 Season 1" => [
+                        "min" => 499,
+                        "max" => 1030,
+                    ],
+                    "2017 Season 3" => [
+                        "min" => 1302,
+                        "max" => 1860,
+                    ],
                 ],
                 "selected" => TRUE
             ],
@@ -559,8 +589,14 @@ class HotstatusPipeline {
                 "min" => 1600,
                 "max" => PHP_INT_MAX,
                 "players" => [
-                    "min" => 1861,
-                    "max" => PHP_INT_MAX,
+                    "2018 Season 1" => [
+                        "min" => 1030,
+                        "max" => PHP_INT_MAX,
+                    ],
+                    "2017 Season 3" => [
+                        "min" => 1861,
+                        "max" => PHP_INT_MAX,
+                    ],
                 ],
                 "selected" => TRUE
             ]
@@ -1846,10 +1882,14 @@ class HotstatusPipeline {
      * Returns the proper name of the rank for a given player rating
      * Returns UNKNOWN if no rank is found
      */
-    public static function getRankNameForPlayerRating($rating) {
+    public static function getRankNameForPlayerRating($rating, $season) {
+        if ($season === self::SEASON_UNKNOWN || !key_exists($season, self::$SEASONS)) {
+            $season = self::SEASON_CURRENT;
+        }
+
         if (is_numeric($rating)) {
             foreach (self::$filter[self::FILTER_KEY_RANK] as $rname => $robj) {
-                if ($rating >= $robj['players']['min'] && $rating <= $robj['players']['max']) return $rname;
+                if ($rating >= $robj['players'][$season]['min'] && $rating <= $robj['players'][$season]['max']) return $rname;
             }
         }
 
@@ -1859,17 +1899,21 @@ class HotstatusPipeline {
     /*
      * Returns a rank tier : [V, IV, III, II, I] for the rank that the rating falls into. Unknown returns "?", Highest Rank returns "*".
      */
-    public static function getRankTierForPlayerRating($rating) {
+    public static function getRankTierForPlayerRating($rating, $season) {
+        if ($season === self::SEASON_UNKNOWN || !key_exists($season, self::$SEASONS)) {
+            $season = self::SEASON_CURRENT;
+        }
+
         if (is_numeric($rating)) {
             foreach (self::$filter[self::FILTER_KEY_RANK] as $rname => $robj) {
-                if ($rating >= $robj['players']['min'] && $rating <= $robj['players']['max']) {
+                if ($rating >= $robj['players'][$season]['min'] && $rating <= $robj['players'][$season]['max']) {
                     if ($rname === "Master") {
                         return "*";
                     }
                     else {
                         //Split min/max of rating into 5 pieces, return the first section that the rating falls into
-                        $min = $robj['players']['min'] * 1.00;
-                        $max = $robj['players']['max'] * 1.00;
+                        $min = $robj['players'][$season]['min'] * 1.00;
+                        $max = $robj['players'][$season]['max'] * 1.00;
 
                         $diff = $max - $min;
 
