@@ -101,6 +101,8 @@ function trackStatDifference($getkey, $setkey, &$stat) {
 //Stats Tracking
 $stat_replays_processed_total = 0;
 $stat_replays_errors_total = 0;
+$stat_replays_reparsed_total = 0;
+$stat_replays_reparsed_errors_total = 0;
 $stat_cache_requests_updated_total = 0;
 
 //Begin main script
@@ -134,6 +136,14 @@ while (true) {
         //stats_replays_errors_per_minute
         $d = trackStatDifference("replays_errors_total", "replays_errors_per_minute", $stat_replays_errors_total);
         log("Stat: Replays Errors - Per Minute: $d");
+
+        //stats_replays_reparsed_per_minute
+        $d = trackStatDifference("replays_reparsed_total", "replays_reparsed_per_minute", $stat_replays_reparsed_total);
+        log("Stat: Replays Reparsed - Per Minute: $d");
+
+        //stats_replays_reparsed_errors_per_minute
+        $d = trackStatDifference("replays_reparsed_errors_total", "replays_reparsed_errors_per_minute", $stat_replays_reparsed_errors_total);
+        log("Stat: Replays Reparsed Errors - Per Minute: $d");
 
         //stats_cache_requests_updated_per_minute
         $d = trackStatDifference("cache_requests_updated_total", "cache_requests_updated_per_minute", $stat_cache_requests_updated_total);
