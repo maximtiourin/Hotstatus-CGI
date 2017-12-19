@@ -49,6 +49,13 @@ $console = new Console();
 $linux = OS::getOS() == OS::OS_LINUX;
 
 //Prepare statements
+$t_players = HotstatusPipeline::$table_pointers['players'];
+$t_players_heroes = HotstatusPipeline::$table_pointers['players_heroes'];
+$t_players_matches = HotstatusPipeline::$table_pointers['players_matches'];
+$t_players_matches_recent_granular = HotstatusPipeline::$table_pointers['players_matches_recent_granular'];
+$t_players_matches_total = HotstatusPipeline::$table_pointers['players_matches_total'];
+$t_players_mmr = HotstatusPipeline::$table_pointers['players_mmr'];
+$t_players_parties = HotstatusPipeline::$table_pointers['players_parties'];
 
 $db->prepare("GetPipelineConfig",
     "SELECT `min_replay_date`, `max_replay_date` FROM `pipeline_config` WHERE `id` = ? LIMIT 1");
@@ -111,8 +118,8 @@ $db->prepare("GetMapNameFromMapNameTranslation",
 $db->bind("GetMapNameFromMapNameTranslation", "s", $r_name_translation);
 
 $db->prepare("GetMMRForPlayer",
-    "SELECT season, rating, mu, sigma FROM players_mmr WHERE id = ? AND (season = ? OR season = ?) AND gameType = ? FOR UPDATE");
-$db->bind("GetMMRForPlayer", "isss", $r_player_id, $r_season, $r_season_previous, $r_gameType);
+    "SELECT season, rating, mu, sigma FROM $t_players_mmr WHERE id = ? AND region = ? AND (season = ? OR season = ?) AND gameType = ? FOR UPDATE");
+$db->bind("GetMMRForPlayer", "iisss", $r_player_id, $r_region, $r_season, $r_season_previous, $r_gameType);
 
 $db->prepare("InsertMatch",
     "INSERT INTO matches (id, type, map, date, match_length, version, region, winner, players, bans, team_level, mmr) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -122,7 +129,7 @@ $db->bind("InsertMatch", "isssisiissss", $r_id, $r_type, $r_map, $r_date, $r_mat
  * Use Secondary Binding technique to get around Mysql 5.7.14 Bug when using ON DUPLICATE KEY UPDATE and VALUES() function on text/blob columns
  */
 $db->prepare("+=:players",
-    "INSERT INTO `players` "
+    "INSERT INTO `$t_players` "
     . "(`id`, `name`, `tag`, `region`, `account_level`) "
     . "VALUES (?, ?, ?, ?, ?) "
     . "ON DUPLICATE KEY UPDATE "
@@ -134,35 +141,35 @@ $db->bind("+=:players",
     $r_name);
 
 $db->prepare("+=:players_heroes",
-    "INSERT INTO players_heroes "
-    . "(id, hero, hero_level) "
-    . "VALUES (?, ?, ?) "
+    "INSERT INTO $t_players_heroes "
+    . "(id, region, hero, hero_level) "
+    . "VALUES (?, ?, ?, ?) "
     . "ON DUPLICATE KEY UPDATE "
     . "hero_level = GREATEST(hero_level, VALUES(hero_level))");
 $db->bind("+=:players_heroes",
-    "isi",
-    $r_player_id, $r_hero, $r_hero_level);
+    "iisi",
+    $r_player_id, $r_region, $r_hero, $r_hero_level);
 
 $db->prepare("+=:players_matches",
-    "INSERT INTO players_matches "
-    . "(id, match_id, date) "
-    . "VALUES (?, ?, ?)");
+    "INSERT INTO `$t_players_matches` "
+    . "(`id`, `region`, `match_id`, `date`) "
+    . "VALUES (?, ?, ?, ?)");
 $db->bind("+=:players_matches",
-    "iis",
-    $r_player_id, $r_match_id, $r_date);
+    "iiis",
+    $r_player_id, $r_region, $r_match_id, $r_date);
 
 $db->prepare("??:players_matches_recent_granular",
-    "SELECT medals, talents, builds, parties FROM players_matches_recent_granular "
-    . "WHERE id = ? AND date_end = ? AND hero = ? AND map = ? AND gameType = ? FOR UPDATE");
+    "SELECT medals, talents, builds, parties FROM $t_players_matches_recent_granular "
+    . "WHERE id = ? AND region = ? AND date_end = ? AND hero = ? AND map = ? AND gameType = ? FOR UPDATE");
 $db->bind("??:players_matches_recent_granular",
-    "issss", $r_player_id, $r_date_end, $r_hero, $r_map, $r_gameType);
+    "iissss", $r_player_id, $r_region, $r_date_end, $r_hero, $r_map, $r_gameType);
 
 $db->prepare("+=:players_matches_recent_granular",
-    "INSERT INTO players_matches_recent_granular "
-    . "(id, date_end, hero, gameType, map, played, won, time_played, stats_kills, stats_assists, stats_deaths, stats_siege_damage, stats_hero_damage, 
+    "INSERT INTO $t_players_matches_recent_granular "
+    . "(id, region, date_end, hero, gameType, map, played, won, time_played, stats_kills, stats_assists, stats_deaths, stats_siege_damage, stats_hero_damage, 
     stats_structure_damage, stats_healing, stats_damage_taken, stats_merc_camps, stats_exp_contrib, stats_best_killstreak, stats_time_spent_dead, medals, talents, 
     builds, parties) "
-    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
     . "ON DUPLICATE KEY UPDATE "
     . "played = played + VALUES(played), won = won + VALUES(won), time_played = time_played + VALUES(time_played), 
     stats_kills = stats_kills + VALUES(stats_kills), stats_assists = stats_assists + VALUES(stats_assists), stats_deaths = stats_deaths + VALUES(stats_deaths), 
@@ -173,31 +180,31 @@ $db->prepare("+=:players_matches_recent_granular",
     stats_time_spent_dead = stats_time_spent_dead + VALUES(stats_time_spent_dead), medals = VALUES(medals), talents = VALUES(talents), builds = VALUES(builds), 
     parties = VALUES(parties)");
 $db->bind("+=:players_matches_recent_granular",
-    "issssiiiiiiiiiiiiiiissss",
-    $r_player_id, $r_date_end, $r_hero, $r_gameType, $r_map, $r_played, $r_won, $r_time_played, $r_stats_kills, $r_stats_assists, $r_stats_deaths,
+    "iissssiiiiiiiiiiiiiiissss",
+    $r_player_id, $r_region, $r_date_end, $r_hero, $r_gameType, $r_map, $r_played, $r_won, $r_time_played, $r_stats_kills, $r_stats_assists, $r_stats_deaths,
     $r_stats_siege_damage, $r_stats_hero_damage, $r_stats_structure_damage, $r_stats_healing, $r_stats_damage_taken, $r_stats_merc_camps, $r_stats_exp_contrib,
     $r_stats_best_killstreak, $r_stats_time_spent_dead, $r_medals, $r_talents, $r_builds, $r_parties);
 
 $db->prepare("+=:players_matches_total",
-    "INSERT INTO players_matches_total "
-    . "(id, hero, gameType, map, played, won, time_played, time_played_silenced, medals) "
-    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) "
+    "INSERT INTO $t_players_matches_total "
+    . "(id, region, hero, gameType, map, played, won, time_played, time_played_silenced, medals) "
+    . "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
     . "ON DUPLICATE KEY UPDATE "
     . "played = played + VALUES(played), won = won + VALUES(won), time_played = time_played + VALUES(time_played), 
     time_played_silenced = time_played_silenced + VALUES(time_played_silenced), medals = VALUES(medals)");
 $db->bind("+=:players_matches_total",
-    "isssiiiis",
-    $r_player_id, $r_hero, $r_gameType, $r_map, $r_played, $r_won, $r_time_played, $r_time_played_silenced, $r_medals);
+    "iisssiiiis",
+    $r_player_id, $r_region, $r_hero, $r_gameType, $r_map, $r_played, $r_won, $r_time_played, $r_time_played_silenced, $r_medals);
 
 $db->prepare("+=:players_mmr",
-    "INSERT INTO players_mmr "
-    . "(id, season, gameType, rating, mu, sigma) "
-    . "VALUES (?, ?, ?, ?, ?, ?) "
+    "INSERT INTO $t_players_mmr "
+    . "(id, region, season, gameType, rating, mu, sigma) "
+    . "VALUES (?, ?, ?, ?, ?, ?, ?) "
     . "ON DUPLICATE KEY UPDATE "
     . "rating = VALUES(rating), mu = VALUES(mu), sigma = VALUES(sigma)");
 $db->bind("+=:players_mmr",
-    "issidd",
-    $r_player_id, $r_season, $r_gameType, $r_rating, $r_mu, $r_sigma);
+    "iissidd",
+    $r_player_id, $r_region, $r_season, $r_gameType, $r_rating, $r_mu, $r_sigma);
 
 $db->prepare("??:heroes_matches_recent_granular",
     "SELECT medals, talents, builds, matchup_friends, matchup_foes FROM heroes_matches_recent_granular "
@@ -242,8 +249,8 @@ $db->prepare("ensureTalentBuild",
 $db->bind("ensureTalentBuild", "sss", $r_hero, $r_build, $r_build_talents);
 
 $db->prepare("ensurePlayerParty",
-    "INSERT INTO players_parties (id, party, players) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE id = id");
-$db->bind("ensurePlayerParty", "iss", $r_player_id, $r_party, $r_players);
+    "INSERT INTO $t_players_parties (id, region, party, players) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE id = id");
+$db->bind("ensurePlayerParty", "iiss", $r_player_id, $r_region, $r_party, $r_players);
 
 /*
  * Inserts match into 'matches' collection
