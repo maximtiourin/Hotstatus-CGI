@@ -220,6 +220,7 @@ function generate_getPageDataRankingsAction() {
 
                 $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][HotstatusResponse::QUERY_RAWVALUE];
                 $queryGameType = $query[HotstatusPipeline::FILTER_KEY_GAMETYPE][HotstatusResponse::QUERY_RAWVALUE];
+                $queryRegion = $query[HotstatusPipeline::FILTER_KEY_REGION][HotstatusResponse::QUERY_RAWVALUE];
 
                 //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
                 foreach ($query as $qkey => &$qobj) {
@@ -239,6 +240,7 @@ function generate_getPageDataRankingsAction() {
                 $payload = [
                     "querySeason" => $querySeason,
                     "queryGameType" => $queryGameType,
+                    "queryRegion" => $queryRegion,
                     "querySql" => $querySql,
                 ];
 
