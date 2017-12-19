@@ -114,12 +114,6 @@ echo '--------------------------------------'.E
 while (true) {
     //Per 10 Minutes
     if (time() % 600 == 0) {
-        //Count replays_queued_total
-        $r_status = 1;
-        $d = getCountResult("CountReplaysOfStatus");
-        setStatInt("replays_queued_total", $d);
-        log("Sync: Replays Queued: $d");
-
         //Count replays_outofdate_total
         $r_status = 16;
         $d = getCountResult("CountReplaysOfStatus");
@@ -129,6 +123,12 @@ while (true) {
 
     //Per Minute
     if (time() % 60 == 0) {
+        //Count replays_queued_total
+        $r_status = 1;
+        $d = getCountResult("CountReplaysOfStatus");
+        setStatInt("replays_queued_total", $d);
+        log("Sync: Replays Queued: $d");
+
         //stats_replays_processed_per_minute
         $d = trackStatDifference("replays_processed_total", "replays_processed_per_minute", $stat_replays_processed_total);
         log("Stat: Replays Processed - Per Minute: $d");
@@ -151,14 +151,14 @@ while (true) {
     }
 
     //Per 30 Seconds
-    if (time() % 30 == 0) {
+    /*if (time() % 30 == 0) {
         //Count Downloaded Replays Up To Limit
         if (SYNC_DOWNLOADED_REPLAYS) {
             $r_replays_downloaded = getCountResult("CountDownloadedReplaysUpToLimit");
             $db->execute("set_semaphore_replays_downloaded");
             log("Sync: Semaphore - Replays Downloaded");
         }
-    }
+    }*/
 
     $sleep->add(PROCESS_GRANULARITY);
 
