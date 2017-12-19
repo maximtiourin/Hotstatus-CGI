@@ -145,8 +145,8 @@ while (true) {
                             $db->freeResult($existingReplayResult);
                         }
 
-                        //Finished processing results for result array, set latest hots api id processed
-                        $r_val_int = $maxReplayId;
+                        //Finished processing results for result array, set latest hots api id processed + 1
+                        $r_val_int = $maxReplayId + 1;
                         $db->execute("SetReplaysLatestHotsApiId");
 
                         $db->transaction_commit();
@@ -155,7 +155,7 @@ while (true) {
                     }
                     else {
                         //No relevant replays found, set new latest hotsapi id to be the maxId encountered
-                        $r_val_int = $maxReplayId;
+                        $r_val_int = $maxReplayId + 1;
                         $db->execute("SetReplaysLatestHotsApiId");
 
                         echo 'Result Group #' . $lastCatalogedReplay . ' had no more relevant replays.' . E . E;
