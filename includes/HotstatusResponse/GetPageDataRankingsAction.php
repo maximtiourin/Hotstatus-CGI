@@ -86,79 +86,8 @@ class GetPageDataRankingsAction {
 
         $numRegion = HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_REGION][$queryRegion]['index'];
 
-        //TODO - Figure out why in the everliving fuck any queries from this function return null results or fail the response altogether...
-
         $db->prepare("GetTopRanks",
-            "SELECT mmr.`id` AS `playerid`, `name` AS `playername`, `rating`, (SELECT COUNT(`type`) FROM `$t_players_matches` pm INNER JOIN `matches` m ON pm.`match_id` = m.`id` AND pm.`region` = m.`region` WHERE pm.`id` = mmr.`id` AND `type` = \"$queryGameType\" AND pm.`date` >= \"$date_start\" AND pm.`date` <= \"$date_end\") AS `played` FROM `$t_players_mmr` mmr INNER JOIN `$t_players` p ON mmr.`id` = p.`id` AND mmr.`region` = p.`region` WHERE (SELECT COUNT(`type`) FROM `$t_players_matches` pm INNER JOIN `matches` m ON pm.`match_id` = m.`id` AND pm.`region` = m.`region` WHERE pm.`id` = mmr.`id` AND `type` = \"$queryGameType\" AND pm.`date` >= \"$date_start\" AND pm.`date` <= \"$date_end\") >= $matchLimit $querySql ORDER BY `rating` DESC LIMIT $rankLimit");
-         // QuerySql no longer has AND prepended by default
-
-        $db->prepare("GetRatings",
-            "SELECT * FROM `rp_players_mmr` WHERE `region` = 1 AND `gameType` = \"Hero League\" AND `season` = \"2017 Season 3\" LIMIT 4");
-
-        $db->prepare("CountMatchesPlayedForPlayer",
-            "SELECT COUNT(*) AS `count` FROM `rp_players_matches` pm INNER JOIN `matches` m ON pm.`match_id` = m.`id` AND pm.`region` = m.`region` WHERE pm.`id` = ? AND pm.`region` = ? AND m.`type` = '$queryGameType' AND pm.`date` >= '$date_start' AND pm.`date` <= '$date_end'");
-        $db->bind("CountMatchesPlayedForPlayer", "ii", $r_player_id, $r_region);
-
-        $db->prepare("GetPlayerName",
-            "SELECT `name` FROM `rp_players` WHERE `id` = ? AND `region` = ?");
-        $db->bind("GetPlayerName", "ii", $r_player_id, $r_region);
-
-        /*$ranks = [];
-        $rankplace = 1;
-        $rankresult = $db->execute("GetRatings");
-        $rankresultrows = $db->countResultRows($rankresult);
-        if ($rankresultrows > 0) {
-            while ($row = $db->fetchArray($rankresult) && $rankplace <= $rankLimit) {*/
-                //$r_player_id = $row['id'];
-                //$r_region = $row['region'];
-
-                /*$matchcountresult = $db->execute("CountMatchesPlayedForPlayer");
-                $count = $db->fetchArray($matchcountresult)['count'];
-                $db->freeResult($matchcountresult);
-
-                if ($count >= $matchLimit) {*/
-                //$nameresult = $db->execute("GetPlayerName");
-                //$playername = $db->fetchArray($nameresult)['name'];
-
-
-                /*$rank = [];
-
-                $rank["rank"] = $rankplace++;
-                $rank['player_id'] = ($row['id']);
-                //$rank['player_name'] = $playername;
-                $rank['rating'] = ($row['rating']);
-                $rank['region'] = ($row['region']);
-                $rank['played'] = 999;
-                //$rank['played'] = $count;
-
-                //$db->freeResult($nameresult);
-
-                $ranks[] = $rank;
-                // }
-            }
-        }*/
-
-        /*$db->freeResult($rankresult);
-
-        $pagedata['ranks'] = $ranks;*/
-
-        /*$ranks = [];
-        $ranknum = 1;
-        $res = $db->execute("GetRatings");
-        while ($row = $db->fetchArray($res)) {
-            $rank = [];
-
-            $rank['rank'] = $ranknum++;
-            $rank['id'] = intval($row['id']);
-            $rank['region'] = intval($row['region']);
-            $rank['played'] = 999;
-            $rank['rating'] = 2000;
-
-            $ranks[] = $rank;
-        }
-        $db->freeResult($res);
-        $pagedata['ranks'] = $ranks;*/
-
+            "SELECT mmr.`id` AS `playerid`, `name` AS `playername`, `rating`, (SELECT COUNT(`type`) FROM `$t_players_matches` pm INNER JOIN `matches` m ON pm.`match_id` = m.`id` AND pm.`region` = m.`region` WHERE pm.`id` = mmr.`id` AND `type` = \"$queryGameType\" AND pm.`date` >= \"$date_start\" AND pm.`date` <= \"$date_end\") AS `played` FROM `$t_players_mmr` mmr INNER JOIN `$t_players` p ON mmr.`id` = p.`id` AND mmr.`region` = p.`region` WHERE (SELECT COUNT(`type`) FROM `$t_players_matches` pm INNER JOIN `matches` m ON pm.`match_id` = m.`id` AND pm.`region` = m.`region` WHERE pm.`id` = mmr.`id` AND `type` = \"$queryGameType\" AND pm.`date` >= \"$date_start\" AND pm.`date` <= \"$date_end\") >= $matchLimit AND mmr.`region` = $numRegion AND `gameType` = \"$queryGameType\" AND `season` = \"$querySeason\" ORDER BY `rating` DESC LIMIT $rankLimit");
 
         $ranks = [];
         $rankplace = 1;
