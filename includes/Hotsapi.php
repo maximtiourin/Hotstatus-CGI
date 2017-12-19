@@ -20,6 +20,10 @@ class Hotsapi {
         return self::ResponseHeadersAndJson(self::API . '/replays/paged?page=' . $page);
     }
 
+    public static function getReplaysStartingFromHotsApiId($id) {
+        return self::ResponseHeadersAndJson(self::API . '/replays?min_id=' . $id);
+    }
+
     /*
      * Returns assoc array of http code and json body of the response at url
      * ['code'] = http code of response
@@ -93,7 +97,7 @@ class Hotsapi {
      * Adds an extra key 'page_index' that is set to the replays original page index before the filtering occured.
      * Note that the page index is the replay's index within the individual page, and not the # of the page itself.
      */
-    public static function getReplaysGreaterThanEqualToId($replays, $id, $filterValidMatchTypes = true, $filterByDays = null) {
+    public static function getReplaysGreaterThanEqualToId($replays, $id, $filterValidMatchTypes = true) {
         $arr = [];
         $i = 1;
         foreach ($replays as $replay) {
@@ -103,7 +107,7 @@ class Hotsapi {
             $replaydate = $modreplay['game_date'];
 
 
-            if ($i >= $id && ($filterByDays == null || self::getReplayAgeInDays($replaydate) <= $filterByDays)) {
+            if ($i >= $id) {
                 if ($filterValidMatchTypes) {
                     if (in_array($replaytype, self::$validMatchTypes, true)) {
                         $arr[] = $modreplay;
@@ -116,6 +120,33 @@ class Hotsapi {
             $i++;
         }
         return $arr;
+    }
+
+    /*
+     * [
+     *  "maxReplayId" => Maximum hots api id encountered in the array
+     *  "replays" => Array of the filter replay objects
+     * ]
+     */
+    public static function getReplaysWithValidMatchTypes(&$replays, $minReplayId) {
+        $res = [];
+        $arr = [];
+
+        $maxId = $minReplayId;
+
+        foreach ($replays as $replay) {
+            $gameType = $replay['game_type'];
+
+            if (in_array($gameType, self::$validMatchTypes, true)) {
+                $arr[] = $replay;
+                if ($replay['id'] > $maxId) $maxId = $replay['id'];
+            }
+        }
+
+        $res['maxReplayId'] = $maxId;
+        $res['replays'] = $arr;
+
+        return $res;
     }
 
     /*
