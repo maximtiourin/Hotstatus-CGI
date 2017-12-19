@@ -74,12 +74,8 @@ $db->prepare("UpdateReplayParsedError",
     "UPDATE replays SET match_id = ?, file = NULL, error = ?, status = ?, lastused = ? WHERE id = ? LIMIT 1");
 $db->bind("UpdateReplayParsedError", "isiii", $r_match_id, $r_error, $r_status, $r_timestamp, $r_id);
 
-$db->prepare("SelectNextReplayForDownload-Unlocked",
-    "SELECT `id`, `fingerprint`, `storage_id`, `match_id` FROM `replays` WHERE `match_date` > ? AND `match_date` < ? AND `status` = ? AND `lastused` <= ? ORDER BY `match_date` ASC, `id` ASC LIMIT 1");
-$db->bind("SelectNextReplayForDownload-Unlocked", "ssii", $replaymindate, $replaymaxdate, $r_status, $r_timestamp);
-
 $db->prepare("SelectNextReplayWithStatus-Unlocked",
-    "SELECT `id`, `fingerprint`, `file` FROM `replays` WHERE `status` = ? AND `lastused` <= ? ORDER BY `match_date` ASC, `id` ASC LIMIT 1");
+    "SELECT `id`, `match_id` FROM `replays` WHERE `status` = ? AND `lastused` <= ? ORDER BY `match_date` ASC, `id` ASC LIMIT 1");
 $db->bind("SelectNextReplayWithStatus-Unlocked", "ii", $r_status, $r_timestamp);
 
 $db->prepare("stats_replays_processed_total",
@@ -448,9 +444,10 @@ while (true) {
         }
         else {
             //No Worker Processing previously failed, look for unlocked queued replay to process
+            echo "Finding parsed replay to reparse...".E;
             $r_status = HotstatusPipeline::REPLAY_STATUS_PARSED;
             $r_timestamp = time() - UNLOCK_DEFAULT_DURATION;
-            $queuedResult = $db->execute("SelectNextReplayForDownload-Unlocked");
+            $queuedResult = $db->execute("SelectNextReplayWithStatus-Unlocked");
             $queuedResultRows = $db->countResultRows($queuedResult);
             if ($queuedResultRows > 0) {
                 //Found a queued unlocked replay for download, softlock for processing and process it
@@ -462,17 +459,22 @@ while (true) {
 
                 $db->execute("UpdateReplayStatus");
 
+                echo "Flagging replay as reparsing before trying to obtain lock...".E;
+
                 //Set lock id
-                $replayLockId = "hotstatus_downloadReplay_$r_id"; //Use same lock id as replayprocess_download.php, to allow both variants of processes to co-exist
+                $replayLockId = "hotstatus_reparsing_$r_id";
 
                 //Obtain lock
                 $replayLocked = $db->lock($replayLockId, 0);
 
                 if ($replayLocked) {
+                  echo "Obtained lock 'hotstatus_reparsing_$r_id'...".E;
                     /*
                      * PARSE PORTION OF PROCESSING
                      */
                     $r_match_id = $row['match_id'];
+
+                  echo "Getting match data...".E;
 
                     $match_result = $db->execute("GetMatch");
                     $match_result_rows = $db->countResultRows($match_result);
@@ -511,7 +513,6 @@ while (true) {
 
                         if (!$hadError) {
                             //Flag replay as fully reprocessed
-                            $r_id = $row['id'];
                             $r_status = HotstatusPipeline::REPLAY_STATUS_REPARSED;
                             $r_timestamp = time();
 
@@ -531,7 +532,6 @@ while (true) {
                             $db->transaction_rollback();
 
                             //Flag replay reparse error
-                            $r_id = $row['id'];
                             $r_status = HotstatusPipeline::REPLAY_STATUS_REPARSE_ERROR;
                             $r_timestamp = time();
                             $r_error = "Semi-Parsed, Missed: " . $errorstr;
@@ -548,13 +548,29 @@ while (true) {
                     else {
                         //No match found with match id
                         $db->transaction_rollback();
+
+                         //Flag replay reparse error
+                         $r_status = HotstatusPipeline::REPLAY_STATUS_REPARSE_ERROR;
+                         $r_timestamp = time();
+                         $r_error = "No match found with match_id $r_match_id";
+
+                         $db->execute("UpdateReplayStatusError");
+
+                         //Track stats
+                         $r_replays_errors_total = 1;
+                         $db->execute("stats_replays_errors_total");
+
+                         echo 'Could not successfully reparse replay #' . $r_id . '...' . E . E;
                     }
+
+                    $db->freeResult($match_result);
 
                     //Release lock
                     $db->unlock($replayLockId);
                 }
                 else {
                     //Could not attain lock on replay, immediately continue
+                     echo "Could not obtain lock 'hotstatus_reparsing_$r_id'...".E.E;
                 }
             }
             else {
