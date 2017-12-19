@@ -2132,4 +2132,14 @@ class HotstatusPipeline {
     const REPLAY_STATUS_MYSQL_MATCHDATA_WRITE_ERROR = 15; //"mysql_matchdata_write_error"; //status value for when a repaly had an unknown mysql write error during match data insertion
     const REPLAY_STATUS_OUTOFDATE = 16; //"replay_out_of_date"; //Replay is older than our minimum cutoff for dataset, seperate it from queued replays to improve query speeds
     const REPLAY_STATUS_PROCESSING = 17; //"processing"; //Special container instance processing, handles downloading and parsing replays one at a time without using EFS for dataset storage
+
+    public static $table_pointers = [
+        "players" => "rp_players",
+        "players_heroes" => "rp_players_heroes",
+        "players_matches" => "rp_players_matches",
+        "players_matches_recent_granular" => "rp_players_matches_recent_granular",
+        "players_matches_total" => "rp_players_matches_total",
+        "players_mmr" => "rp_players_mmr",
+        "players_parties" => "rp_players_parties",
+    ];
 }
