@@ -24,7 +24,8 @@ const E = PHP_EOL;
 //Prepare statements
 
 //Player Rank Distribution
-$db->prepare("GetRatings", "SELECT `rating` FROM `players_mmr` WHERE `season` = ?");
+$t_players_mmr = HotstatusPipeline::$table_pointers['players_mmr'];
+$db->prepare("GetRatings", "SELECT `rating` FROM `$t_players_mmr` WHERE `season` = ?");
 $db->bind("GetRatings", "s", $r_season);
 
 $r_season = "2018 Season 1";

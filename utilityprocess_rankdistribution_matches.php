@@ -28,7 +28,7 @@ $selector = 'mmr';
 $db->prepare("GetRatings", "SELECT `mmr_average`, `played` FROM `heroes_matches_recent_granular` WHERE `date_end` >= ?");
 $db->bind("GetRatings", "s", $r_date);
 
-$r_season = "2017 Season 3";
+$r_season = "2018 Season 1";
 $r_date = HotstatusPipeline::$SEASONS[$r_season]["start"];
 
 $stepsize = 100;

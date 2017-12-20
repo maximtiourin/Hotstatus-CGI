@@ -512,7 +512,7 @@ class HotstatusPipeline {
         self::FILTER_KEY_RANK => [
             "Bronze" => [
                 "min" => 0,
-                "max" => 199,
+                "max" => 0,
                 "players" => [
                     "2018 Season 1" => [
                         "min" => 0,
@@ -526,75 +526,75 @@ class HotstatusPipeline {
                 "selected" => TRUE
             ],
             "Silver" => [
-                "min" => 200,
-                "max" => 399,
+                "min" => 1,
+                "max" => 49,
                 "players" => [
                     "2018 Season 1" => [
                         "min" => 1,
-                        "max" => 86,
+                        "max" => 69,
                     ],
                     "2017 Season 3" => [
                         "min" => 1,
-                        "max" => 182,
+                        "max" => 160,
                     ],
                 ],
                 "selected" => TRUE
             ],
             "Gold" => [
-                "min" => 400,
-                "max" => 799,
+                "min" => 50,
+                "max" => 99,
                 "players" => [
                     "2018 Season 1" => [
-                        "min" => 87,
-                        "max" => 226,
+                        "min" => 70,
+                        "max" => 217,
                     ],
                     "2017 Season 3" => [
-                        "min" => 183,
-                        "max" => 580,
+                        "min" => 161,
+                        "max" => 468,
                     ],
                 ],
                 "selected" => TRUE
             ],
             "Platinum" => [
-                "min" => 800,
-                "max" => 1199,
+                "min" => 100,
+                "max" => 499,
                 "players" => [
                     "2018 Season 1" => [
-                        "min" => 227,
-                        "max" => 498,
+                        "min" => 218,
+                        "max" => 446,
                     ],
                     "2017 Season 3" => [
-                        "min" => 581,
-                        "max" => 1301,
+                        "min" => 469,
+                        "max" => 1142,
                     ],
                 ],
                 "selected" => TRUE
             ],
             "Diamond" => [
-                "min" => 1200,
-                "max" => 1599,
+                "min" => 500,
+                "max" => 1199,
                 "players" => [
                     "2018 Season 1" => [
-                        "min" => 499,
-                        "max" => 1030,
+                        "min" => 447,
+                        "max" => 885,
                     ],
                     "2017 Season 3" => [
-                        "min" => 1302,
-                        "max" => 1860,
+                        "min" => 1143,
+                        "max" => 1733,
                     ],
                 ],
                 "selected" => TRUE
             ],
             "Master" => [
-                "min" => 1600,
+                "min" => 1200,
                 "max" => PHP_INT_MAX,
                 "players" => [
                     "2018 Season 1" => [
-                        "min" => 1030,
+                        "min" => 886,
                         "max" => PHP_INT_MAX,
                     ],
                     "2017 Season 3" => [
-                        "min" => 1861,
+                        "min" => 1734,
                         "max" => PHP_INT_MAX,
                     ],
                 ],
