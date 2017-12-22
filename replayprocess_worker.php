@@ -732,6 +732,8 @@ while (true) {
 
                         //Check if parse was a success
                         if (!key_exists('error', $parse)) {
+                            $r_region = $parse['region'];
+
                             /* Collect player mmrs and calculate new mmr for match season */
                             $seasonid = HotstatusPipeline::getSeasonStringForDateTime($parse['date']);
                             $seasonprevid = HotstatusPipeline::getSeasonPreviousStringForSeasonString($seasonid);

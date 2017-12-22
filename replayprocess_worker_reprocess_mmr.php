@@ -330,6 +330,8 @@ while (true) {
 
                         echo 'Reparsing replay #' . $r_id . '...                                       ' . E;
 
+                        $r_region = $parse['region'];
+
                         /* Collect player mmrs and calculate new mmr for match season */
                         $seasonid = HotstatusPipeline::getSeasonStringForDateTime($parse['date']);
                         $seasonprevid = HotstatusPipeline::getSeasonPreviousStringForSeasonString($seasonid);
