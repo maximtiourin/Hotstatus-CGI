@@ -2140,6 +2140,8 @@ class HotstatusPipeline {
     const REPLAY_STATUS_PROCESSING = 17; //"processing"; //Special container instance processing, handles downloading and parsing replays one at a time without using EFS for dataset storage
 
     public static $table_pointers = [
+        "matches" => "matches",
+        "matches_mmr" => "matches_mmr",
         "players" => "rp_players",
         "players_heroes" => "rp_players_heroes",
         "players_matches" => "rp_players_matches",
