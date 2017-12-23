@@ -537,11 +537,11 @@ class HotstatusPipeline {
                 "players" => [
                     "2018 Season 1" => [
                         "min" => 1,
-                        "max" => 69,
+                        "max" => 109,
                     ],
                     "2017 Season 3" => [
                         "min" => 1,
-                        "max" => 160,
+                        "max" => 191,
                     ],
                 ],
                 "selected" => TRUE
@@ -551,12 +551,12 @@ class HotstatusPipeline {
                 "max" => 99,
                 "players" => [
                     "2018 Season 1" => [
-                        "min" => 70,
-                        "max" => 217,
+                        "min" => 110,
+                        "max" => 291,
                     ],
                     "2017 Season 3" => [
-                        "min" => 161,
-                        "max" => 468,
+                        "min" => 192,
+                        "max" => 630,
                     ],
                 ],
                 "selected" => TRUE
@@ -566,12 +566,12 @@ class HotstatusPipeline {
                 "max" => 499,
                 "players" => [
                     "2018 Season 1" => [
-                        "min" => 218,
-                        "max" => 446,
+                        "min" => 292,
+                        "max" => 492,
                     ],
                     "2017 Season 3" => [
-                        "min" => 469,
-                        "max" => 1142,
+                        "min" => 631,
+                        "max" => 1054,
                     ],
                 ],
                 "selected" => TRUE
@@ -581,12 +581,12 @@ class HotstatusPipeline {
                 "max" => 1199,
                 "players" => [
                     "2018 Season 1" => [
-                        "min" => 447,
-                        "max" => 885,
+                        "min" => 493,
+                        "max" => 1038,
                     ],
                     "2017 Season 3" => [
-                        "min" => 1143,
-                        "max" => 1733,
+                        "min" => 1055,
+                        "max" => 1706,
                     ],
                 ],
                 "selected" => TRUE
@@ -596,11 +596,11 @@ class HotstatusPipeline {
                 "max" => PHP_INT_MAX,
                 "players" => [
                     "2018 Season 1" => [
-                        "min" => 886,
+                        "min" => 1039,
                         "max" => PHP_INT_MAX,
                     ],
                     "2017 Season 3" => [
-                        "min" => 1734,
+                        "min" => 1707,
                         "max" => PHP_INT_MAX,
                     ],
                 ],
@@ -1932,7 +1932,7 @@ class HotstatusPipeline {
                             $newmin = $i;
                             $newmax = $i + $sectionsize;
 
-                            if ($rating >= $newmin && $rating <= $newmax) {
+                            if ($t >= (count($sections) - 1) || $rating >= $newmin && $rating <= $newmax) {
                                 return $sections[$t];
                             }
 
@@ -2147,7 +2147,7 @@ class HotstatusPipeline {
         "players_matches" => "rp_players_matches",
         "players_matches_recent_granular" => "rp_players_matches_recent_granular",
         "players_matches_total" => "rp_players_matches_total",
-        "players_mmr" => "rp_players_mmr",
+        "players_mmr" => "rp_players_mmr_v2",
         "players_parties" => "rp_players_parties",
     ];
 }

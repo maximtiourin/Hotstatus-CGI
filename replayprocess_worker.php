@@ -49,6 +49,8 @@ $console = new Console();
 $linux = OS::getOS() == OS::OS_LINUX;
 
 //Prepare statements
+$t_matches = HotstatusPipeline::$table_pointers['matches'];
+$t_matches_mmr = HotstatusPipeline::$table_pointers['matches_mmr'];
 $t_players = HotstatusPipeline::$table_pointers['players'];
 $t_players_heroes = HotstatusPipeline::$table_pointers['players_heroes'];
 $t_players_matches = HotstatusPipeline::$table_pointers['players_matches'];
@@ -122,8 +124,20 @@ $db->prepare("GetMMRForPlayer",
 $db->bind("GetMMRForPlayer", "iisss", $r_player_id, $r_region, $r_season, $r_season_previous, $r_gameType);
 
 $db->prepare("InsertMatch",
-    "INSERT INTO matches (id, type, map, date, match_length, version, region, winner, players, bans, team_level, mmr) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    "INSERT INTO $t_matches (id, type, map, date, match_length, version, region, winner, players, bans, team_level, mmr) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 $db->bind("InsertMatch", "isssisiissss", $r_id, $r_type, $r_map, $r_date, $r_match_length, $r_version, $r_region, $r_winner, $r_players, $r_bans, $r_team_level, $r_mmr);
+
+$db->prepare("+=:matches_mmr",
+    "INSERT INTO $t_matches_mmr "
+    . "(id, players, teams) "
+    . "VALUES (?, ?, ?) "
+    . "ON DUPLICATE KEY UPDATE "
+    . "players = ?, teams = ?");
+$db->bind("+=:matches_mmr",
+    "issss",
+    $r_match_id, $r_players, $r_teams,
+
+    $r_players, $r_teams);
 
 /*
  * Use Secondary Binding technique to get around Mysql 5.7.14 Bug when using ON DUPLICATE KEY UPDATE and VALUES() function on text/blob columns
@@ -262,13 +276,13 @@ $db->bind("ensurePlayerParty", "iiss", $r_player_id, $r_region, $r_party, $r_pla
  * Otherwise, returns FALSE
  */
 function insertMatch(&$parse, $mapMapping, $heroNameMappings, &$mmrcalc, &$old_mmrs, &$new_mmrs) {
-    global $db, $r_id, $r_type, $r_map, $r_date, $r_match_length, $r_version, $r_region, $r_winner, $r_players, $r_bans, $r_team_level, $r_mmr;
+    global $db, $r_id, $r_type, $r_map, $r_date, $r_match_length, $r_version, $r_region, $r_winner, $r_players, $r_bans, $r_team_level, $r_mmr, $r_match_id, $r_teams;
 
     /* Update document with additional relevant data */
     $parse['id'] = $r_id;
 
     //Team MMR
-    $parse['mmr'] = [
+    $teams_mmr = [
         '0' => [
             'old' => [
                 'rating' => $mmrcalc['team_ratings']['initial'][0]['mmr']
@@ -288,14 +302,17 @@ function insertMatch(&$parse, $mapMapping, $heroNameMappings, &$mmrcalc, &$old_m
         'quality' => $mmrcalc['match_quality']
     ];
 
+    $parse['mmr'] = $teams_mmr;
+
     //Map mapping
     $parse['map'] = $mapMapping;
 
     //Player MMR && Hero Name mappings
+    $players_mmr = [];
     foreach ($parse['players'] as &$player) {
         $player['hero'] = $heroNameMappings[$player['hero']];
 
-        $player['mmr'] = [
+        $mmrObject = [
             'old' => [
                 'rating' => $old_mmrs['team'.$player['team']][$player['id'].""]['rating'],
                 'mu' => $old_mmrs['team'.$player['team']][$player['id'].""]['mu'],
@@ -307,10 +324,15 @@ function insertMatch(&$parse, $mapMapping, $heroNameMappings, &$mmrcalc, &$old_m
                 'sigma' => $new_mmrs['team'.$player['team']][$player['id'].""]['sigma'],
             ]
         ];
+
+        $player['mmr'] = $mmrObject;
+
+        $players_mmr[$player['id']] = $mmrObject;
     }
 
     //Begin inserting match
     try {
+        //Insert Match
         $r_type = $parse['type'];
         $r_map = $parse['map'];
         $r_date = $parse['date'];
@@ -324,6 +346,13 @@ function insertMatch(&$parse, $mapMapping, $heroNameMappings, &$mmrcalc, &$old_m
         $r_mmr = json_encode($parse['mmr']);
 
         $db->execute("InsertMatch");
+
+        //Insert Match MMR
+        $r_match_id = $parse['id'];
+        $r_players = json_encode($players_mmr);
+        $r_teams = json_encode($parse['mmr']);
+
+        $db->execute("+=:matches_mmr");
 
         echo "Inserted Match #" . $r_id . " into 'matches'...".E;
 
