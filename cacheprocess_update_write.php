@@ -175,7 +175,7 @@ while (true) {
                 $db->execute("DeleteWrite");
 
                 //Inc updated total
-                $r_cache_requests_updated_total = 1;
+                $r_cache_writes_updated_total = 1;
                 $db->execute("stats_cache_writes_updated_total");
 
                 //Release lock
