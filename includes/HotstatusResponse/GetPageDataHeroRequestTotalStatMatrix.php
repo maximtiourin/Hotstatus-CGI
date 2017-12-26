@@ -22,7 +22,7 @@ class GetPageDataHeroRequestTotalStatMatrix {
 
     }
 
-    public static function specialExecute(&$mysql, $connected_mysql, &$redis = NULL, $connected_redis = FALSE, $queryCache, $querySql) {
+    public static function specialExecute(&$mysql, $connected_mysql, $queryCache, $querySql) {
         $_TYPE = GetPageDataHeroRequestTotalStatMatrix::_TYPE();
         $_ID = GetPageDataHeroRequestTotalStatMatrix::_ID();
         $_VERSION = GetPageDataHeroRequestTotalStatMatrix::_VERSION();
@@ -38,26 +38,55 @@ class GetPageDataHeroRequestTotalStatMatrix {
             "querySql" => $querySql,
         ];
 
-        $cacheval = NULL;
-        if ($connected_redis !== FALSE) {
-            $cacheval = HotstatusCache::readCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION);
-        }
-
-        if ($connected_redis !== FALSE && $cacheval !== NULL) {
-            //Use cached value
-            $pagedata = json_decode($cacheval, true);
-        }
-        else if ($connected_mysql) {
+        if ($connected_mysql) {
             /** @var MySqlDatabase $db */
             $db = $mysql;
 
-            //Build Response
-            self::execute($payload, $db, $pagedata);
+            $db->prepare("GetCachedStatMatrix",
+                "SELECT `payload`, `lastused` FROM `pipeline_cache_statmatrix` WHERE `action` = ? AND `cache_id` = ?");
+            $db->bind("GetCachedStatMatrix", "ss", $r_action, $r_cache_id);
 
-            //Store mysql value in cache
-            if ($connected_redis) {
-                $encoded = json_encode($pagedata);
-                HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::getCacheDefaultExpirationTimeInSecondsForToday());
+            $db->prepare("UpsertCachedStatMatrix",
+                "INSERT INTO `pipeline_cache_statmatrix` "
+                . "(`action`, `cache_id`, `payload`, `lastused`) "
+                . "VALUES (?, ?, ?, ?) "
+                . "ON DUPLICATE KEY UPDATE "
+                . "payload = ?, lastused = ?");
+            $db->bind("UpsertCachedStatMatrix",
+                "sssisi",
+                $r_action, $r_cache_id, $r_payload, $r_lastused,
+
+                $r_payload, $r_lastused);
+
+            $r_action = $_ID;
+            $r_cache_id = $CACHE_ID;
+
+            $compute = true;
+
+            $smresult = $db->execute("GetCachedStatMatrix");
+            $smresultrows = $db->countResultRows($smresult);
+            if ($smresultrows > 0) {
+                $row = $db->fetchArray($smresult);
+
+                $lastused = intval($row['lastused']);
+
+                $expiretime = 24 /* hours */ * 3600 /* seconds */;
+
+                if (time() - $lastused < $expiretime) {
+                    $pagedata = json_decode($row['payload'], true);
+                    $compute = false;
+                }
+            }
+
+            if ($compute) {
+                //Build Response
+                self::execute($payload, $db, $pagedata);
+
+                //Store newly computed statmatrix in mysql cache
+                $r_payload = json_encode($pagedata);
+                $r_lastused = time();
+
+                $db->execute("UpsertCachedStatMatrix");
             }
         }
 

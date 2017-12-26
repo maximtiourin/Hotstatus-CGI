@@ -123,7 +123,7 @@ $actionMap = [
         $datatable = [];
 
         //Execute response
-        GetPageDataHeroAction::execute($payload, $db, true, $redis, true, $pagedata, true);
+        GetPageDataHeroAction::execute($payload, $db, true, $pagedata, true);
 
         $datatable['data'] = $pagedata;
 

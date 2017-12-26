@@ -87,7 +87,7 @@ class GetPageDataHeroAction {
         ];
     }
 
-    public static function execute(&$payload, MySqlDatabase &$db, $connected_mysql, RedisDatabase &$redis, $connected_redis, &$pagedata, $isCacheProcess = false) {
+    public static function execute(&$payload, MySqlDatabase &$db, $connected_mysql, &$pagedata, $isCacheProcess = false) {
         //Extract payload
         $queryHero = $payload['queryHero'];
         $querySql = $payload['querySql'];
@@ -491,7 +491,7 @@ class GetPageDataHeroAction {
         /*
          * Get Total Hero StatMatrix stats, and calculate StatMatrix values for hero
          */
-        $totalStats = GetPageDataHeroRequestTotalStatMatrix::specialExecute($db, $connected_mysql, $redis, $connected_redis, $querySecondaryCache, $querySecondarySql);
+        $totalStats = GetPageDataHeroRequestTotalStatMatrix::specialExecute($db, $connected_mysql, $querySecondaryCache, $querySecondarySql);
 
         //Init matrix
         $statMatrix = [];
