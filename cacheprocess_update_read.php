@@ -57,6 +57,22 @@ $db->prepare("stats_cache_requests_updated_total",
     "UPDATE `pipeline_analytics` SET `val_int` = `val_int` + ? WHERE `key_name` = 'cache_requests_updated_total' LIMIT 1");
 $db->bind("stats_cache_requests_updated_total", "i", $r_cache_requests_updated_total);
 
+$db->prepare("QueueCacheWrite", "INSERT INTO `pipeline_cache_writes` (`action`, `cache_id`, `payload`, `lastused`, `status`) VALUES (?, ?, ?, ?, ?)");
+$db->bind("QueueCacheWrite", "sssii", $r_action, $r_cache_id, $r_payload, $r_lastused, $r_status);
+
+//QOL Functions
+function queueCacheWrite($functionId, $cache_id, $payload) {
+    global $db, $r_action, $r_cache_id, $r_payload, $r_lastused, $r_status;
+
+    $r_action = $functionId;
+    $r_cache_id = $cache_id;
+    $r_payload = json_encode($payload);
+    $r_lastused = time();
+    $r_status = HotstatusCache::QUEUE_CACHE_STATUS_QUEUED;
+
+    $db->execute("QueueCacheWrite");
+}
+
 /*
  * Map actions to functions
  */
@@ -85,14 +101,12 @@ $actionMap = [
 
         $datatable['data'] = $pagedata;
 
-        //Store value in cache
+        //Store value in database to be written to cache by AWS later
         $encoded = json_encode($datatable);
 
-        HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_DEFAULT_TTL);
+        queueCacheWrite($_ID, $CACHE_ID, $encoded);
 
-        $redis->close();
-
-        unset($encored);
+        unset($encoded);
         unset($datatable);
     },
     "getPageDataHeroAction" => function($cache_id, $payload, MySqlDatabase &$db, $creds) {
@@ -119,14 +133,12 @@ $actionMap = [
 
         $datatable['data'] = $pagedata;
 
-        //Store value in cache
+        //Store value in database to be written to cache by AWS later
         $encoded = json_encode($datatable);
 
-        HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_DEFAULT_TTL);
+        queueCacheWrite($_ID, $CACHE_ID, $encoded);
 
-        $redis->close();
-
-        unset($encored);
+        unset($encoded);
         unset($datatable);
     },
     "getPageDataRankingsAction" => function($cache_id, $payload, MySqlDatabase &$db, $creds) {
@@ -153,21 +165,19 @@ $actionMap = [
 
         $datatable['data'] = $pagedata;
 
-        //Store value in cache
+        //Store value in database to be written to cache by AWS later
         $encoded = json_encode($datatable);
 
-        HotstatusCache::writeCacheRequest($redis, $_TYPE, $CACHE_ID, $_VERSION, $encoded, HotstatusCache::CACHE_DEFAULT_TTL);
+        queueCacheWrite($_ID, $CACHE_ID, $encoded);
 
-        $redis->close();
-
-        unset($encored);
+        unset($encoded);
         unset($datatable);
     },
 ];
 
 //Begin main script
 echo '--------------------------------------'.E
-    .'Cache process <<UPDATE>> has started'.E
+    .'Cache process <<UPDATE - READ>> has started'.E
     .'--------------------------------------'.E;
 
 //Look for requests to update cache with

@@ -104,6 +104,7 @@ $stat_replays_errors_total = 0;
 $stat_replays_reparsed_total = 0;
 $stat_replays_reparsed_errors_total = 0;
 $stat_cache_requests_updated_total = 0;
+$stat_cache_writes_updated_total = 0;
 
 //Begin main script
 echo '--------------------------------------'.E
@@ -148,6 +149,10 @@ while (true) {
         //stats_cache_requests_updated_per_minute
         $d = trackStatDifference("cache_requests_updated_total", "cache_requests_updated_per_minute", $stat_cache_requests_updated_total);
         log("Stat: Cache Requests Updated - Per Minute: $d");
+
+        //stats_cache_writes_updated_per_minute
+        $d = trackStatDifference("cache_writes_updated_total", "cache_writes_updated_per_minute", $stat_cache_writes_updated_total);
+        log("Stat: Cache Writes Updated - Per Minute: $d");
     }
 
     //Per 30 Seconds
