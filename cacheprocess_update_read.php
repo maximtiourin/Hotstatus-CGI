@@ -66,7 +66,7 @@ function queueCacheWrite($functionId, $cache_id, $payload) {
 
     $r_action = $functionId;
     $r_cache_id = $cache_id;
-    $r_payload = json_encode($payload);
+    $r_payload = $payload;
     $r_lastused = time();
     $r_status = HotstatusCache::QUEUE_CACHE_STATUS_QUEUED;
 
