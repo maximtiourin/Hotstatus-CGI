@@ -527,9 +527,9 @@ if ($pipeconfigresrows > 0) {
     $db->freeResult($pipeconfigresult);
 
     //Generation
-    generate_getPageDataRankingsAction();
-    //generate_getDataTableHeroesStatsListAction();
-    //generate_getPageDataHeroAction();
+    //generate_getPageDataRankingsAction();
+    generate_getDataTableHeroesStatsListAction();
+    generate_getPageDataHeroAction();
 }
 else {
     echo "Unable to get pipeline config...".E;

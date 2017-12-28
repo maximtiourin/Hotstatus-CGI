@@ -6,8 +6,11 @@
 
 namespace Fizzik;
 
+require_once 'lib/AWS/aws-autoloader.php';
 require_once 'includes/include.php';
 
+use Aws\CloudWatch\CloudWatchClient;
+use Aws\Exception\AwsException;
 use Fizzik\Database\MySqlDatabase;
 use Fizzik\Utility\SleepHandler;
 
@@ -18,6 +21,15 @@ $db = new MysqlDatabase();
 $creds = Credentials::getCredentialsForUser(Credentials::USER_REPLAYPROCESS);
 HotstatusPipeline::hotstatus_mysql_connect($db, $creds);
 $db->setEncoding(HotstatusPipeline::DATABASE_CHARSET);
+
+//Aws
+$awsCreds = new \Aws\Credentials\Credentials($creds[Credentials::KEY_AWS_KEY], $creds[Credentials::KEY_AWS_SECRET]);
+$sdk_ireland = new \Aws\Sdk([
+    'region' => $creds[Credentials::KEY_AWS_REPLAYREGION],
+    'version' => 'latest',
+    'credentials' => $awsCreds
+]);
+$cloudwatch_ireland = $sdk_ireland->createCloudWatch();
 
 //Constants and qol
 const PROCESS_GRANULARITY = 1; //1 seconds
@@ -98,6 +110,26 @@ function trackStatDifference($getkey, $setkey, &$stat) {
     return $statdiff;
 }
 
+function putCloudWatchMetric(CloudWatchClient &$cloudwatch, $namespace, $metric, $timestamp, $value, $unit, $log = false) {
+    try {
+        $result = $cloudwatch->putMetricData([
+            "Namespace" => $namespace,
+            "MetricData" => [
+                [
+                    "MetricName" => $metric,
+                    "Timestamp" => $timestamp,
+                    "Value" => $value,
+                    "Unit" => $unit,
+                ],
+            ],
+        ]);
+        if ($log) var_dump($result);
+    }
+    catch (AwsException $e) {
+        if ($log) echo $e->getMessage() . E;
+    }
+}
+
 //Stats Tracking
 $stat_replays_processed_total = 0;
 $stat_replays_errors_total = 0;
@@ -128,6 +160,7 @@ while (true) {
         $r_status = 1;
         $d = getCountResult("CountReplaysOfStatus");
         setStatInt("replays_queued_total", $d);
+        putCloudWatchMetric($cloudwatch_ireland, "Hotstatus", "Replays Queued", time(), $d, "Count", false);
         log("Sync: Replays Queued: $d");
 
         //stats_replays_processed_per_minute
@@ -149,10 +182,6 @@ while (true) {
         //stats_cache_requests_updated_per_minute
         $d = trackStatDifference("cache_requests_updated_total", "cache_requests_updated_per_minute", $stat_cache_requests_updated_total);
         log("Stat: Cache Requests Updated - Per Minute: $d");
-
-        //stats_cache_writes_updated_per_minute
-        $d = trackStatDifference("cache_writes_updated_total", "cache_writes_updated_per_minute", $stat_cache_writes_updated_total);
-        log("Stat: Cache Writes Updated - Per Minute: $d");
     }
 
     //Per 30 Seconds

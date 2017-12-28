@@ -119,9 +119,14 @@ $db->prepare("GetMapNameFromMapNameTranslation",
     "SELECT `name` FROM herodata_maps_translations WHERE name_translation = ? LIMIT 1");
 $db->bind("GetMapNameFromMapNameTranslation", "s", $r_name_translation);
 
+//DEPRECATED, use 'GetPlayerMMR'
 $db->prepare("GetMMRForPlayer",
     "SELECT season, rating, mu, sigma FROM $t_players_mmr WHERE id = ? AND region = ? AND (season = ? OR season = ?) AND gameType = ? FOR UPDATE");
 $db->bind("GetMMRForPlayer", "iisss", $r_player_id, $r_region, $r_season, $r_season_previous, $r_gameType);
+
+$db->prepare("GetPlayerMMR",
+    "SELECT `season`, `rating`, `mu`, `sigma` FROM `$t_players_mmr` WHERE `id` = ? AND `region` = ? AND `season` = ? AND `gameType` = ? LIMIT 1 FOR UPDATE");
+$db->bind("GetPlayerMMR", "iiss", $r_player_id, $r_region, $r_season, $r_gameType);
 
 $db->prepare("InsertMatch",
     "INSERT INTO $t_matches (id, type, map, date, match_length, version, region, winner, players, bans, team_level, mmr) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
@@ -761,7 +766,7 @@ while (true) {
 
                         //Check if parse was a success
                         if (!key_exists('error', $parse)) {
-                            $r_region = $parse['region'];
+                            $r_region = intval($parse['region']);
 
                             /* Collect player mmrs and calculate new mmr for match season */
                             $seasonid = HotstatusPipeline::getSeasonStringForDateTime($parse['date']);
@@ -779,11 +784,6 @@ while (true) {
 
                             try {
                                 foreach ($parse['players'] as $player) {
-                                    $r_player_id = $player['id'];
-                                    $r_season = $seasonid;
-                                    $r_season_previous = $seasonprevid;
-                                    $r_gameType = $matchtype;
-
                                     //Set default mmr structure
                                     $mmr = [
                                         'rating' => "?",
@@ -791,38 +791,50 @@ while (true) {
                                         'sigma' => "?"
                                     ];
 
-                                    //Look up old mmrs
-                                    $mmr_result = $db->execute("GetMMRForPlayer");
+                                    $r_player_id = intval($player['id']);
+                                    $r_season = $seasonid;
+                                    $r_gameType = $matchtype;
+
+                                    //Look up old mmrs for current season
+                                    $foundMMR = false;
+
+                                    $mmr_result = $db->execute("GetPlayerMMR");
                                     $mmr_result_rows = $db->countResultRows($mmr_result);
                                     if ($mmr_result_rows > 0) {
-                                        $seasoncurrent = FALSE;
-                                        $seasonprevious = FALSE;
+                                        //Found current season, use it
+                                        $season_row = $db->fetchArray($mmr_result);
 
-                                        while ($season_row = $db->fetchArray($mmr_result)) {
-                                            if ($season_row['season'] === $seasonid) {
-                                                $seasoncurrent = $season_row;
-                                            }
-                                            else if ($season_row['season'] === $seasonprevid) {
-                                                $seasonprevious = $season_row;
-                                            }
-                                        }
+                                        $mmr['rating'] = intval($season_row['rating']);
+                                        $mmr['mu'] = doubleval($season_row['mu']);
+                                        $mmr['sigma'] = doubleval($season_row['sigma']);
 
-                                        if ($seasoncurrent !== FALSE) {
+                                        $foundMMR = true;
+                                    }
+                                    else {
+                                        echo "No Current Rating Found For Player ($r_player_id) : Region ($r_region) : Season ($r_season) : GameType ($r_gameType) ...\n";
+                                    }
+                                    $db->freeResult($mmr_result);
+
+                                    if (!$foundMMR) {
+                                        //Look up old mmrs for previous season
+                                        $r_season = $seasonprevid;
+
+                                        $mmr_result = $db->execute("GetPlayerMMR");
+                                        $mmr_result_rows = $db->countResultRows($mmr_result);
+                                        if ($mmr_result_rows > 0) {
                                             //Found current season, use it
-                                            $mmr['rating'] = $seasoncurrent['rating'];
-                                            $mmr['mu'] = $seasoncurrent['mu'];
-                                            $mmr['sigma'] = $seasoncurrent['sigma'];
+                                            $season_row = $db->fetchArray($mmr_result);
+
+                                            $mmr['mu'] = doubleval($season_row['mu']);
                                         }
-                                        else if ($seasonprevious !== FALSE) {
-                                            //Found only most recent previous season, use mu for seeding
-                                            $mmr['mu'] = $seasonprevious['mu'];
+                                        else {
+                                            echo "No Previous Rating Found For Player ($r_player_id) : Region ($r_region) : Season ($r_season) : GameType ($r_gameType) ...\n";
                                         }
+                                        $db->freeResult($mmr_result);
                                     }
 
                                     //Set player old mmr
                                     $player_old_mmrs['team' . $player['team']][$player['id'] . ""] = $mmr;
-
-                                    $db->freeResult($mmr_result);
                                 }
 
                                 //Calculate new mmrs
