@@ -563,7 +563,7 @@ class HotstatusPipeline {
             ],
             "Platinum" => [
                 "min" => 100,
-                "max" => 499,
+                "max" => 492,
                 "players" => [
                     "2018 Season 1" => [
                         "min" => 292,
@@ -577,8 +577,8 @@ class HotstatusPipeline {
                 "selected" => TRUE
             ],
             "Diamond" => [
-                "min" => 500,
-                "max" => 1199,
+                "min" => 493,
+                "max" => 1038,
                 "players" => [
                     "2018 Season 1" => [
                         "min" => 493,
@@ -592,7 +592,7 @@ class HotstatusPipeline {
                 "selected" => TRUE
             ],
             "Master" => [
-                "min" => 1200,
+                "min" => 1039,
                 "max" => PHP_INT_MAX,
                 "players" => [
                     "2018 Season 1" => [
