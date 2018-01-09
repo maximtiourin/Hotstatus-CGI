@@ -61,8 +61,14 @@ class HotstatusPipeline {
     const PATCH_CURRENT = "CURRENT";
     public static $PATCHES = [
         self::PATCH_CURRENT => [
-            "start" => "2017-12-21 00:00:00",
+            "start" => "2018-01-09 00:00:00",
             "end" => null,
+            "version" => "2.29.7",
+            "type" => "Blaze",
+        ],
+        "2.29.5" => [
+            "start" => "2017-12-21 00:00:00",
+            "end" => "2018-01-08 23:59:59",
             "version" => "2.29.5",
             "type" => "Balance",
         ],
@@ -108,13 +114,13 @@ class HotstatusPipeline {
             "version" => "2.28.0",
             "type" => "Ana",
         ],
-        "2.27.5" => [
+        /*"2.27.5" => [
             "start" => "2017-09-20 00:00:00",
             "end" => "2017-09-25 23:59:59",
             "version" => "2.27.5",
             "type" => "Balance",
         ],
-        /*"2.27.3" => [
+        "2.27.3" => [
             "start" => "2017-09-05 00:00:00",
             "end" => "2017-09-19 23:59:59",
             "version" => "2.27.3",
@@ -537,7 +543,7 @@ class HotstatusPipeline {
                 "players" => [
                     "2018 Season 1" => [
                         "min" => 1,
-                        "max" => 109,
+                        "max" => 120,
                     ],
                     "2017 Season 3" => [
                         "min" => 1,
@@ -551,8 +557,8 @@ class HotstatusPipeline {
                 "max" => 99,
                 "players" => [
                     "2018 Season 1" => [
-                        "min" => 110,
-                        "max" => 291,
+                        "min" => 121,
+                        "max" => 399,
                     ],
                     "2017 Season 3" => [
                         "min" => 192,
@@ -566,8 +572,8 @@ class HotstatusPipeline {
                 "max" => 492,
                 "players" => [
                     "2018 Season 1" => [
-                        "min" => 292,
-                        "max" => 492,
+                        "min" => 400,
+                        "max" => 697,
                     ],
                     "2017 Season 3" => [
                         "min" => 631,
@@ -581,8 +587,8 @@ class HotstatusPipeline {
                 "max" => 1038,
                 "players" => [
                     "2018 Season 1" => [
-                        "min" => 493,
-                        "max" => 1038,
+                        "min" => 698,
+                        "max" => 1049,
                     ],
                     "2017 Season 3" => [
                         "min" => 1055,
@@ -596,7 +602,7 @@ class HotstatusPipeline {
                 "max" => PHP_INT_MAX,
                 "players" => [
                     "2018 Season 1" => [
-                        "min" => 1039,
+                        "min" => 1050,
                         "max" => PHP_INT_MAX,
                     ],
                     "2017 Season 3" => [
@@ -819,6 +825,15 @@ class HotstatusPipeline {
                 "image_minimap" => "storm_ui_minimapicon_heros_azmodan",
                 "role_blizzard" => "Specialist",
                 "role_specific" => "Siege",
+                "selected" => false
+            ],
+            "Blaze" => [
+                "name_sort" => "Blaze",
+                "name_attribute" => "Fire",
+                "image_hero" => "ui_targetportrait_hero_firebat",
+                "image_minimap" => "storm_ui_minimapicon_firebat",
+                "role_blizzard" => "Warrior",
+                "role_specific" => "Tank",
                 "selected" => false
             ],
             "Brightwing" => [

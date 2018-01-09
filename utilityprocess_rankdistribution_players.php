@@ -84,11 +84,11 @@ $toppercent = function(&$arr, $ratingcount, &$ratingsassoc, $percent, $name) {
     return "$name >= UNKNOWN\n";
 };
 
-//Top .51% (Master)
-echo $toppercent($ratingsarr, $result_rows, $ratings, .0051, "Master");
+//Top 1.1% (Master)
+echo $toppercent($ratingsarr, $result_rows, $ratings, .011, "Master");
 
-//Top 6.251% (Diamond)
-echo $toppercent($ratingsarr, $result_rows, $ratings, .06251, "Diamond");
+//Top 5.1% (Diamond)
+echo $toppercent($ratingsarr, $result_rows, $ratings, .051, "Diamond");
 
 //Top 17.1% (Platinum)
 echo $toppercent($ratingsarr, $result_rows, $ratings, .171, "Platinum");

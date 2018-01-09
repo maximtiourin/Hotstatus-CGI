@@ -83,6 +83,7 @@ $stormDataNames = [
     "Diablo" => TRUE,
     "Dryad" => TRUE,
     "Genn" => TRUE,
+    "Illidan" => TRUE,
     "Jaina" => TRUE,
     "Kaelthas" => TRUE,
     "Kerrigan" => TRUE,
@@ -124,6 +125,7 @@ $heromodsDataNames = [
     "chromie" => TRUE,
     "dehaka" => TRUE,
     "dva" => TRUE,
+    "firebat" => TRUE,
     "garrosh" => TRUE,
     "genji" => TRUE,
     "guldan" => TRUE,
@@ -258,6 +260,7 @@ $heroCustomRoleMappings = [
     "Arthas" => CROLE_BRUISER,
     "Auriel" => CROLE_HEALER,
     "Azmodan" => CROLE_SIEGE,
+    "Firebat" => CROLE_TANK, //Blaze
     "FaerieDragon" => CROLE_HEALER, //Brightwing
     "Amazon" => CROLE_DMG_SUSTAIN, //Cassia
     "Chen" => CROLE_BRUISER,
@@ -1512,6 +1515,8 @@ $validargs = [
                                 $str = $oldarr[1];
                                 $logstr .= $str . E;
                             }
+
+                            $logstr .= E.E.E;
 
                             //New diff
                             $newarr = [];
