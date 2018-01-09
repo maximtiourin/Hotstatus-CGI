@@ -41,11 +41,15 @@ $sleep = new SleepHandler();
 const SYNC_DOWNLOADED_REPLAYS = FALSE;
 
 //Prepare statements
+$db->prepare("GetPipelineConfig",
+    "SELECT `max_replay_date` FROM `pipeline_config` WHERE `id` = ? LIMIT 1");
+$db->bind("GetPipelineConfig", "i", $r_pipeline_config_id);
+
 $db->prepare("CountDownloadedReplaysUpToLimit",
 "SELECT COUNT(`id`) AS `count` FROM `replays` WHERE `status` = " . HotstatusPipeline::REPLAY_STATUS_DOWNLOADED . " LIMIT ".HotstatusPipeline::REPLAY_DOWNLOAD_LIMIT);
 
-$db->prepare("CountReplaysOfStatus", "SELECT COUNT(`id`) AS `count` FROM `replays` WHERE `status` = ?");
-$db->bind("CountReplaysOfStatus", "i", $r_status);
+$db->prepare("CountReplaysOfStatus", "SELECT COUNT(`id`) AS `count` FROM `replays` WHERE `status` = ? AND `match_date` < ?");
+$db->bind("CountReplaysOfStatus", "is", $r_status, $r_date_cutoff);
 
 $db->prepare("set_semaphore_replays_downloaded",
     "UPDATE `pipeline_semaphores` SET `value` = ? WHERE `name` = \"replays_downloaded\" LIMIT 1");
@@ -156,12 +160,25 @@ while (true) {
 
     //Per Minute
     if (time() % 60 == 0) {
-        //Count replays_queued_total
-        $r_status = 1;
-        $d = getCountResult("CountReplaysOfStatus");
-        setStatInt("replays_queued_total", $d);
-        putCloudWatchMetric($cloudwatch_ireland, "Hotstatus", "Replays Queued", time(), $d, "Count", false);
-        log("Sync: Replays Queued: $d");
+        //Get pipeline configuration
+        $r_pipeline_config_id = HotstatusPipeline::$pipeline_config[HotstatusPipeline::PIPELINE_CONFIG_DEFAULT]['id'];
+        $pipeconfigresult = $db->execute("GetPipelineConfig");
+        $pipeconfigresrows = $db->countResultRows($pipeconfigresult);
+        if ($pipeconfigresrows > 0) {
+            $pipeconfig = $db->fetchArray($pipeconfigresult);
+
+            $replaymaxdate = $pipeconfig['max_replay_date'];
+
+            $db->freeResult($pipeconfigresult);
+
+            //Count replays_queued_total
+            $r_status = 1;
+            $r_date_cutoff = $replaymaxdate;
+            $d = getCountResult("CountReplaysOfStatus");
+            setStatInt("replays_queued_total", $d);
+            putCloudWatchMetric($cloudwatch_ireland, "Hotstatus", "Replays Queued", time(), $d, "Count", false);
+            log("Sync: Replays Queued: $d");
+        }
 
         //stats_replays_processed_per_minute
         $d = trackStatDifference("replays_processed_total", "replays_processed_per_minute", $stat_replays_processed_total);
