@@ -5,7 +5,7 @@ namespace Fizzik;
 use Fizzik\Database\MySqlDatabase;
 
 class HotstatusPipeline {
-    //General settings
+    //General settings constants
     const STATS_WEEK_RANGE = 15; //How many weeks of match data to keep alive in the database
     const REPLAY_AGE_LIMIT = 7 * self::STATS_WEEK_RANGE; //Relevant replays are those that are less than or equal to days of age
     const REPLAY_TIMEZONE = "UTC"; //Default timezone used for dating replays as well as process locks
