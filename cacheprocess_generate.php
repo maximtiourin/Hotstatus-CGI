@@ -166,13 +166,14 @@ function pc_array_power_set(&$array) {
     return $results;
 }
 
+//Checks to see if arrays are of same size and if arr2 contains all elements of arr1, does not account for duplicates in anyway
 function areArraysEqual($arr1, $arr2) {
     if (count($arr1) !== count($arr2)) {
         return false;
     }
 
     for ($i = 0; $i < count($arr1); $i++) {
-        if ($arr1[$i] !== $arr2[$i]) {
+        if (!in_array($arr1[$i], $arr2, true)) {
             return false;
         }
     }
