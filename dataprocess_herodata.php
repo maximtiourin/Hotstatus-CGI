@@ -204,6 +204,9 @@ $actorImageMappings = [
         "hero" => "ui_targetportrait_hero_lostvikings",
         "minimap" => "storm_ui_minimapicon_heros_erik"
     ],
+    "HeroMaiev" => [
+        "hero" => "ui_targetportrait_hero_maiev",
+    ],
     "HeroMedivh" => [
         "hero" => "ui_targetportrait_hero_medivh"
     ]
@@ -299,6 +302,7 @@ $heroCustomRoleMappings = [
     "Medic" => CROLE_HEALER, //Lt. Morales
     "Lucio" => CROLE_HEALER, //Lúcio
     "Dryad" => CROLE_DMG_SUSTAIN, //Lunara
+    "Maiev" => CROLE_DMG_SUSTAIN,
     "Malfurion" => CROLE_HEALER,
     "Malthael" => CROLE_DMG_SUSTAIN,
     "Medivh" => CROLE_SUPPORT,

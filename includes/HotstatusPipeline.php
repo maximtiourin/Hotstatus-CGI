@@ -1154,10 +1154,10 @@ class HotstatusPipeline {
             "Maiev" => [
                 "name_sort" => "Maiev",
                 "name_attribute" => "Maie",
-                "image_hero" => "NoImage",
+                "image_hero" => "ui_targetportrait_hero_maiev",
                 "image_minimap" => "storm_ui_minimapicon_maiev",
                 "role_blizzard" => "Assassin",
-                "role_specific" => "Unknown",
+                "role_specific" => "Sustained Damage",
                 "selected" => false
             ],
             "Malfurion" => [
