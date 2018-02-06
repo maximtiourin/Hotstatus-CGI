@@ -61,8 +61,14 @@ class HotstatusPipeline {
     const PATCH_CURRENT = "CURRENT";
     public static $PATCHES = [
         self::PATCH_CURRENT => [
-            "start" => "2018-01-24 00:00:00",
+            "start" => "2018-02-06 00:00:00",
             "end" => null,
+            "version" => "2.30.0",
+            "type" => "Maiev",
+        ],
+        "2.29.9" => [
+            "start" => "2018-01-24 00:00:00",
+            "end" => "2018-02-05 23:59:59",
             "version" => "2.29.9",
             "type" => "Balance",
         ],
@@ -108,12 +114,12 @@ class HotstatusPipeline {
             "version" => "2.28.5",
             "type" => "Balance",
         ],
-        "2.28.3" => [
+        /*"2.28.3" => [
             "start" => "2017-10-17 00:00:00",
             "end" => "2017-10-31 23:59:59",
             "version" => "2.28.3",
             "type" => "Junkrat",
-        ],
+        ],*/
         /*"2.28.2" => [
             "start" => "2017-10-11 00:00:00",
             "end" => "2017-10-16 23:59:59",
@@ -1143,6 +1149,15 @@ class HotstatusPipeline {
                 "image_minimap" => "storm_ui_minimapicon_lunara",
                 "role_blizzard" => "Assassin",
                 "role_specific" => "Sustained Damage",
+                "selected" => false
+            ],
+            "Maiev" => [
+                "name_sort" => "Maiev",
+                "name_attribute" => "Maie",
+                "image_hero" => "NoImage",
+                "image_minimap" => "storm_ui_minimapicon_maiev",
+                "role_blizzard" => "Assassin",
+                "role_specific" => "Unknown",
                 "selected" => false
             ],
             "Malfurion" => [
