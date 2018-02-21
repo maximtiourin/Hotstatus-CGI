@@ -37,6 +37,18 @@ $db->prepare("get_var",
     "SELECT * FROM `pipeline_variables` WHERE `key_name` = ? LIMIT 1");
 $db->bind("get_var", "s", $r_key_name);
 
+$db->prepare("+=Squawk",
+    "INSERT INTO `pipeline_instances` "
+    . "(`id`, `type`, `state`, `lastused`) "
+    . "VALUES (?, ?, ?, ?) "
+    . "ON DUPLICATE KEY UPDATE "
+    . "`state` = ?, `lastused` = ?");
+$db->bind("+=Squawk",
+    "ssiiii",
+    $r_instance_id, $r_instance_type, $r_instance_state, $r_instance_lastused,
+
+    $r_instance_state, $r_instance_lastused);
+
 $db->prepare("TouchWrite",
     "UPDATE `pipeline_cache_writes` SET `lastused` = ? WHERE `id` = ?");
 $db->bind("TouchWrite", "ii", $r_timestamp, $r_id);
@@ -123,6 +135,10 @@ echo '--------------------------------------'.E
     .'Cache process <<UPDATE - WRITE>> has started'.E
     .'--------------------------------------'.E;
 
+//Generate Instance info
+$r_instance_id = md5(time() . "fizzik" . mt_rand() . "kizzif" . rand() . uniqid("fizzik", true));
+$r_instance_type = "Cache Update Write";
+
 //Look for requests to update cache with
 while (true) {
     //Check shutoff state
@@ -137,6 +153,10 @@ while (true) {
     }
 
     if ($shutoff === 0) {
+        $r_instance_state = HotstatusPipeline::INSTANCE_STATE_PROCESSING;
+        $r_instance_lastused = time();
+        $db->execute("+=Squawk");
+
         //Check for unlocked failed cache updating
         $r_timestamp = time() - UNLOCK_UPDATE_DURATION;
         $r_status = HotstatusCache::QUEUE_CACHE_STATUS_UPDATING;
@@ -217,6 +237,10 @@ while (true) {
         $db->freeResult($result);
     }
     else {
+        $r_instance_state = HotstatusPipeline::INSTANCE_STATE_SAFESHUTOFF;
+        $r_instance_lastused = time();
+        $db->execute("+=Squawk");
+
         //Safe shutoff has been flagged
         $dots = $console->animateDotDotDot();
         echo "Safe Shutdown$dots                                              \r";

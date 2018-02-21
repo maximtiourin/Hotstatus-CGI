@@ -32,7 +32,7 @@ $sdk_ireland = new \Aws\Sdk([
 $cloudwatch_ireland = $sdk_ireland->createCloudWatch();
 
 //Constants and qol
-const INSTANCE_QUIET_PURGE_AGE = 600; //10 minutes
+const INSTANCE_QUIET_PURGE_AGE = 1200; //20 minutes
 const PROCESS_GRANULARITY = 1; //1 seconds
 const E = PHP_EOL;
 $out_of_replays_count = 0; //Count how many times we ran out of replays to process, once reaching limit it means the api isn't bugging out and there actually is no more replays.
@@ -171,7 +171,7 @@ while (true) {
         $r_status = 16;
         $d = getCountResult("CountReplaysOfStatus");
         setStatInt("replays_outofdate_total", $d);
-        log("Sync: Replays Out-of-Date: $d");
+        //log("Sync: Replays Out-of-Date: $d");
     }
 
     //Per Minute
@@ -210,15 +210,15 @@ while (true) {
 
         //stats_replays_reparsed_per_minute
         $d = trackStatDifference("replays_reparsed_total", "replays_reparsed_per_minute", $stat_replays_reparsed_total);
-        log("Stat: Replays Reparsed - Per Minute: $d");
+        //log("Stat: Replays Reparsed - Per Minute: $d");
 
         //stats_replays_reparsed_errors_per_minute
         $d = trackStatDifference("replays_reparsed_errors_total", "replays_reparsed_errors_per_minute", $stat_replays_reparsed_errors_total);
-        log("Stat: Replays Reparsed Errors - Per Minute: $d");
+        //log("Stat: Replays Reparsed Errors - Per Minute: $d");
 
         //stats_cache_requests_updated_per_minute
         $d = trackStatDifference("cache_requests_updated_total", "cache_requests_updated_per_minute", $stat_cache_requests_updated_total);
-        log("Stat: Cache Requests Updated - Per Minute: $d");
+        //log("Stat: Cache Requests Updated - Per Minute: $d");
     }
 
     //Per 30 Seconds
@@ -239,6 +239,68 @@ while (true) {
         log("Stat: Instances Online: $d");
 
         //
+        // REPLAY FIND
+        //
+        $r_instance_type = "Replay Find";
+
+        //Count online replay find
+        $d = getCountResult("CountInstancesOfType");
+        setStatInt("instances_replay_find_online", $d);
+        log("Stat: Instances Replay Find Online: $d");
+
+        //Count replay find state: Safe Shutoff
+        $r_instance_state = HotstatusPipeline::INSTANCE_STATE_SAFESHUTOFF;
+        $d = getCountResult("CountInstancesOfTypeState");
+        setStatInt("instances_replay_find_s_safeshutoff", $d);
+        //log("Stat: Instances Replay Find State (safeshutoff): $d");
+
+        //Count replay find state: No Config
+        $r_instance_state = HotstatusPipeline::INSTANCE_STATE_NOCONFIG;
+        $d = getCountResult("CountInstancesOfTypeState");
+        setStatInt("instances_replay_find_s_noconfig", $d);
+        //log("Stat: Instances Replay Find State (noconfig): $d");
+
+        //Count replay find state: Processing
+        $r_instance_state = HotstatusPipeline::INSTANCE_STATE_PROCESSING;
+        $d = getCountResult("CountInstancesOfTypeState");
+        setStatInt("instances_replay_find_s_processing", $d);
+        //log("Stat: Instances Replay Find State (processing): $d");
+
+        //
+        // CACHE UPDATE READ
+        //
+        $r_instance_type = "Cache Update Read";
+
+        $d = getCountResult("CountInstancesOfType");
+        setStatInt("instances_cache_update_read_online", $d);
+        log("Stat: Instances Cache Update Read Online: $d");
+
+        $r_instance_state = HotstatusPipeline::INSTANCE_STATE_SAFESHUTOFF;
+        $d = getCountResult("CountInstancesOfTypeState");
+        setStatInt("instances_cache_update_read_s_safeshutoff", $d);
+
+        $r_instance_state = HotstatusPipeline::INSTANCE_STATE_PROCESSING;
+        $d = getCountResult("CountInstancesOfTypeState");
+        setStatInt("instances_cache_update_read_s_processing", $d);
+
+        //
+        // CACHE UPDATE WRITE
+        //
+        $r_instance_type = "Cache Update Write";
+
+        $d = getCountResult("CountInstancesOfType");
+        setStatInt("instances_cache_update_write_online", $d);
+        log("Stat: Instances Cache Update Write Online: $d");
+
+        $r_instance_state = HotstatusPipeline::INSTANCE_STATE_SAFESHUTOFF;
+        $d = getCountResult("CountInstancesOfTypeState");
+        setStatInt("instances_cache_update_write_s_safeshutoff", $d);
+
+        $r_instance_state = HotstatusPipeline::INSTANCE_STATE_PROCESSING;
+        $d = getCountResult("CountInstancesOfTypeState");
+        setStatInt("instances_cache_update_write_s_processing", $d);
+
+        //
         // REPLAY WORKERS
         //
         $r_instance_type = "Replay Worker";
@@ -252,19 +314,19 @@ while (true) {
         $r_instance_state = HotstatusPipeline::INSTANCE_STATE_SAFESHUTOFF;
         $d = getCountResult("CountInstancesOfTypeState");
         setStatInt("instances_replay_workers_s_safeshutoff", $d);
-        log("Stat: Instances Replay Workers State (safeshutoff): $d");
+        //log("Stat: Instances Replay Workers State (safeshutoff): $d");
 
         //Count replay workers state: No Config
         $r_instance_state = HotstatusPipeline::INSTANCE_STATE_NOCONFIG;
         $d = getCountResult("CountInstancesOfTypeState");
         setStatInt("instances_replay_workers_s_noconfig", $d);
-        log("Stat: Instances Replay Workers State (noconfig): $d");
+        //log("Stat: Instances Replay Workers State (noconfig): $d");
 
         //Count replay workers state: Processing
         $r_instance_state = HotstatusPipeline::INSTANCE_STATE_PROCESSING;
         $d = getCountResult("CountInstancesOfTypeState");
         setStatInt("instances_replay_workers_s_processing", $d);
-        log("Stat: Instances Replay Workers State (processing): $d");
+        //log("Stat: Instances Replay Workers State (processing): $d");
     }
 
     $sleep->add(PROCESS_GRANULARITY);

@@ -10,6 +10,7 @@ require_once 'includes/include.php';
 require_once 'includes/Hotsapi.php';
 
 use Fizzik\Database\MySqlDatabase;
+use Fizzik\Utility\Console;
 use Fizzik\Utility\SleepHandler;
 
 set_time_limit(0);
@@ -32,12 +33,29 @@ const SLEEP_DURATION = 5; //seconds
 const MINI_SLEEP_DURATION = 1; //seconds
 const E = PHP_EOL;
 $out_of_replays_count = 0; //Count how many times we ran out of replays to process, once reaching limit it means the api isn't bugging out and there actually is no more replays.
+$console = new Console();
 $sleep = new SleepHandler();
 
 //Prepare statements
 $db->prepare("GetPipelineConfig",
     "SELECT `min_replay_date` FROM `pipeline_config` WHERE `id` = ? LIMIT 1");
 $db->bind("GetPipelineConfig", "i", $r_pipeline_config_id);
+
+$db->prepare("get_var",
+    "SELECT * FROM `pipeline_variables` WHERE `key_name` = ? LIMIT 1");
+$db->bind("get_var", "s", $r_key_name);
+
+$db->prepare("+=Squawk",
+    "INSERT INTO `pipeline_instances` "
+    . "(`id`, `type`, `state`, `lastused`) "
+    . "VALUES (?, ?, ?, ?) "
+    . "ON DUPLICATE KEY UPDATE "
+    . "`state` = ?, `lastused` = ?");
+$db->bind("+=Squawk",
+    "ssiiii",
+    $r_instance_id, $r_instance_type, $r_instance_state, $r_instance_lastused,
+
+    $r_instance_state, $r_instance_lastused);
 
 $db->prepare("GetPipelineVariable",
     "SELECT * FROM `pipeline_variables` WHERE `key_name` = ? LIMIT 1");
@@ -67,133 +85,173 @@ echo '--------------------------------------'.E
     .'Replay process <<FIND>> has started'.E
     .'--------------------------------------'.E;
 
+//Generate Instance info
+$r_instance_id = md5(time() . "fizzik" . mt_rand() . "kizzif" . rand() . uniqid("fizzik", true));
+$r_instance_type = "Replay Find";
+
 //Look for replays to download and handle
 while (true) {
-    //Get pipeline configuration
-    $r_pipeline_config_id = HotstatusPipeline::$pipeline_config[HotstatusPipeline::PIPELINE_CONFIG_DEFAULT]['id'];
-    $pipeconfigresult = $db->execute("GetPipelineConfig");
-    $pipeconfigresrows = $db->countResultRows($pipeconfigresult);
-    if ($pipeconfigresrows > 0) {
-        $pipeconfig = $db->fetchArray($pipeconfigresult);
+    //Check shutoff state
+    $shutoff = 0;
+    $r_key_name = "instance_safe_shutoff";
+    $shutoffResult = $db->execute("get_var");
+    $shutoffResultRows = $db->countResultRows($shutoffResult);
+    if ($shutoffResultRows > 0) {
+        $shutoffRow = $db->fetchArray($shutoffResult);
 
-        $replaymindate = $pipeconfig['min_replay_date'];
-        $datetime_min = new \DateTime($replaymindate);
+        $shutoff = intval($shutoffRow['val_int']);
+    }
 
-        $db->freeResult($pipeconfigresult);
+    if ($shutoff === 0) {
+        //Get pipeline configuration
+        $r_pipeline_config_id = HotstatusPipeline::$pipeline_config[HotstatusPipeline::PIPELINE_CONFIG_DEFAULT]['id'];
+        $pipeconfigresult = $db->execute("GetPipelineConfig");
+        $pipeconfigresrows = $db->countResultRows($pipeconfigresult);
+        if ($pipeconfigresrows > 0) {
+            $r_instance_state = HotstatusPipeline::INSTANCE_STATE_PROCESSING;
+            $r_instance_lastused = time();
+            $db->execute("+=Squawk");
 
-        //Begin Finding Replays
-        $r_key_name = "replays_latest_hotsapi_id";
-        $lastCatalogedReplayResult = $db->execute("GetPipelineVariable");
-        $lastCatalogedReplayResultRows = $db->countResultRows($lastCatalogedReplayResult);
-        if ($lastCatalogedReplayResultRows > 0) {
-            $lastCatalogedRow = $db->fetchArray($lastCatalogedReplayResult);
-            $lastCatalogedReplay = $lastCatalogedRow['val_int'];
-            $db->freeResult($lastCatalogedReplayResult);
+            $pipeconfig = $db->fetchArray($pipeconfigresult);
 
-            //Request replays starting from lastCatalogedReplay, and process them
-            echo 'Requesting replays starting from id ' . $lastCatalogedReplay . ' from hotsapi...' . E;
+            $replaymindate = $pipeconfig['min_replay_date'];
+            $datetime_min = new \DateTime($replaymindate);
 
-            $api = Hotsapi::getReplaysStartingFromHotsApiId($lastCatalogedReplay);
+            $db->freeResult($pipeconfigresult);
 
-            if ($api['code'] == Hotsapi::HTTP_OK) {
-                $replays = $api['json'];
-                $replaylen = count($replays);
-                if ($replaylen > 0) {
-                    $out_of_replays_count = 0;
-                    $outofdate_replays_count = 0;
-                    $duplicates = 0;
+            //Begin Finding Replays
+            $r_key_name = "replays_latest_hotsapi_id";
+            $lastCatalogedReplayResult = $db->execute("GetPipelineVariable");
+            $lastCatalogedReplayResultRows = $db->countResultRows($lastCatalogedReplayResult);
+            if ($lastCatalogedReplayResultRows > 0) {
+                $lastCatalogedRow = $db->fetchArray($lastCatalogedReplayResult);
+                $lastCatalogedReplay = $lastCatalogedRow['val_int'];
+                $db->freeResult($lastCatalogedReplayResult);
 
-                    $getFilteredReplays = Hotsapi::getReplaysWithValidMatchTypes($replays, $lastCatalogedReplay);
+                //Request replays starting from lastCatalogedReplay, and process them
+                echo 'Requesting replays starting from id ' . $lastCatalogedReplay . ' from hotsapi...' . E;
 
-                    $maxReplayId = $getFilteredReplays['maxReplayId'];
-                    $validReplays = $getFilteredReplays['replays'];
+                $api = Hotsapi::getReplaysStartingFromHotsApiId($lastCatalogedReplay);
 
-                    if (count($validReplays) > 0) {
-                        $db->transaction_begin();
+                if ($api['code'] == Hotsapi::HTTP_OK) {
+                    $replays = $api['json'];
+                    $replaylen = count($replays);
+                    if ($replaylen > 0) {
+                        $out_of_replays_count = 0;
+                        $outofdate_replays_count = 0;
+                        $duplicates = 0;
 
-                        foreach ($validReplays as $replay) {
-                            $r_id = $replay['id'];
+                        $getFilteredReplays = Hotsapi::getReplaysWithValidMatchTypes($replays, $lastCatalogedReplay);
 
-                            $existingReplayResult = $db->execute("GetExistingReplayWithHotsApiId");
-                            $existingReplayResultRows = $db->countResultRows($existingReplayResult);
-                            if ($existingReplayResultRows <= 0) {
-                                $r_page = -1;
-                                $r_idinpage = -1;
-                                $r_match_date = $replay['game_date'];
-                                $r_fingerprint = $replay['fingerprint'];
-                                $r_s3url = $replay['url'];
-                                $r_status = HotstatusPipeline::REPLAY_STATUS_QUEUED;
-                                $r_storage_state = HotstatusPipeline::REPLAY_STORAGE_CATALOG;
-                                $r_timestamp = time();
+                        $maxReplayId = $getFilteredReplays['maxReplayId'];
+                        $validReplays = $getFilteredReplays['replays'];
 
-                                // Determine outofdate status
-                                //
-                                // This allows us to catalog replays that are older than our dataset's min start date, without having them
-                                // clog up the status=queued select queries
-                                $datetime_match = new \DateTime($r_match_date);
-                                if ($datetime_match <= $datetime_min) {
-                                    $r_status = HotstatusPipeline::REPLAY_STATUS_OUTOFDATE;
-                                    $outofdate_replays_count++;
+                        if (count($validReplays) > 0) {
+                            $db->transaction_begin();
+
+                            foreach ($validReplays as $replay) {
+                                $r_id = $replay['id'];
+
+                                $existingReplayResult = $db->execute("GetExistingReplayWithHotsApiId");
+                                $existingReplayResultRows = $db->countResultRows($existingReplayResult);
+                                if ($existingReplayResultRows <= 0) {
+                                    $r_page = -1;
+                                    $r_idinpage = -1;
+                                    $r_match_date = $replay['game_date'];
+                                    $r_fingerprint = $replay['fingerprint'];
+                                    $r_s3url = $replay['url'];
+                                    $r_status = HotstatusPipeline::REPLAY_STATUS_QUEUED;
+                                    $r_storage_state = HotstatusPipeline::REPLAY_STORAGE_CATALOG;
+                                    $r_timestamp = time();
+
+                                    // Determine outofdate status
+                                    //
+                                    // This allows us to catalog replays that are older than our dataset's min start date, without having them
+                                    // clog up the status=queued select queries
+                                    $datetime_match = new \DateTime($r_match_date);
+                                    if ($datetime_match <= $datetime_min) {
+                                        $r_status = HotstatusPipeline::REPLAY_STATUS_OUTOFDATE;
+                                        $outofdate_replays_count++;
+                                    }
+
+                                    $db->execute("InsertNewReplay");
                                 }
+                                else {
+                                    echo "Duplicate Replay Found (#$r_id), prevented insertion...                             \r";
+                                    $duplicates++;
+                                }
+                                $db->freeResult($existingReplayResult);
+                            }
 
-                                $db->execute("InsertNewReplay");
-                            }
-                            else {
-                                echo "Duplicate Replay Found (#$r_id), prevented insertion...                             \r";
-                                $duplicates++;
-                            }
-                            $db->freeResult($existingReplayResult);
+                            //Finished processing results for result array, set latest hots api id processed + 1
+                            $r_val_int = $maxReplayId + 1;
+                            $db->execute("SetReplaysLatestHotsApiId");
+
+                            $db->transaction_commit();
+
+                            echo 'Result Group #' . $lastCatalogedReplay . ' processed (' . count($validReplays) . ' relevant -> ' . $outofdate_replays_count . ' out-of-date [' . $replaylen . ' total : ' . $duplicates . ' duplicates]).' . E . E;
                         }
+                        else {
+                            //No relevant replays found, set new latest hotsapi id to be the maxId encountered
+                            $r_val_int = $maxReplayId + 1;
+                            $db->execute("SetReplaysLatestHotsApiId");
 
-                        //Finished processing results for result array, set latest hots api id processed + 1
-                        $r_val_int = $maxReplayId + 1;
-                        $db->execute("SetReplaysLatestHotsApiId");
-
-                        $db->transaction_commit();
-
-                        echo 'Result Group #' . $lastCatalogedReplay . ' processed (' . count($validReplays) . ' relevant -> '. $outofdate_replays_count .' out-of-date ['. $replaylen .' total : '. $duplicates .' duplicates]).' . E . E;
+                            echo 'Result Group #' . $lastCatalogedReplay . ' had no more relevant replays.' . E . E;
+                        }
                     }
                     else {
-                        //No relevant replays found, set new latest hotsapi id to be the maxId encountered
-                        $r_val_int = $maxReplayId + 1;
-                        $db->execute("SetReplaysLatestHotsApiId");
+                        $out_of_replays_count++;
 
-                        echo 'Result Group #' . $lastCatalogedReplay . ' had no more relevant replays.' . E . E;
+                        if ($out_of_replays_count >= OUT_OF_REPLAYS_COUNT_LIMIT) {
+                            //No more replays to process! Long sleep
+                            $out_of_replays_count = 0;
+
+                            echo timestamp() . 'Out of replays to process! Waiting for new hotsapi replay at #' . $lastCatalogedReplay . '...' . E;
+                            $sleep->add(OUT_OF_REPLAYS_SLEEP_DURATION);
+                        }
+                        else {
+                            //Potentially no more replay pages to process, try a few more times after a minute to make sure it's not just the API bugging out.
+                            echo timestamp() . 'Received empty replays result...' . E . E;
+                            $sleep->add(OUT_OF_REPLAYS_COUNT_DURATION);
+                        }
                     }
+                }
+                else if ($api['code'] == Hotsapi::HTTP_RATELIMITED) {
+                    //Error too many requests, wait awhile before trying again
+                    echo timestamp() . 'Error: HTTP Code ' . $api['code'] . '. Rate limited.' . E . E;
+                    $sleep->add(TOO_MANY_REQUEST_SLEEP_DURATION);
                 }
                 else {
-                    $out_of_replays_count++;
-
-                    if ($out_of_replays_count >= OUT_OF_REPLAYS_COUNT_LIMIT) {
-                        //No more replays to process! Long sleep
-                        $out_of_replays_count = 0;
-
-                        echo timestamp() . 'Out of replays to process! Waiting for new hotsapi replay at #' . $lastCatalogedReplay . '...' . E;
-                        $sleep->add(OUT_OF_REPLAYS_SLEEP_DURATION);
-                    }
-                    else {
-                        //Potentially no more replay pages to process, try a few more times after a minute to make sure it's not just the API bugging out.
-                        echo timestamp() . 'Received empty replays result...' . E . E;
-                        $sleep->add(OUT_OF_REPLAYS_COUNT_DURATION);
-                    }
+                    echo timestamp() . 'Error: HTTP Code ' . $api['code'] . '.' . E . E;
+                    $sleep->add(UNKNOWN_ERROR_CODE);
                 }
             }
-            else if ($api['code'] == Hotsapi::HTTP_RATELIMITED) {
-                //Error too many requests, wait awhile before trying again
-                echo timestamp() . 'Error: HTTP Code ' . $api['code'] . '. Rate limited.' . E . E;
-                $sleep->add(TOO_MANY_REQUEST_SLEEP_DURATION);
-            }
             else {
-                echo timestamp() . 'Error: HTTP Code ' . $api['code'] . '.' . E . E;
-                $sleep->add(UNKNOWN_ERROR_CODE);
+                //Couldn't Access Pipeline variable for last cataloged replay
             }
         }
         else {
-            //Couldn't Access Pipeline variable for last cataloged replay
+            $r_instance_state = HotstatusPipeline::INSTANCE_STATE_NOCONFIG;
+            $r_instance_lastused = time();
+            $db->execute("+=Squawk");
+
+            //Could not find config
+            $dots = $console->animateDotDotDot();
+            echo "Could not retrieve pipeline configuration$dots                           \r";
+
+            $sleep->add(SLEEP_DURATION);
         }
     }
     else {
-        //Couldn't access Pipeline config
+        $r_instance_state = HotstatusPipeline::INSTANCE_STATE_SAFESHUTOFF;
+        $r_instance_lastused = time();
+        $db->execute("+=Squawk");
+
+        //Safe shutoff has been flagged
+        $dots = $console->animateDotDotDot();
+        echo "Safe Shutdown$dots                                              \r";
+
+        $sleep->add(SLEEP_DURATION);
     }
 
     $sleep->add(NORMAL_EXECUTION_SLEEP_DURATION, true, true);
