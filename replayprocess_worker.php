@@ -74,7 +74,7 @@ $db->prepare("+=Squawk",
     . "ON DUPLICATE KEY UPDATE "
     . "`state` = ?, `lastused` = ?");
 $db->bind("+=Squawk",
-    "ssi",
+    "ssiiii",
     $r_instance_id, $r_instance_type, $r_instance_state, $r_instance_lastused,
 
     $r_instance_state, $r_instance_lastused);
