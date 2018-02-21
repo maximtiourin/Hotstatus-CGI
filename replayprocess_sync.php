@@ -32,6 +32,7 @@ $sdk_ireland = new \Aws\Sdk([
 $cloudwatch_ireland = $sdk_ireland->createCloudWatch();
 
 //Constants and qol
+const INSTANCE_QUIET_PURGE_AGE = 600; //10 minutes
 const PROCESS_GRANULARITY = 1; //1 seconds
 const E = PHP_EOL;
 $out_of_replays_count = 0; //Count how many times we ran out of replays to process, once reaching limit it means the api isn't bugging out and there actually is no more replays.
@@ -62,6 +63,21 @@ $db->bind("get_stat_int", "s", $r_key_name);
 $db->prepare("set_stat_int",
     "UPDATE `pipeline_analytics` SET `val_int` = ? WHERE `key_name` = ? LIMIT 1");
 $db->bind("set_stat_int", "is", $r_val_int, $r_key_name);
+
+$db->prepare("CountInstances",
+    "SELECT COUNT(`id`) AS `count` FROM `pipeline_instances`");
+
+$db->prepare("CountInstancesOfType",
+    "SELECT COUNT(`id`) AS `count` FROM `pipeline_instances` WHERE `type` = ?");
+$db->bind("CountInstancesOfType", "s", $r_instance_type);
+
+$db->prepare("CountInstancesOfTypeState",
+    "SELECT COUNT(`id`) AS `count` FROM `pipeline_instances` WHERE `type` = ? AND `state` = ?");
+$db->bind("CountInstancesOfTypeState", "si", $r_instance_type, $r_instance_state);
+
+$db->prepare("PurgeQuietInstances",
+    "DELETE FROM `pipeline_instances` WHERE `lastused` < ?");
+$db->bind("PurgeQuietInstances", "i", $r_instance_lastused);
 
 //Helper Functions
 function log($str) {
@@ -160,6 +176,10 @@ while (true) {
 
     //Per Minute
     if (time() % 60 == 0) {
+        //Purge quiet instances
+        $r_instance_lastused = time() - INSTANCE_QUIET_PURGE_AGE;
+        $db->execute("PurgeQuietInstances");
+
         //Get pipeline configuration
         $r_pipeline_config_id = HotstatusPipeline::$pipeline_config[HotstatusPipeline::PIPELINE_CONFIG_DEFAULT]['id'];
         $pipeconfigresult = $db->execute("GetPipelineConfig");
@@ -202,14 +222,50 @@ while (true) {
     }
 
     //Per 30 Seconds
-    /*if (time() % 30 == 0) {
+    //if (time() % 30 == 0) {
         //Count Downloaded Replays Up To Limit
-        if (SYNC_DOWNLOADED_REPLAYS) {
+        /*if (SYNC_DOWNLOADED_REPLAYS) {
             $r_replays_downloaded = getCountResult("CountDownloadedReplaysUpToLimit");
             $db->execute("set_semaphore_replays_downloaded");
             log("Sync: Semaphore - Replays Downloaded");
-        }
-    }*/
+        }*/
+    //}
+
+    //Per 15 Seconds
+    if (time() % 15 == 0) {
+        //Count online instances
+        $d = getCountResult("CountInstances");
+        setStatInt("instances_online", $d);
+        log("Stat: Instances Online: $d");
+
+        //
+        // REPLAY WORKERS
+        //
+        $r_instance_type = "Replay Worker";
+
+        //Count online replay workers
+        $d = getCountResult("CountInstancesOfType");
+        setStatInt("instances_replay_workers_online", $d);
+        log("Stat: Instances Replay Workers Online: $d");
+
+        //Count replay workers state: Safe Shutoff
+        $r_instance_state = HotstatusPipeline::INSTANCE_STATE_SAFESHUTOFF;
+        $d = getCountResult("CountInstancesOfTypeState");
+        setStatInt("instances_replay_workers_s_safeshutoff", $d);
+        log("Stat: Instances Replay Workers State (safeshutoff): $d");
+
+        //Count replay workers state: No Config
+        $r_instance_state = HotstatusPipeline::INSTANCE_STATE_NOCONFIG;
+        $d = getCountResult("CountInstancesOfTypeState");
+        setStatInt("instances_replay_workers_s_noconfig", $d);
+        log("Stat: Instances Replay Workers State (noconfig): $d");
+
+        //Count replay workers state: Processing
+        $r_instance_state = HotstatusPipeline::INSTANCE_STATE_PROCESSING;
+        $d = getCountResult("CountInstancesOfTypeState");
+        setStatInt("instances_replay_workers_s_processing", $d);
+        log("Stat: Instances Replay Workers State (processing): $d");
+    }
 
     $sleep->add(PROCESS_GRANULARITY);
 

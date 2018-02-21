@@ -33,6 +33,10 @@ $sleep = new SleepHandler();
 $console = new Console();
 
 //Prepare statements
+$db->prepare("get_var",
+    "SELECT * FROM `pipeline_variables` WHERE `key_name` = ? LIMIT 1");
+$db->bind("get_var", "s", $r_key_name);
+
 $db->prepare("TouchWrite",
     "UPDATE `pipeline_cache_writes` SET `lastused` = ? WHERE `id` = ?");
 $db->bind("TouchWrite", "ii", $r_timestamp, $r_id);
@@ -121,84 +125,104 @@ echo '--------------------------------------'.E
 
 //Look for requests to update cache with
 while (true) {
-    //Check for unlocked failed cache updating
-    $r_timestamp = time() - UNLOCK_UPDATE_DURATION;
-    $r_status = HotstatusCache::QUEUE_CACHE_STATUS_UPDATING;
-    $result = $db->execute("SelectNextWriteWithStatus-Unlocked");
-    $resrows = $db->countResultRows($result);
-    if ($resrows > 0) {
-        //Found a failed cache update process, reset it to queued
-        $row = $db->fetchArray($result);
+    //Check shutoff state
+    $shutoff = 0;
+    $r_key_name = "instance_safe_shutoff";
+    $shutoffResult = $db->execute("get_var");
+    $shutoffResultRows = $db->countResultRows($shutoffResult);
+    if ($shutoffResultRows > 0) {
+        $shutoffRow = $db->fetchArray($shutoffResult);
 
-        echo 'Found a failed cache update at #' . $row['id'] . ', resetting status to \'' . HotstatusCache::QUEUE_CACHE_STATUS_QUEUED . '\'...' . E;
-
-        $r_id = $row['id'];
-        $r_timestamp = time();
-        $r_status = HotstatusCache::QUEUE_CACHE_STATUS_QUEUED;
-
-        $db->execute("UpdateWriteStatus");
+        $shutoff = intval($shutoffRow['val_int']);
     }
-    else {
-        //No Cache Updating previously failed, look for unlocked queued request to update
-        $r_timestamp = time() - UNLOCK_DEFAULT_DURATION;
-        $r_status = HotstatusCache::QUEUE_CACHE_STATUS_QUEUED;
-        $queuedResult = $db->execute("SelectNextWriteWithStatus-Unlocked");
-        $queuedResultRows = $db->countResultRows($queuedResult);
-        if ($queuedResultRows > 0) {
-            //Found a queued unlocked request for update, softlock for updating and update it
-            $row = $db->fetchArray($queuedResult);
+
+    if ($shutoff === 0) {
+        //Check for unlocked failed cache updating
+        $r_timestamp = time() - UNLOCK_UPDATE_DURATION;
+        $r_status = HotstatusCache::QUEUE_CACHE_STATUS_UPDATING;
+        $result = $db->execute("SelectNextWriteWithStatus-Unlocked");
+        $resrows = $db->countResultRows($result);
+        if ($resrows > 0) {
+            //Found a failed cache update process, reset it to queued
+            $row = $db->fetchArray($result);
+
+            echo 'Found a failed cache update at #' . $row['id'] . ', resetting status to \'' . HotstatusCache::QUEUE_CACHE_STATUS_QUEUED . '\'...' . E;
 
             $r_id = $row['id'];
             $r_timestamp = time();
-            $r_status = HotstatusCache::QUEUE_CACHE_STATUS_UPDATING;
+            $r_status = HotstatusCache::QUEUE_CACHE_STATUS_QUEUED;
 
             $db->execute("UpdateWriteStatus");
-
-            //Set lock id
-            $requestLockId = "hotstatus_updateCacheWrite_$r_id";
-
-            //Obtain lock
-            $requestLocked = $db->lock($requestLockId, 0);
-
-            if ($requestLocked) {
-                echo 'Update Cache Write #' . $r_id . '...                              ' . E;
-
-                $action = $row['action'];
-                $cache_id = $row['cache_id'];
-                $payload = json_decode($row['payload'], true);
-
-                //Execute request
-                $func = $actionMap[$action];
-                $func($cache_id, $payload, $db, $creds);
-
-                //Delete request after update
-                $db->execute("DeleteWrite");
-
-                //Inc updated total
-                $r_cache_writes_updated_total = 1;
-                $db->execute("stats_cache_writes_updated_total");
-
-                //Release lock
-                $db->unlock($requestLockId);
-
-                echo 'Cache Write #' . $r_id . ' Updated.                                 '.E.E;
-            }
-            else {
-                //Could not attain lock on request, immediately continue
-            }
         }
         else {
-            //No unlocked queued requests to update, sleep
-            $dots = $console->animateDotDotDot();
-            echo "No unlocked queued requests found$dots                           \r";
+            //No Cache Updating previously failed, look for unlocked queued request to update
+            $r_timestamp = time() - UNLOCK_DEFAULT_DURATION;
+            $r_status = HotstatusCache::QUEUE_CACHE_STATUS_QUEUED;
+            $queuedResult = $db->execute("SelectNextWriteWithStatus-Unlocked");
+            $queuedResultRows = $db->countResultRows($queuedResult);
+            if ($queuedResultRows > 0) {
+                //Found a queued unlocked request for update, softlock for updating and update it
+                $row = $db->fetchArray($queuedResult);
 
-            $sleep->add(SLEEP_DURATION);
+                $r_id = $row['id'];
+                $r_timestamp = time();
+                $r_status = HotstatusCache::QUEUE_CACHE_STATUS_UPDATING;
+
+                $db->execute("UpdateWriteStatus");
+
+                //Set lock id
+                $requestLockId = "hotstatus_updateCacheWrite_$r_id";
+
+                //Obtain lock
+                $requestLocked = $db->lock($requestLockId, 0);
+
+                if ($requestLocked) {
+                    echo 'Update Cache Write #' . $r_id . '...                              ' . E;
+
+                    $action = $row['action'];
+                    $cache_id = $row['cache_id'];
+                    $payload = json_decode($row['payload'], true);
+
+                    //Execute request
+                    $func = $actionMap[$action];
+                    $func($cache_id, $payload, $db, $creds);
+
+                    //Delete request after update
+                    $db->execute("DeleteWrite");
+
+                    //Inc updated total
+                    $r_cache_writes_updated_total = 1;
+                    $db->execute("stats_cache_writes_updated_total");
+
+                    //Release lock
+                    $db->unlock($requestLockId);
+
+                    echo 'Cache Write #' . $r_id . ' Updated.                                 ' . E . E;
+                }
+                else {
+                    //Could not attain lock on request, immediately continue
+                }
+            }
+            else {
+                //No unlocked queued requests to update, sleep
+                $dots = $console->animateDotDotDot();
+                echo "No unlocked queued requests found$dots                           \r";
+
+                $sleep->add(SLEEP_DURATION);
+            }
+
+            $db->freeResult($queuedResult);
         }
 
-        $db->freeResult($queuedResult);
+        $db->freeResult($result);
     }
+    else {
+        //Safe shutoff has been flagged
+        $dots = $console->animateDotDotDot();
+        echo "Safe Shutdown$dots                                              \r";
 
-    $db->freeResult($result);
+        $sleep->add(SLEEP_DURATION);
+    }
 
     //Default sleep
     $sleep->add(NORMAL_EXECUTION_SLEEP_DURATION, true, true);

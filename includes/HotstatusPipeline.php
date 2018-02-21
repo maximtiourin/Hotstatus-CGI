@@ -33,7 +33,7 @@ class HotstatusPipeline {
      */
     const SEASON_UNKNOWN = "Legacy"; //This is the season to use when no season dates are defined for a given date time
     const SEASON_NONE = "None"; //This is the value of NO previous season
-    const SEASON_OVERRIDE = "2017 Season 3"; //Season override - If override is set, then select the overrided season instead of the current. Useful for when a new season begins and there is not enough data for current season
+    const SEASON_OVERRIDE = null; //Season override - If override is set, then select the overrided season instead of the current. Useful for when a new season begins and there is not enough data for current season
     const SEASON_CURRENT = "2018 Season 1";
     public static $SEASONS = [
         "2018 Season 1" => [
@@ -61,14 +61,20 @@ class HotstatusPipeline {
     const PATCH_CURRENT = "CURRENT";
     public static $PATCHES = [
         self::PATCH_CURRENT => [
-            "start" => "2018-02-09 17:00:00",
+            "start" => "2018-02-21 18:00:00",
             "end" => null,
+            "version" => "2.30.3",
+            "type" => "Balance",
+        ],
+        "2.30.1" => [
+            "start" => "2018-02-09 18:00:00",
+            "end" => "2018-02-21 17:59:59",
             "version" => "2.30.1",
             "type" => "Balance",
         ],
         "2.30.0" => [
             "start" => "2018-02-06 00:00:00",
-            "end" => "2018-02-09 16:59:59",
+            "end" => "2018-02-09 17:59:59",
             "version" => "2.30.0",
             "type" => "Maiev",
         ],
@@ -108,12 +114,12 @@ class HotstatusPipeline {
             "version" => "2.29.2",
             "type" => "Balance",
         ],
-        "2.29.0" => [
+        /*"2.29.0" => [
             "start" => "2017-11-14 00:00:00",
             "end" => "2017-11-28 23:59:59",
             "version" => "2.29.0",
             "type" => "Alexstrasza",
-        ],
+        ],*/
         /*"2.28.5" => [
             "start" => "2017-11-01 00:00:00",
             "end" => "2017-11-13 23:59:59",
@@ -2164,6 +2170,10 @@ class HotstatusPipeline {
             "id" => 1,
         ],
     ];
+
+    const INSTANCE_STATE_SAFESHUTOFF = 1;
+    const INSTANCE_STATE_NOCONFIG = 2;
+    const INSTANCE_STATE_PROCESSING = 60;
 
     const REPLAY_STORAGE_INVALID = 0; //Default value of flag, for invalid storage states
     const REPLAY_STORAGE_CATALOG = 1; //"hotsapi"; //The replay is currently stored on hotsapi s3
