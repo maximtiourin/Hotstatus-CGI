@@ -297,6 +297,7 @@ class GetDataTableHeroesStatsListAction {
         $pagedata['last_updated'] = time();
 
         //Max Age
-        $pagedata['max_age'] = HotstatusCache::getCacheDefaultExpirationTimeInSecondsForToday();
+        //$pagedata['max_age'] = HotstatusCache::getCacheDefaultExpirationTimeInSecondsForToday();
+        $pagedata['max_age'] = HotstatusCache::CACHE_180_MINUTES;
     }
 }

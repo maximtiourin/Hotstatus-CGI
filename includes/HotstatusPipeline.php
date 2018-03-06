@@ -33,12 +33,17 @@ class HotstatusPipeline {
      */
     const SEASON_UNKNOWN = "Legacy"; //This is the season to use when no season dates are defined for a given date time
     const SEASON_NONE = "None"; //This is the value of NO previous season
-    const SEASON_OVERRIDE = null; //Season override - If override is set, then select the overrided season instead of the current. Useful for when a new season begins and there is not enough data for current season
-    const SEASON_CURRENT = "2018 Season 1";
+    const SEASON_OVERRIDE = "2018 Season 1"; //Season override - If override is set (null for unset), then select the overrided season instead of the current. Useful for when a new season begins and there is not enough data for current season
+    const SEASON_CURRENT = "2018 Season 2";
     public static $SEASONS = [
+        "2018 Season 2" => [
+            "start" =>  "2018-03-06 18:00:00",
+            "end" =>    "2018-06-12 17:59:59",
+            "previous" => "2018 Season 1"
+        ],
         "2018 Season 1" => [
             "start" =>  "2017-12-12 07:00:00",
-            "end" =>    "2018-03-06 06:59:59",
+            "end" =>    "2018-03-06 17:59:59",
             "previous" => "2017 Season 3"
         ],
         "2017 Season 3" => [
@@ -61,8 +66,14 @@ class HotstatusPipeline {
     const PATCH_CURRENT = "CURRENT";
     public static $PATCHES = [
         self::PATCH_CURRENT => [
-            "start" => "2018-02-21 18:00:00",
+            "start" => "2018-03-06 18:00:00",
             "end" => null,
+            "version" => "2.30.4",
+            "type" => "Rework",
+        ],
+        "2.30.3" => [
+            "start" => "2018-02-21 18:00:00",
+            "end" => "2018-03-06 17:59:59",
             "version" => "2.30.3",
             "type" => "Balance",
         ],
@@ -108,12 +119,12 @@ class HotstatusPipeline {
             "version" => "2.29.3",
             "type" => "Hanzo",
         ],
-        "2.29.2" => [
+        /*"2.29.2" => [
             "start" => "2017-11-29 00:00:00",
             "end" => "2017-12-11 23:59:59",
             "version" => "2.29.2",
             "type" => "Balance",
-        ],
+        ],*/
         /*"2.29.0" => [
             "start" => "2017-11-14 00:00:00",
             "end" => "2017-11-28 23:59:59",
@@ -556,6 +567,10 @@ class HotstatusPipeline {
                 "min" => 0,
                 "max" => 0,
                 "players" => [
+                    "2018 Season 2" => [
+                        "min" => 0,
+                        "max" => 0,
+                    ],
                     "2018 Season 1" => [
                         "min" => 0,
                         "max" => 0,
@@ -571,6 +586,10 @@ class HotstatusPipeline {
                 "min" => 1,
                 "max" => 49,
                 "players" => [
+                    "2018 Season 2" => [
+                        "min" => 1,
+                        "max" => 120,
+                    ],
                     "2018 Season 1" => [
                         "min" => 1,
                         "max" => 120,
@@ -586,6 +605,10 @@ class HotstatusPipeline {
                 "min" => 50,
                 "max" => 99,
                 "players" => [
+                    "2018 Season 2" => [
+                        "min" => 121,
+                        "max" => 399,
+                    ],
                     "2018 Season 1" => [
                         "min" => 121,
                         "max" => 399,
@@ -601,6 +624,10 @@ class HotstatusPipeline {
                 "min" => 100,
                 "max" => 492,
                 "players" => [
+                    "2018 Season 2" => [
+                        "min" => 400,
+                        "max" => 697,
+                    ],
                     "2018 Season 1" => [
                         "min" => 400,
                         "max" => 697,
@@ -616,6 +643,10 @@ class HotstatusPipeline {
                 "min" => 493,
                 "max" => 1038,
                 "players" => [
+                    "2018 Season 2" => [
+                        "min" => 698,
+                        "max" => 1049,
+                    ],
                     "2018 Season 1" => [
                         "min" => 698,
                         "max" => 1049,
@@ -631,6 +662,10 @@ class HotstatusPipeline {
                 "min" => 1039,
                 "max" => PHP_INT_MAX,
                 "players" => [
+                    "2018 Season 2" => [
+                        "min" => 1050,
+                        "max" => PHP_INT_MAX,
+                    ],
                     "2018 Season 1" => [
                         "min" => 1050,
                         "max" => PHP_INT_MAX,

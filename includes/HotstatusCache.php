@@ -11,6 +11,7 @@ class HotstatusCache {
     const CACHE_RATELIMITING_DATABASE_INDEX = 2; //The index of the database used for caching and tracking rate limiting for certain actions
     const CACHE_DEFAULT_TTL = 31536000; //(~1 year) The default TTL of stored cache values, keys with a TTL are subject to the volatile-lru cache policy
     const CACHE_60_MINUTES = 3600;
+    const CACHE_180_MINUTES = 10800;
     const CACHE_PLAYERSEARCH_TTL = 300; //The TTL of stored playersearch cache values.
     const CACHE_PLAYER_HIT_TTL = 3600; //TTL of player caching when valid result
     const CACHE_PLAYER_MISS_TTL = 300; //TTL of player caching when invalid result
