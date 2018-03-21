@@ -558,7 +558,7 @@ if ($pipeconfigresrows > 0) {
     //Generation
     //generate_getPageDataRankingsAction();
     generate_getDataTableHeroesStatsListAction();
-    //generate_getPageDataHeroAction();
+    generate_getPageDataHeroAction();
 }
 else {
     echo "Unable to get pipeline config...".E;
