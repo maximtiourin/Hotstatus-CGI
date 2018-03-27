@@ -66,8 +66,14 @@ class HotstatusPipeline {
     const PATCH_CURRENT = "CURRENT";
     public static $PATCHES = [
         self::PATCH_CURRENT => [
-            "start" => "2018-03-21 18:00:00",
+            "start" => "2018-03-27 17:00:00",
             "end" => null,
+            "version" => "2.31.0",
+            "type" => "Fenix",
+        ],
+        "2.30.6" => [
+            "start" => "2018-03-21 18:00:00",
+            "end" => "2018-03-27 16:59:59",
             "version" => "2.30.6",
             "type" => "Balance",
         ],
@@ -113,12 +119,12 @@ class HotstatusPipeline {
             "version" => "2.29.8",
             "type" => "Tyrael",
         ],
-        "2.29.7" => [
+        /*"2.29.7" => [
             "start" => "2018-01-09 00:00:00",
             "end" => "2018-01-15 23:59:59",
             "version" => "2.29.7",
             "type" => "Blaze",
-        ],
+        ],*/
         /*"2.29.5" => [
             "start" => "2017-12-21 00:00:00",
             "end" => "2018-01-08 23:59:59",
@@ -1008,6 +1014,15 @@ class HotstatusPipeline {
                 "name_attribute" => "Fals",
                 "image_hero" => "ui_targetportrait_hero_falstad",
                 "image_minimap" => "storm_ui_minimapicon_gryphon_rider",
+                "role_blizzard" => "Assassin",
+                "role_specific" => "Sustained Damage",
+                "selected" => false
+            ],
+            "Fenix" => [
+                "name_sort" => "Fenix",
+                "name_attribute" => "FENX",
+                "image_hero" => "storm_ui_ingame_hero_leaderboard_fenix",
+                "image_minimap" => "storm_ui_minimapicon_fenix",
                 "role_blizzard" => "Assassin",
                 "role_specific" => "Sustained Damage",
                 "selected" => false
