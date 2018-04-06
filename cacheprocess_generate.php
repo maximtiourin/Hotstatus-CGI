@@ -22,7 +22,9 @@ const E = PHP_EOL;
 
 //Targeted generation
 $target_date_range = "Last 7 Days";
-$target_rank_range = ["Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master"];
+$target_patch_range = "2.31.0 (Fenix)";
+$target_rank_range = null;
+//$target_rank_range = ["Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master"];
 
 //Prepare statements
 $db->prepare("GetPipelineConfig",
@@ -275,7 +277,7 @@ function generate_getPageDataRankingsAction() {
 }
 
 function generate_getDataTableHeroesStatsListAction() {
-    global $target_date_range, $target_rank_range;
+    global $target_date_range, $target_patch_range, $target_rank_range;
 
     $_TYPE = GetDataTableHeroesStatsListAction::_TYPE();
     $_ID = GetDataTableHeroesStatsListAction::_ID();
@@ -304,7 +306,7 @@ function generate_getDataTableHeroesStatsListAction() {
                 if (count($rankPermutation) > 0) {
                     if ($target_rank_range === null || areArraysEqual($target_rank_range, $rankPermutation)) {
                         foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_DATE] as $dateSelection) {
-                            if ($target_date_range === null || $target_date_range === $dateSelection) {
+                            if (($target_date_range === null && $target_patch_range === null) || $target_date_range === $dateSelection || $target_patch_range === $dateSelection) {
                                 //Calculate priority (Higher number has higher priority)
                                 $priority = 0;
                                 if (count($rankPermutation) === MAX_RANK_SIZE) {
@@ -395,7 +397,7 @@ function generate_getDataTableHeroesStatsListAction() {
 }
 
 function generate_getPageDataHeroAction() {
-    global $target_date_range, $target_rank_range;
+    global $target_date_range, $target_patch_range, $target_rank_range;
 
     $_TYPE = GetPageDataHeroAction::_TYPE();
     $_ID = GetPageDataHeroAction::_ID();
@@ -421,7 +423,7 @@ function generate_getPageDataHeroAction() {
     foreach ($filterKeyPermutations[HotstatusPipeline::FILTER_KEY_GAMETYPE] as $gameTypePermutation) {
         if (count($gameTypePermutation) > 0) {
             foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_DATE] as $dateSelection) {
-                if ($target_date_range === null || $target_date_range === $dateSelection) {
+                if (($target_date_range === null && $target_patch_range === null) || $target_date_range === $dateSelection || $target_patch_range === $dateSelection) {
                     foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_HERO] as $heroSelection) {
                         //Calculate priority (Higher number has higher priority)
                         $priority = 0;

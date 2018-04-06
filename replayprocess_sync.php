@@ -64,6 +64,22 @@ $db->prepare("set_stat_int",
     "UPDATE `pipeline_analytics` SET `val_int` = ? WHERE `key_name` = ? LIMIT 1");
 $db->bind("set_stat_int", "is", $r_val_int, $r_key_name);
 
+$db->prepare("get_var_int",
+    "SELECT `val_int` FROM `pipeline_variables` WHERE `key_name` = ? LIMIT 1");
+$db->bind("get_var_int", "s", $r_key_name);
+
+$db->prepare("set_var_int",
+    "UPDATE `pipeline_variables` SET `val_int` = ? WHERE `key_name` = ? LIMIT 1");
+$db->bind("set_var_int", "is", $r_val_int, $r_key_name);
+
+$db->prepare("get_var_string",
+    "SELECT `val_string` FROM `pipeline_variables` WHERE `key_name` = ? LIMIT 1");
+$db->bind("get_var_string", "s", $r_key_name);
+
+$db->prepare("set_var_string",
+    "UPDATE `pipeline_variables` SET `val_string` = ? WHERE `key_name` = ? LIMIT 1");
+$db->bind("set_var_string", "ss", $r_val_string, $r_key_name);
+
 $db->prepare("CountInstances",
     "SELECT COUNT(`id`) AS `count` FROM `pipeline_instances`");
 
@@ -122,6 +138,60 @@ function setStatInt($key, $val) {
     $db->execute("set_stat_int");
 }
 
+function getVarInt($key) {
+    global $db, $r_key_name;
+
+    $val = 0;
+
+    $r_key_name = $key;
+    $var_result = $db->execute("get_var_int");
+    $var_result_rows = $db->countResultRows($var_result);
+    if ($var_result_rows > 0) {
+        $row = $db->fetchArray($var_result);
+
+        $val = $row['val_int'];
+    }
+    $db->freeResult($var_result);
+
+    return $val;
+}
+
+function setVarInt($key, $val) {
+    global $db, $r_key_name, $r_val_int;
+
+    $r_key_name = $key;
+    $r_val_int = $val;
+
+    $db->execute("set_var_int");
+}
+
+function getVarString($key) {
+    global $db, $r_key_name;
+
+    $val = "";
+
+    $r_key_name = $key;
+    $var_result = $db->execute("get_var_string");
+    $var_result_rows = $db->countResultRows($var_result);
+    if ($var_result_rows > 0) {
+        $row = $db->fetchArray($var_result);
+
+        $val = $row['val_string'];
+    }
+    $db->freeResult($var_result);
+
+    return $val;
+}
+
+function setVarString($key, $val) {
+    global $db, $r_key_name, $r_val_string;
+
+    $r_key_name = $key;
+    $r_val_string = $val;
+
+    $db->execute("set_var_string");
+}
+
 function trackStatDifference($getkey, $setkey, &$stat) {
     $newstat = getStatInt($getkey);
     $statdiff = $newstat - $stat;
@@ -148,6 +218,49 @@ function putCloudWatchMetric(CloudWatchClient &$cloudwatch, $namespace, $metric,
     catch (AwsException $e) {
         if ($log) echo $e->getMessage() . E;
     }
+}
+
+function execInBackground($cmd) {
+    if (substr(php_uname(), 0, 7) == "Windows"){
+        pclose(popen("start /B ". $cmd, "r"));
+    }
+    else {
+        exec($cmd . " > /dev/null &");
+    }
+}
+
+/**
+ * Execute the given command by displaying console output live to the user.
+ *  @param  string  cmd          :  command to be executed
+ *  @return array   exit_status  :  exit status of the executed command
+ *                  output       :  console output of the executed command
+ */
+function liveExecuteCommand($cmd) {
+    while (@ ob_end_flush()); // end all output buffers if any
+
+    $proc = popen("$cmd 2>&1 ; echo Exit status : $?", 'r');
+
+    $live_output     = "";
+    $complete_output = "";
+
+    while (!feof($proc))
+    {
+        $live_output     = fread($proc, 4096);
+        $complete_output = $complete_output . $live_output;
+        echo "$live_output";
+        @ flush();
+    }
+
+    pclose($proc);
+
+    // get exit status
+    preg_match('/[0-9]+$/', $complete_output, $matches);
+
+    // return exit status and intended output
+    return array (
+        'exit_status'  => intval($matches[0]),
+        'output'       => str_replace("Exit status : " . $matches[0], '', $complete_output)
+    );
 }
 
 //Stats Tracking
@@ -198,6 +311,49 @@ while (true) {
             setStatInt("replays_queued_total", $d);
             putCloudWatchMetric($cloudwatch_ireland, "Hotstatus", "Replays Queued", time(), $d, "Count", false);
             log("Sync: Replays Queued: $d");
+        }
+
+        //Scheduling: Cache Generation
+        $cache_generate = getVarInt("cache_generate");
+        if ($cache_generate === 0 || $cache_generate === 1) {
+            $date = new \DateTime("now");
+
+            $yearOfWeek = intval($date->format("o"));
+            $weekOfYear = intval($date->format("W"));
+            $dayOfWeek = intval($date->format("N"));
+
+            $dayBeginDate = new \DateTime();
+            $dayBeginDate->setISODate($yearOfWeek, $weekOfYear, $dayOfWeek);
+            $dayBeginDate->setTime(7, 0, 0);
+
+            $dayCutoffDate = new \DateTime();
+            $dayCutoffDate->setISODate($yearOfWeek, $weekOfYear, $dayOfWeek);
+            $dayCutoffDate->setTime(10, 0, 0);
+
+            if ($date > $dayBeginDate && $date < $dayCutoffDate) {
+                if ($cache_generate === 1) {
+                    //Reset Flag
+                    setVarInt("cache_generate", 0);
+                }
+            }
+            elseif ($cache_generate === 0) {
+                //Process
+                //execInBackground("php cacheprocess_generate.php");
+                $execResult = liveExecuteCommand("php cacheprocess_generate.php");
+
+                $now = (new \DateTime("now"))->format(HotstatusPipeline::FORMAT_DATETIME);
+
+                if ($execResult['exit_status'] !== 0) {
+                    log("ERROR: Cache Generation Failed.");
+
+                    setVarString("cache_generate", "ERROR: $now");
+                }
+                else {
+                    setVarString("cache_generate", $now);
+                }
+
+                setVarInt("cache_generate", 1);
+            }
         }
 
         //stats_replays_processed_per_minute
