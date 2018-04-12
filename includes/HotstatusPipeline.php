@@ -66,8 +66,14 @@ class HotstatusPipeline {
     const PATCH_CURRENT = "CURRENT";
     public static $PATCHES = [
         self::PATCH_CURRENT => [
-            "start" => "2018-03-27 17:00:00",
+            "start" => "2018-04-12 00:10:00",
             "end" => null,
+            "version" => "2.31.2",
+            "type" => "Balance",
+        ],
+        "2.31.0" => [
+            "start" => "2018-03-27 17:00:00",
+            "end" => "2018-04-12 00:00:00",
             "version" => "2.31.0",
             "type" => "Fenix",
         ],
@@ -77,13 +83,13 @@ class HotstatusPipeline {
             "version" => "2.30.6",
             "type" => "Balance",
         ],
-        "2.30.5" => [
+        /*"2.30.5" => [
             "start" => "2018-03-10 01:05:00",
             "end" => "2018-03-21 17:59:59",
             "version" => "2.30.5",
             "type" => "Hotfix",
-        ],
-        "2.30.4" => [
+        ],*/
+        /*"2.30.4" => [
             "start" => "2018-03-06 18:00:00",
             "end" => "2018-03-10 01:04:59",
             "version" => "2.30.4",
@@ -118,7 +124,7 @@ class HotstatusPipeline {
             "end" => "2018-01-23 23:59:59",
             "version" => "2.29.8",
             "type" => "Tyrael",
-        ],
+        ],*/
         /*"2.29.7" => [
             "start" => "2018-01-09 00:00:00",
             "end" => "2018-01-15 23:59:59",
@@ -468,9 +474,29 @@ class HotstatusPipeline {
          * ["GameTypeProperName"] => [
          *      ['selected] => TRUE/FALSE (can be modified as needed)
          * ]
+         *
+         * aggregate denotes whether or not the gametype is a collection of other gametypes
+         *
+         * Non aggregate gametypes also have selected value set to TRUE to make use of view snippet "Select Once" functionality,
+         * so that multiselects can decide to have all non aggregate types selected right off the bat, while more discerning selects can choose
+         * to only toggle the first selected they encounter of a varying type.
          */
         self::FILTER_KEY_GAMETYPE => [
+            "All Leagues" => [
+                "aggregate" => TRUE,
+                "value" => "Hero League,Team League,Unranked Draft,Quick Match",
+                "name_sort" => "AllLeagues",
+                "selected" => TRUE
+            ],
+            "Draft Leagues" => [
+                "aggregate" => TRUE,
+                "value" => "Hero League,Team League,Unranked Draft",
+                "name_sort" => "DraftLeagues",
+                "selected" => TRUE
+            ],
             "Hero League" => [
+                "aggregate" => FALSE,
+                "value" => "Hero League",
                 "name_sort" => "HeroLeague",
                 "ranking" => [
                     "matchLimit" => 100,
@@ -479,6 +505,8 @@ class HotstatusPipeline {
                 "selected" => TRUE
             ],
             "Team League" => [
+                "aggregate" => FALSE,
+                "value" => "Team League",
                 "name_sort" => "TeamLeague",
                 "ranking" => [
                     "matchLimit" => 25,
@@ -487,6 +515,8 @@ class HotstatusPipeline {
                 "selected" => TRUE
             ],
             "Unranked Draft" => [
+                "aggregate" => FALSE,
+                "value" => "Unranked Draft",
                 "name_sort" => "UnrankedDraft",
                 "ranking" => [
                     "matchLimit" => 100,
@@ -495,6 +525,8 @@ class HotstatusPipeline {
                 "selected" => TRUE
             ],
             "Quick Match" => [
+                "aggregate" => FALSE,
+                "value" => "Quick Match",
                 "name_sort" => "QuickMatch",
                 "ranking" => [
                     "matchLimit" => 100,
@@ -509,70 +541,108 @@ class HotstatusPipeline {
          *      ['name_sort'] => mapNameSort
          *      ['selected] => TRUE/FALSE (can be modified as needed)
          * ]
+         *
+         * The first key
          */
         self::FILTER_KEY_MAP => [
-            "Battlefield of Eternity" => [
-                "name_sort" => "BattlefieldofEternity",
+            "All Maps" => [
+                "value" =>
+                    "Battlefield of Eternity,".
+                    "Blackheart's Bay,".
+                    "Braxis Holdout,".
+                    "Cursed Hollow,".
+                    "Dragon Shire,".
+                    "Garden of Terror,".
+                    "Hanamura,". /*Hanamura is included in all maps to use pre-existing key signature, but is not available for individual selection*/
+                    "Haunted Mines,".
+                    "Infernal Shrines,".
+                    "Sky Temple,".
+                    "Tomb of the Spider Queen,".
+                    "Towers of Doom,".
+                    "Volskaya Foundry,".
+                    "Warhead Junction",
+                "name_sort" => "0A",
                 "selected" => TRUE
+            ],
+            "Battlefield of Eternity" => [
+                "value" => "Battlefield of Eternity",
+                "name_sort" => "BattlefieldofEternity",
+                "selected" => FALSE
             ],
             "Blackheart's Bay" => [
+                "value" => "Blackheart's Bay",
                 "name_sort" => "BlackheartsBay",
-                "selected" => TRUE
+                "selected" => FALSE
             ],
             "Braxis Holdout" => [
+                "value" => "Braxis Holdout",
                 "name_sort" => "BraxisHoldout",
-                "selected" => TRUE
+                "selected" => FALSE
             ],
             "Cursed Hollow" => [
+                "value" => "Cursed Hollow",
                 "name_sort" => "CursedHollow",
-                "selected" => TRUE
+                "selected" => FALSE
             ],
             "Dragon Shire" => [
+                "value" => "Dragon Shire",
                 "name_sort" => "DragonShire",
-                "selected" => TRUE
+                "selected" => FALSE
             ],
             "Garden of Terror" => [
+                "value" => "Garden of Terror",
                 "name_sort" => "GardenofTerror",
-                "selected" => TRUE
+                "selected" => FALSE
             ],
-            "Hanamura" => [
+            /*"Hanamura" => [
+                "value" => "Hanamura",
                 "name_sort" => "Hanamura",
-                "selected" => TRUE
-            ],
+                "selected" => FALSE
+            ],*/
             "Haunted Mines" => [
+                "value" => "Haunted Mines",
                 "name_sort" => "HauntedMines",
-                "selected" => TRUE
+                "selected" => FALSE
             ],
             "Infernal Shrines" => [
+                "value" => "Infernal Shrines",
                 "name_sort" => "InfernalShrines",
-                "selected" => TRUE
+                "selected" => FALSE
             ],
             "Sky Temple" => [
+                "value" => "Sky Temple",
                 "name_sort" => "SkyTemple",
-                "selected" => TRUE
+                "selected" => FALSE
             ],
             "Tomb of the Spider Queen" => [
+                "value" => "Tomb of the Spider Queen",
                 "name_sort" => "TomboftheSpiderQueen",
-                "selected" => TRUE
+                "selected" => FALSE
             ],
             "Towers of Doom" => [
+                "value" => "Towers of Doom",
                 "name_sort" => "TowersofDoom",
-                "selected" => TRUE
+                "selected" => FALSE
             ],
             "Volskaya Foundry" => [
+                "value" => "Volskaya Foundry",
                 "name_sort" => "VolskayaFoundry",
-                "selected" => TRUE
+                "selected" => FALSE
             ],
             "Warhead Junction" => [
+                "value" => "Warhead Junction",
                 "name_sort" => "WarheadJunction",
-                "selected" => TRUE
+                "selected" => FALSE
             ],
         ],
+
         /*
          * Filter Ranks
          * ["RankProperName"] => [
          *      "selected" => TRUE/FALSE (can be modified as needed)
          * ]
+         *
+         * aggregate denotes whether or not the rank is an aggregation of other ranks
          *
          * min/max are match distributions for ranks (based on average match mmr) -- useful for filtering hero statistics
          *
@@ -581,7 +651,41 @@ class HotstatusPipeline {
          * [Rank Distributions are manually filled out by data generated with utilityprocess_rankdistribution variants]
          */
         self::FILTER_KEY_RANK => [
+            "All Ranks" => [
+                "aggregate" => TRUE,
+                "selectable" => TRUE,
+                "image_key" => "AllRanks",
+                "value" => "Bronze,".
+                    "Silver,".
+                    "Gold,".
+                    "Platinum,".
+                    "Diamond,".
+                    "Master",
+                "selected" => TRUE,
+            ],
+            /*"Low Ranks" => [
+                "aggregate" => TRUE,
+                "selectable" => TRUE,
+                "image_key" => "LowRanks",
+                "value" => "Bronze,".
+                    "Silver,".
+                    "Gold",
+                "selected" => TRUE,
+            ],*/
+            "High Ranks" => [
+                "aggregate" => TRUE,
+                "selectable" => TRUE,
+                "image_key" => "HighRanks",
+                "value" => "Platinum,".
+                    "Diamond,".
+                    "Master",
+                "selected" => TRUE,
+            ],
             "Bronze" => [
+                "aggregate" => FALSE,
+                "selectable" => FALSE,
+                "image_key" => "Bronze",
+                "value" => "Bronze",
                 "min" => 0,
                 "max" => 0,
                 "players" => [
@@ -598,9 +702,13 @@ class HotstatusPipeline {
                         "max" => 0,
                     ],
                 ],
-                "selected" => TRUE
+                "selected" => FALSE
             ],
             "Silver" => [
+                "aggregate" => FALSE,
+                "selectable" => FALSE,
+                "image_key" => "Silver",
+                "value" => "Silver",
                 "min" => 1,
                 "max" => 49,
                 "players" => [
@@ -617,9 +725,13 @@ class HotstatusPipeline {
                         "max" => 191,
                     ],
                 ],
-                "selected" => TRUE
+                "selected" => FALSE
             ],
             "Gold" => [
+                "aggregate" => FALSE,
+                "selectable" => FALSE,
+                "image_key" => "Gold",
+                "value" => "Gold",
                 "min" => 50,
                 "max" => 99,
                 "players" => [
@@ -636,9 +748,13 @@ class HotstatusPipeline {
                         "max" => 630,
                     ],
                 ],
-                "selected" => TRUE
+                "selected" => FALSE
             ],
             "Platinum" => [
+                "aggregate" => FALSE,
+                "selectable" => FALSE,
+                "image_key" => "Platinum",
+                "value" => "Platinum",
                 "min" => 100,
                 "max" => 492,
                 "players" => [
@@ -655,9 +771,13 @@ class HotstatusPipeline {
                         "max" => 1054,
                     ],
                 ],
-                "selected" => TRUE
+                "selected" => FALSE
             ],
             "Diamond" => [
+                "aggregate" => FALSE,
+                "selectable" => FALSE,
+                "image_key" => "Diamond",
+                "value" => "Diamond",
                 "min" => 493,
                 "max" => 1038,
                 "players" => [
@@ -674,9 +794,13 @@ class HotstatusPipeline {
                         "max" => 1706,
                     ],
                 ],
-                "selected" => TRUE
+                "selected" => FALSE
             ],
             "Master" => [
+                "aggregate" => FALSE,
+                "selectable" => FALSE,
+                "image_key" => "Master",
+                "value" => "Master",
                 "min" => 1039,
                 "max" => PHP_INT_MAX,
                 "players" => [
@@ -693,63 +817,8 @@ class HotstatusPipeline {
                         "max" => PHP_INT_MAX,
                     ],
                 ],
-                "selected" => TRUE
+                "selected" => FALSE
             ]
-            //BACKUP - 12/4/2017
-            /*"Bronze" => [
-                "min" => 0,
-                "max" => 99,
-                "players" => [
-                    "min" => 0,
-                    "max" => 0,
-                ],
-                "selected" => TRUE
-            ],
-            "Silver" => [
-                "min" => 100,
-                "max" => 199,
-                "players" => [
-                    "min" => 1,
-                    "max" => 151,
-                ],
-                "selected" => TRUE
-            ],
-            "Gold" => [
-                "min" => 200,
-                "max" => 499,
-                "players" => [
-                    "min" => 152,
-                    "max" => 420,
-                ],
-                "selected" => TRUE
-            ],
-            "Platinum" => [
-                "min" => 500,
-                "max" => 799,
-                "players" => [
-                    "min" => 421,
-                    "max" => 1006,
-                ],
-                "selected" => TRUE
-            ],
-            "Diamond" => [
-                "min" => 800,
-                "max" => 1099,
-                "players" => [
-                    "min" => 1007,
-                    "max" => 1584,
-                ],
-                "selected" => TRUE
-            ],
-            "Master" => [
-                "min" => 1100,
-                "max" => PHP_INT_MAX,
-                "players" => [
-                    "min" => 1585,
-                    "max" => PHP_INT_MAX,
-                ],
-                "selected" => TRUE
-            ]*/
         ],
         /*
          * Filter Hero Levels
@@ -1586,7 +1655,7 @@ class HotstatusPipeline {
         ];
 
         //Last 30 Days
-        $last30days = self::getMinMaxRangeForLastISODaysInclusive(30, $date_offset);
+        /*$last30days = self::getMinMaxRangeForLastISODaysInclusive(30, $date_offset);
         self::$filter[self::FILTER_KEY_DATE]['Last 30 Days'] = [
             "min" => $last30days['date_start'],
             "max" => $last30days['date_end'],
@@ -1596,10 +1665,10 @@ class HotstatusPipeline {
                 "priority" => 85,
             ],
             "selected" => FALSE
-        ];
+        ];*/
 
         //Last 90 Days
-        $last90days = self::getMinMaxRangeForLastISODaysInclusive(90, $date_offset);
+        /*$last90days = self::getMinMaxRangeForLastISODaysInclusive(90, $date_offset);
         self::$filter[self::FILTER_KEY_DATE]['Last 90 Days'] = [
             "min" => $last90days['date_start'],
             "max" => $last90days['date_end'],
@@ -1609,7 +1678,7 @@ class HotstatusPipeline {
                 "priority" => 75,
             ],
             "selected" => FALSE
-        ];
+        ];*/
 
         //Current Build
         $cpatch = self::$PATCHES[self::PATCH_CURRENT];
@@ -2011,7 +2080,9 @@ class HotstatusPipeline {
 
         if (is_numeric($rating)) {
             foreach (self::$filter[self::FILTER_KEY_RANK] as $rname => $robj) {
-                if ($rating >= $robj['players'][$season]['min'] && $rating <= $robj['players'][$season]['max']) return $rname;
+                if ($robj['aggregate'] === FALSE) {
+                    if ($rating >= $robj['players'][$season]['min'] && $rating <= $robj['players'][$season]['max']) return $rname;
+                }
             }
         }
 
@@ -2028,31 +2099,33 @@ class HotstatusPipeline {
 
         if (is_numeric($rating)) {
             foreach (self::$filter[self::FILTER_KEY_RANK] as $rname => $robj) {
-                if ($rating >= $robj['players'][$season]['min'] && $rating <= $robj['players'][$season]['max']) {
-                    if ($rname === "Master") {
-                        return "*";
-                    }
-                    else {
-                        //Split min/max of rating into 5 pieces, return the first section that the rating falls into
-                        $min = $robj['players'][$season]['min'] * 1.00;
-                        $max = $robj['players'][$season]['max'] * 1.00;
+                if ($robj['aggregate'] === FALSE) {
+                    if ($rating >= $robj['players'][$season]['min'] && $rating <= $robj['players'][$season]['max']) {
+                        if ($rname === "Master") {
+                            return "*";
+                        }
+                        else {
+                            //Split min/max of rating into 5 pieces, return the first section that the rating falls into
+                            $min = $robj['players'][$season]['min'] * 1.00;
+                            $max = $robj['players'][$season]['max'] * 1.00;
 
-                        $diff = $max - $min;
+                            $diff = $max - $min;
 
-                        $sectionsize = $diff / 5.0;
+                            $sectionsize = $diff / 5.0;
 
-                        $sections = ["V", "IV", "III", "II", "I"];
+                            $sections = ["V", "IV", "III", "II", "I"];
 
-                        $t = 0;
-                        for ($i = $min; $i <= $max; $i += $sectionsize) {
-                            $newmin = $i;
-                            $newmax = $i + $sectionsize;
+                            $t = 0;
+                            for ($i = $min; $i <= $max; $i += $sectionsize) {
+                                $newmin = $i;
+                                $newmax = $i + $sectionsize;
 
-                            if ($t >= (count($sections) - 1) || $rating >= $newmin && $rating <= $newmax) {
-                                return $sections[$t];
+                                if ($t >= (count($sections) - 1) || $rating >= $newmin && $rating <= $newmax) {
+                                    return $sections[$t];
+                                }
+
+                                $t++;
                             }
-
-                            $t++;
                         }
                     }
                 }

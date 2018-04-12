@@ -22,9 +22,7 @@ const E = PHP_EOL;
 
 //Targeted generation
 $target_date_range = "Last 7 Days";
-$target_patch_range = "2.31.0 (Fenix)";
-$target_rank_range = null;
-//$target_rank_range = ["Bronze", "Silver", "Gold", "Platinum", "Diamond", "Master"];
+$target_patch_range = "2.31.2 (Balance)";
 
 //Prepare statements
 $db->prepare("GetPipelineConfig",
@@ -77,13 +75,16 @@ function queueCacheRequest($functionId, $cache_id, $payload, $priority, $permuta
  *  "key" => '$key',
  *  "value" => '$value' || '$value1,$value2,$value3,...,$valueN'
  * ]
+ *
+ *
+ * if the active map has a 'value' => ... relation inside of its object, then that value will be used instead of the key for activevals
  */
 function generateFilterFragment($key, &$activemap) {
     $activevals = [];
 
     foreach ($activemap as $akey => $aobj) {
         if ($aobj['selected'] === TRUE) {
-            $activevals[] = $akey;
+            $activevals[] = $aobj['value'];
         }
     }
 
@@ -137,7 +138,15 @@ function generateCleanFilterListPartialCopy(&$filterlist) {
     foreach ($filterlist as $filterType => &$filterObj) {
         $cleanfilterlist[$filterType] = [];
         foreach ($filterObj as $filterObjType => &$filterObjObj) {
+            if (key_exists("value", $filterObjObj)) {
+                $value = $filterObjObj['value'];
+            }
+            else {
+                $value = $filterObjType;
+            }
+
             $cleanfilterlist[$filterType][$filterObjType] = [
+                "value" => $value,
                 "selected" => false,
             ];
         }
@@ -206,7 +215,7 @@ function generate_getPageDataRankingsAction() {
         foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_SEASON] as $seasonSelection) {
             foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_GAMETYPE] as $gameTypeSelection) {
                 //Calculate priority (Higher number has higher priority)
-                $priority = 10000;
+                $priority = 1000000; //Rankings should process before statslist and before hero page
 
                 //Copy clean filterlist (where everything is unselected)
                 $cleanfilterlist = generateCleanFilterListPartialCopy($filterList);
@@ -296,96 +305,100 @@ function generate_getDataTableHeroesStatsListAction() {
     $filterKeyArray = generateFilterKeyArray($filterList);
 
     //Filter Key Permutations
-    $filterKeyPermutations = generateFilterKeyPermutations($filterKeyArray, $query);
+    //$filterKeyPermutations = generateFilterKeyPermutations($filterKeyArray, $query);
 
     //Loop through all filter permutations and queue responses
     $permutationCount = 1;
-    foreach ($filterKeyPermutations[HotstatusPipeline::FILTER_KEY_GAMETYPE] as $gameTypePermutation) {
-        if (count($gameTypePermutation) > 0) {
-            foreach ($filterKeyPermutations[HotstatusPipeline::FILTER_KEY_RANK] as $rankPermutation) {
-                if (count($rankPermutation) > 0) {
-                    if ($target_rank_range === null || areArraysEqual($target_rank_range, $rankPermutation)) {
-                        foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_DATE] as $dateSelection) {
-                            if (($target_date_range === null && $target_patch_range === null) || $target_date_range === $dateSelection || $target_patch_range === $dateSelection) {
-                                //Calculate priority (Higher number has higher priority)
-                                $priority = 0;
-                                if (count($rankPermutation) === MAX_RANK_SIZE) {
-                                    $priority += 500;
-                                }
-                                if (count($gameTypePermutation) === MAX_GAMETYPE_SIZE) {
-                                    $priority += 1000;
-                                }
-                                $priority += $filterList[HotstatusPipeline::FILTER_KEY_DATE][$dateSelection]['generation']['priority'] + 1; //Add 1 to take precedence over equal hero page dates
+    foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_GAMETYPE] as $gameTypeSelection) {
+        foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_MAP] as $mapSelection) {
+            foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_RANK] as $rankSelection) {
+                if (HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_RANK][$rankSelection]['selectable'] === TRUE) {
+                    foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_DATE] as $dateSelection) {
+                        if (($target_date_range === null && $target_patch_range === null) || $target_date_range === $dateSelection || $target_patch_range === $dateSelection) {
+                            //Calculate priority (Higher number has higher priority)
+                            $priority = 100000; //Statslist should process before hero page
 
-                                //Copy clean filterlist (where everything is unselected)
-                                $cleanfilterlist = generateCleanFilterListPartialCopy($filterList);
-
-                                //Loop through chosen permutations and select them in a clean filter list
-                                foreach ($gameTypePermutation as $gameType) {
-                                    $cleanfilterlist[HotstatusPipeline::FILTER_KEY_GAMETYPE][$gameType]['selected'] = true;
-                                }
-                                foreach ($rankPermutation as $rank) {
-                                    $cleanfilterlist[HotstatusPipeline::FILTER_KEY_RANK][$rank]['selected'] = true;
-                                }
-
-                                //Set blanket multiselections (Multiselects that are otherwise ignored for permutation generation)
-                                foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_MAP] as $map) {
-                                    $cleanfilterlist[HotstatusPipeline::FILTER_KEY_MAP][$map]['selected'] = true;
-                                }
-
-                                //Set selections
-                                $cleanfilterlist[HotstatusPipeline::FILTER_KEY_DATE][$dateSelection]['selected'] = true;
-
-                                //Generate requestQuery with filter fragments
-                                $requestQuery = new HotstatusResponse();
-
-                                foreach ($cleanfilterlist as $cfkey => &$cfobj) {
-                                    $fragment = generateFilterFragment($cfkey, $cfobj);
-
-                                    $requestQuery->addQuery($fragment['key'], $fragment['value']);
-                                }
-
-                                //Process requestQuery
-                                $queryCacheValues = [];
-                                $querySqlValues = [];
-
-                                //Collect WhereOr strings from all query parameters for cache key
-                                foreach ($query as $qkey => &$qobj) {
-                                    if ($requestQuery->has($qkey)) {
-                                        $qobj[HotstatusResponse::QUERY_ISSET] = true;
-                                        $qobj[HotstatusResponse::QUERY_RAWVALUE] = $requestQuery->get($qkey);
-                                        $qobj[HotstatusResponse::QUERY_SQLVALUE] = HotstatusResponse::buildQuery_WhereOr_String($qkey, $qobj[HotstatusResponse::QUERY_SQLCOLUMN], $qobj[HotstatusResponse::QUERY_RAWVALUE], $qobj[HotstatusResponse::QUERY_TYPE]);
-                                        $queryCacheValues[] = $query[$qkey][HotstatusResponse::QUERY_RAWVALUE];
-                                    }
-                                }
-
-                                $queryDateKey = $query[HotstatusPipeline::FILTER_KEY_DATE][HotstatusResponse::QUERY_RAWVALUE];
-
-                                //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
-                                foreach ($query as $qkey => &$qobj) {
-                                    if (!$qobj[HotstatusResponse::QUERY_IGNORE_AFTER_CACHE] && $qobj[HotstatusResponse::QUERY_ISSET]) {
-                                        $querySqlValues[] = $query[$qkey][HotstatusResponse::QUERY_SQLVALUE];
-                                    }
-                                }
-
-                                //Build WhereAnd string from collected WhereOr strings
-                                $queryCache = HotstatusResponse::buildCacheKey($queryCacheValues);
-                                $querySql = HotstatusResponse::buildQuery_WhereAnd_String($querySqlValues);
-
-                                //Determine cache id from query parameters
-                                $CACHE_ID = $_ID . ((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
-
-                                //Define payload
-                                $payload = [
-                                    "queryDateKey" => $queryDateKey,
-                                    "querySql" => $querySql,
-                                ];
-
-                                //Queue Cache Request
-                                queueCacheRequest($_ID, $CACHE_ID, $payload, $priority, $permutationCount);
-
-                                $permutationCount++;
+                            if ($rankSelection === "All Ranks") {
+                                $priority += 900;
                             }
+                            elseif ($rankSelection === "High Ranks") {
+                                $priority += 500;
+                            }
+                            elseif ($rankSelection === "Low Ranks") {
+                                $priority += 200;
+                            }
+
+                            if ($gameTypeSelection === "All Leagues") {
+                                $priority += 2000;
+                            }
+                            elseif ($gameTypeSelection === "Draft Leagues") {
+                                $priority += 1000;
+                            }
+
+                            if ($mapSelection === "All Maps") {
+                                $priority += 10000;
+                            }
+
+                            $priority += $filterList[HotstatusPipeline::FILTER_KEY_DATE][$dateSelection]['generation']['priority'] + 1; //Add 1 to take precedence over equal hero page dates
+
+                            //Copy clean filterlist (where everything is unselected)
+                            $cleanfilterlist = generateCleanFilterListPartialCopy($filterList);
+
+                            //Set selections
+                            $cleanfilterlist[HotstatusPipeline::FILTER_KEY_GAMETYPE][$gameTypeSelection]['selected'] = true;
+                            $cleanfilterlist[HotstatusPipeline::FILTER_KEY_MAP][$mapSelection]['selected'] = true;
+                            $cleanfilterlist[HotstatusPipeline::FILTER_KEY_RANK][$rankSelection]['selected'] = true;
+                            $cleanfilterlist[HotstatusPipeline::FILTER_KEY_DATE][$dateSelection]['selected'] = true;
+
+                            //Generate requestQuery with filter fragments
+                            $requestQuery = new HotstatusResponse();
+
+                            foreach ($cleanfilterlist as $cfkey => &$cfobj) {
+                                $fragment = generateFilterFragment($cfkey, $cfobj);
+
+                                $requestQuery->addQuery($fragment['key'], $fragment['value']);
+                            }
+
+                            //Process requestQuery
+                            $queryCacheValues = [];
+                            $querySqlValues = [];
+
+                            //Collect WhereOr strings from all query parameters for cache key
+                            foreach ($query as $qkey => &$qobj) {
+                                if ($requestQuery->has($qkey)) {
+                                    $qobj[HotstatusResponse::QUERY_ISSET] = true;
+                                    $qobj[HotstatusResponse::QUERY_RAWVALUE] = $requestQuery->get($qkey);
+                                    $qobj[HotstatusResponse::QUERY_SQLVALUE] = HotstatusResponse::buildQuery_WhereOr_String($qkey, $qobj[HotstatusResponse::QUERY_SQLCOLUMN], $qobj[HotstatusResponse::QUERY_RAWVALUE], $qobj[HotstatusResponse::QUERY_TYPE]);
+                                    $queryCacheValues[] = $query[$qkey][HotstatusResponse::QUERY_RAWVALUE];
+                                }
+                            }
+
+                            $queryDateKey = $query[HotstatusPipeline::FILTER_KEY_DATE][HotstatusResponse::QUERY_RAWVALUE];
+
+                            //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
+                            foreach ($query as $qkey => &$qobj) {
+                                if (!$qobj[HotstatusResponse::QUERY_IGNORE_AFTER_CACHE] && $qobj[HotstatusResponse::QUERY_ISSET]) {
+                                    $querySqlValues[] = $query[$qkey][HotstatusResponse::QUERY_SQLVALUE];
+                                }
+                            }
+
+                            //Build WhereAnd string from collected WhereOr strings
+                            $queryCache = HotstatusResponse::buildCacheKey($queryCacheValues);
+                            $querySql = HotstatusResponse::buildQuery_WhereAnd_String($querySqlValues);
+
+                            //Determine cache id from query parameters
+                            $CACHE_ID = $_ID . ((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
+
+                            //Define payload
+                            $payload = [
+                                "queryDateKey" => $queryDateKey,
+                                "querySql" => $querySql,
+                            ];
+
+                            //Queue Cache Request
+                            queueCacheRequest($_ID, $CACHE_ID, $payload, $priority, $permutationCount);
+
+                            $permutationCount++;
                         }
                     }
                 }
@@ -416,108 +429,121 @@ function generate_getPageDataHeroAction() {
     $filterKeyArray = generateFilterKeyArray($filterList);
 
     //Filter Key Permutations
-    $filterKeyPermutations = generateFilterKeyPermutations($filterKeyArray, $query);
+    //$filterKeyPermutations = generateFilterKeyPermutations($filterKeyArray, $query);
 
     //Loop through all filter permutations and queue responses
     $permutationCount = 1;
-    foreach ($filterKeyPermutations[HotstatusPipeline::FILTER_KEY_GAMETYPE] as $gameTypePermutation) {
-        if (count($gameTypePermutation) > 0) {
-            foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_DATE] as $dateSelection) {
-                if (($target_date_range === null && $target_patch_range === null) || $target_date_range === $dateSelection || $target_patch_range === $dateSelection) {
-                    foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_HERO] as $heroSelection) {
-                        //Calculate priority (Higher number has higher priority)
-                        $priority = 0;
-                        if (count($gameTypePermutation) === MAX_GAMETYPE_SIZE) {
-                            $priority += 750;
-                        }
-                        $priority += $filterList[HotstatusPipeline::FILTER_KEY_DATE][$dateSelection]['generation']['priority'];
+    foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_GAMETYPE] as $gameTypeSelection) {
+        foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_MAP] as $mapSelection) {
+            foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_RANK] as $rankSelection) {
+                if (HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_RANK][$rankSelection]['selectable'] === TRUE) {
+                    foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_DATE] as $dateSelection) {
+                        if (($target_date_range === null && $target_patch_range === null) || $target_date_range === $dateSelection || $target_patch_range === $dateSelection) {
+                            foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_HERO] as $heroSelection) {
+                                //Calculate priority (Higher number has higher priority)
+                                $priority = 0;
 
-                        //Copy clean filterlist (where everything is unselected)
-                        $cleanfilterlist = generateCleanFilterListPartialCopy($filterList);
-
-                        //Loop through chosen permutations and select them in a clean filter list
-                        foreach ($gameTypePermutation as $gameType) {
-                            $cleanfilterlist[HotstatusPipeline::FILTER_KEY_GAMETYPE][$gameType]['selected'] = true;
-                        }
-
-                        //Set blanket multiselections (Multiselects that are otherwise ignored for permutation generation)
-                        foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_MAP] as $map) {
-                            $cleanfilterlist[HotstatusPipeline::FILTER_KEY_MAP][$map]['selected'] = true;
-                        }
-                        foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_RANK] as $rank) {
-                            $cleanfilterlist[HotstatusPipeline::FILTER_KEY_RANK][$rank]['selected'] = true;
-                        }
-
-                        //Set selections
-                        $cleanfilterlist[HotstatusPipeline::FILTER_KEY_DATE][$dateSelection]['selected'] = true;
-                        $cleanfilterlist[HotstatusPipeline::FILTER_KEY_HERO][$heroSelection]['selected'] = true;
-
-                        //Generate requestQuery with filter fragments
-                        $requestQuery = new HotstatusResponse();
-
-                        foreach ($cleanfilterlist as $cfkey => &$cfobj) {
-                            $fragment = generateFilterFragment($cfkey, $cfobj);
-
-                            $requestQuery->addQuery($fragment['key'], $fragment['value']);
-                        }
-
-                        //Process requestQuery
-                        $queryCacheValues = [];
-                        $querySqlValues = [];
-                        $querySecondaryCacheValues = [];
-                        $querySecondarySqlValues = [];
-
-                        //Collect WhereOr strings from all query parameters for cache key
-                        foreach ($query as $qkey => &$qobj) {
-                            if ($requestQuery->has($qkey)) {
-                                $qobj[HotstatusResponse::QUERY_ISSET] = true;
-                                $qobj[HotstatusResponse::QUERY_RAWVALUE] = $requestQuery->get($qkey);
-                                $qobj[HotstatusResponse::QUERY_SQLVALUE] = HotstatusResponse::buildQuery_WhereOr_String($qkey, $qobj[HotstatusResponse::QUERY_SQLCOLUMN], $qobj[HotstatusResponse::QUERY_RAWVALUE], $qobj[HotstatusResponse::QUERY_TYPE]);
-                                $queryCacheValues[] = $query[$qkey][HotstatusResponse::QUERY_RAWVALUE];
-
-                                if ($qkey !== HotstatusPipeline::FILTER_KEY_HERO) {
-                                    $querySecondaryCacheValues[] = $query[$qkey][HotstatusResponse::QUERY_RAWVALUE];
+                                if ($rankSelection === "All Ranks") {
+                                    $priority += 900;
                                 }
+                                elseif ($rankSelection === "High Ranks") {
+                                    $priority += 500;
+                                }
+                                elseif ($rankSelection === "Low Ranks") {
+                                    $priority += 200;
+                                }
+
+                                if ($gameTypeSelection === "All Leagues") {
+                                    $priority += 2000;
+                                }
+                                elseif ($gameTypeSelection === "Draft Leagues") {
+                                    $priority += 1000;
+                                }
+
+                                if ($mapSelection === "All Maps") {
+                                    $priority += 10000;
+                                }
+
+                                $priority += $filterList[HotstatusPipeline::FILTER_KEY_DATE][$dateSelection]['generation']['priority'];
+
+                                //Copy clean filterlist (where everything is unselected)
+                                $cleanfilterlist = generateCleanFilterListPartialCopy($filterList);
+
+                                //Set selections
+                                $cleanfilterlist[HotstatusPipeline::FILTER_KEY_GAMETYPE][$gameTypeSelection]['selected'] = true;
+                                $cleanfilterlist[HotstatusPipeline::FILTER_KEY_MAP][$mapSelection]['selected'] = true;
+                                $cleanfilterlist[HotstatusPipeline::FILTER_KEY_RANK][$rankSelection]['selected'] = true;
+                                $cleanfilterlist[HotstatusPipeline::FILTER_KEY_DATE][$dateSelection]['selected'] = true;
+                                $cleanfilterlist[HotstatusPipeline::FILTER_KEY_HERO][$heroSelection]['selected'] = true;
+
+                                //Generate requestQuery with filter fragments
+                                $requestQuery = new HotstatusResponse();
+
+                                foreach ($cleanfilterlist as $cfkey => &$cfobj) {
+                                    $fragment = generateFilterFragment($cfkey, $cfobj);
+
+                                    $requestQuery->addQuery($fragment['key'], $fragment['value']);
+                                }
+
+                                //Process requestQuery
+                                $queryCacheValues = [];
+                                $querySqlValues = [];
+                                $querySecondaryCacheValues = [];
+                                $querySecondarySqlValues = [];
+
+                                //Collect WhereOr strings from all query parameters for cache key
+                                foreach ($query as $qkey => &$qobj) {
+                                    if ($requestQuery->has($qkey)) {
+                                        $qobj[HotstatusResponse::QUERY_ISSET] = true;
+                                        $qobj[HotstatusResponse::QUERY_RAWVALUE] = $requestQuery->get($qkey);
+                                        $qobj[HotstatusResponse::QUERY_SQLVALUE] = HotstatusResponse::buildQuery_WhereOr_String($qkey, $qobj[HotstatusResponse::QUERY_SQLCOLUMN], $qobj[HotstatusResponse::QUERY_RAWVALUE], $qobj[HotstatusResponse::QUERY_TYPE]);
+                                        $queryCacheValues[] = $query[$qkey][HotstatusResponse::QUERY_RAWVALUE];
+
+                                        if ($qkey !== HotstatusPipeline::FILTER_KEY_HERO) {
+                                            $querySecondaryCacheValues[] = $query[$qkey][HotstatusResponse::QUERY_RAWVALUE];
+                                        }
+                                    }
+                                }
+
+                                $queryHero = $query[HotstatusPipeline::FILTER_KEY_HERO][HotstatusResponse::QUERY_RAWVALUE];
+
+                                //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
+                                foreach ($query as $qkey => &$qobj) {
+                                    if (!$qobj[HotstatusResponse::QUERY_IGNORE_AFTER_CACHE] && $qobj[HotstatusResponse::QUERY_ISSET]) {
+                                        $querySqlValues[] = $query[$qkey][HotstatusResponse::QUERY_SQLVALUE];
+                                    }
+                                }
+
+                                //Collect WhereOr strings for query parameters for dynamic sql query
+                                foreach ($query as $qkey => &$qobj) {
+                                    if ($qobj[HotstatusResponse::QUERY_USE_FOR_SECONDARY] && $qobj[HotstatusResponse::QUERY_ISSET]) {
+                                        $querySecondarySqlValues[] = $query[$qkey][HotstatusResponse::QUERY_SQLVALUE];
+                                    }
+                                }
+
+                                //Build WhereAnd string from collected WhereOr strings
+                                $queryCache = HotstatusResponse::buildCacheKey($queryCacheValues);
+                                $querySql = HotstatusResponse::buildQuery_WhereAnd_String($querySqlValues, false);
+                                $querySecondaryCache = HotstatusResponse::buildCacheKey($querySecondaryCacheValues);
+                                $querySecondarySql = HotstatusResponse::buildQuery_WhereAnd_String($querySecondarySqlValues, true);
+
+                                //Determine Cache Id
+                                $CACHE_ID = $_ID . ":" . $queryHero . ((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
+
+                                //Define Payload
+                                $payload = [
+                                    "queryHero" => $queryHero,
+                                    "querySql" => $querySql,
+                                    "querySecondaryCache" => $querySecondaryCache,
+                                    "querySecondarySql" => $querySecondarySql,
+                                ];
+
+                                //Queue Cache Request
+                                queueCacheRequest($_ID, $CACHE_ID, $payload, $priority, $permutationCount);
+
+                                $permutationCount++;
                             }
                         }
-
-                        $queryHero = $query[HotstatusPipeline::FILTER_KEY_HERO][HotstatusResponse::QUERY_RAWVALUE];
-
-                        //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
-                        foreach ($query as $qkey => &$qobj) {
-                            if (!$qobj[HotstatusResponse::QUERY_IGNORE_AFTER_CACHE] && $qobj[HotstatusResponse::QUERY_ISSET]) {
-                                $querySqlValues[] = $query[$qkey][HotstatusResponse::QUERY_SQLVALUE];
-                            }
-                        }
-
-                        //Collect WhereOr strings for query parameters for dynamic sql query
-                        foreach ($query as $qkey => &$qobj) {
-                            if ($qobj[HotstatusResponse::QUERY_USE_FOR_SECONDARY] && $qobj[HotstatusResponse::QUERY_ISSET]) {
-                                $querySecondarySqlValues[] = $query[$qkey][HotstatusResponse::QUERY_SQLVALUE];
-                            }
-                        }
-
-                        //Build WhereAnd string from collected WhereOr strings
-                        $queryCache = HotstatusResponse::buildCacheKey($queryCacheValues);
-                        $querySql = HotstatusResponse::buildQuery_WhereAnd_String($querySqlValues, false);
-                        $querySecondaryCache = HotstatusResponse::buildCacheKey($querySecondaryCacheValues);
-                        $querySecondarySql = HotstatusResponse::buildQuery_WhereAnd_String($querySecondarySqlValues, true);
-
-                        //Determine Cache Id
-                        $CACHE_ID = $_ID . ":" . $queryHero . ((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
-
-                        //Define Payload
-                        $payload = [
-                            "queryHero" => $queryHero,
-                            "querySql" => $querySql,
-                            "querySecondaryCache" => $querySecondaryCache,
-                            "querySecondarySql" => $querySecondarySql,
-                        ];
-
-                        //Queue Cache Request
-                        queueCacheRequest($_ID, $CACHE_ID, $payload, $priority, $permutationCount);
-
-                        $permutationCount++;
                     }
                 }
             }
@@ -558,7 +584,7 @@ if ($pipeconfigresrows > 0) {
     $db->freeResult($pipeconfigresult);
 
     //Generation
-    //generate_getPageDataRankingsAction();
+    generate_getPageDataRankingsAction();
     generate_getDataTableHeroesStatsListAction();
     generate_getPageDataHeroAction();
 }
