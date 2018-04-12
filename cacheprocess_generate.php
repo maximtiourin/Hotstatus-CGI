@@ -214,70 +214,72 @@ function generate_getPageDataRankingsAction() {
     foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_REGION] as $regionSelection) {
         foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_SEASON] as $seasonSelection) {
             foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_GAMETYPE] as $gameTypeSelection) {
-                //Calculate priority (Higher number has higher priority)
-                $priority = 1000000; //Rankings should process before statslist and before hero page
+                if (HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_GAMETYPE][$gameTypeSelection]['aggregate'] === FALSE) {
+                    //Calculate priority (Higher number has higher priority)
+                    $priority = 1000000; //Rankings should process before statslist and before hero page
 
-                //Copy clean filterlist (where everything is unselected)
-                $cleanfilterlist = generateCleanFilterListPartialCopy($filterList);
+                    //Copy clean filterlist (where everything is unselected)
+                    $cleanfilterlist = generateCleanFilterListPartialCopy($filterList);
 
-                //Set selections
-                $cleanfilterlist[HotstatusPipeline::FILTER_KEY_REGION][$regionSelection]['selected'] = true;
-                $cleanfilterlist[HotstatusPipeline::FILTER_KEY_SEASON][$seasonSelection]['selected'] = true;
-                $cleanfilterlist[HotstatusPipeline::FILTER_KEY_GAMETYPE][$gameTypeSelection]['selected'] = true;
+                    //Set selections
+                    $cleanfilterlist[HotstatusPipeline::FILTER_KEY_REGION][$regionSelection]['selected'] = true;
+                    $cleanfilterlist[HotstatusPipeline::FILTER_KEY_SEASON][$seasonSelection]['selected'] = true;
+                    $cleanfilterlist[HotstatusPipeline::FILTER_KEY_GAMETYPE][$gameTypeSelection]['selected'] = true;
 
-                //Generate requestQuery with filter fragments
-                $requestQuery = new HotstatusResponse();
+                    //Generate requestQuery with filter fragments
+                    $requestQuery = new HotstatusResponse();
 
-                foreach ($cleanfilterlist as $cfkey => &$cfobj) {
-                    $fragment = generateFilterFragment($cfkey, $cfobj);
+                    foreach ($cleanfilterlist as $cfkey => &$cfobj) {
+                        $fragment = generateFilterFragment($cfkey, $cfobj);
 
-                    $requestQuery->addQuery($fragment['key'], $fragment['value']);
-                }
-
-                //Process requestQuery
-                $queryCacheValues = [];
-                $querySqlValues = [];
-
-                //Collect WhereOr strings from all query parameters for cache key
-                foreach ($query as $qkey => &$qobj) {
-                    if ($requestQuery->has($qkey)) {
-                        $qobj[HotstatusResponse::QUERY_ISSET] = true;
-                        $qobj[HotstatusResponse::QUERY_RAWVALUE] = $requestQuery->get($qkey);
-                        $qobj[HotstatusResponse::QUERY_SQLVALUE] = HotstatusResponse::buildQuery_WhereOr_String($qkey, $qobj[HotstatusResponse::QUERY_SQLCOLUMN], $qobj[HotstatusResponse::QUERY_RAWVALUE], $qobj[HotstatusResponse::QUERY_TYPE]);
-                        $queryCacheValues[] = $query[$qkey][HotstatusResponse::QUERY_RAWVALUE];
+                        $requestQuery->addQuery($fragment['key'], $fragment['value']);
                     }
-                }
 
-                $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][HotstatusResponse::QUERY_RAWVALUE];
-                $queryGameType = $query[HotstatusPipeline::FILTER_KEY_GAMETYPE][HotstatusResponse::QUERY_RAWVALUE];
-                $queryRegion = $query[HotstatusPipeline::FILTER_KEY_REGION][HotstatusResponse::QUERY_RAWVALUE];
+                    //Process requestQuery
+                    $queryCacheValues = [];
+                    $querySqlValues = [];
 
-                //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
-                foreach ($query as $qkey => &$qobj) {
-                    if (!$qobj[HotstatusResponse::QUERY_IGNORE_AFTER_CACHE] && $qobj[HotstatusResponse::QUERY_ISSET]) {
-                        $querySqlValues[] = $query[$qkey][HotstatusResponse::QUERY_SQLVALUE];
+                    //Collect WhereOr strings from all query parameters for cache key
+                    foreach ($query as $qkey => &$qobj) {
+                        if ($requestQuery->has($qkey)) {
+                            $qobj[HotstatusResponse::QUERY_ISSET] = true;
+                            $qobj[HotstatusResponse::QUERY_RAWVALUE] = $requestQuery->get($qkey);
+                            $qobj[HotstatusResponse::QUERY_SQLVALUE] = HotstatusResponse::buildQuery_WhereOr_String($qkey, $qobj[HotstatusResponse::QUERY_SQLCOLUMN], $qobj[HotstatusResponse::QUERY_RAWVALUE], $qobj[HotstatusResponse::QUERY_TYPE]);
+                            $queryCacheValues[] = $query[$qkey][HotstatusResponse::QUERY_RAWVALUE];
+                        }
                     }
+
+                    $querySeason = $query[HotstatusPipeline::FILTER_KEY_SEASON][HotstatusResponse::QUERY_RAWVALUE];
+                    $queryGameType = $query[HotstatusPipeline::FILTER_KEY_GAMETYPE][HotstatusResponse::QUERY_RAWVALUE];
+                    $queryRegion = $query[HotstatusPipeline::FILTER_KEY_REGION][HotstatusResponse::QUERY_RAWVALUE];
+
+                    //Collect WhereOr strings from non-ignored query parameters for dynamic sql query
+                    foreach ($query as $qkey => &$qobj) {
+                        if (!$qobj[HotstatusResponse::QUERY_IGNORE_AFTER_CACHE] && $qobj[HotstatusResponse::QUERY_ISSET]) {
+                            $querySqlValues[] = $query[$qkey][HotstatusResponse::QUERY_SQLVALUE];
+                        }
+                    }
+
+                    //Build WhereAnd string from collected WhereOr strings
+                    $queryCache = HotstatusResponse::buildCacheKey($queryCacheValues);
+                    $querySql = HotstatusResponse::buildQuery_WhereAnd_String($querySqlValues, TRUE);
+
+                    //Determine Cache Id
+                    $CACHE_ID = "$_ID:rankings" . ((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
+
+                    //Define Payload
+                    $payload = [
+                        "querySeason" => $querySeason,
+                        "queryGameType" => $queryGameType,
+                        "queryRegion" => $queryRegion,
+                        "querySql" => $querySql,
+                    ];
+
+                    //Queue Cache Request
+                    queueCacheRequest($_ID, $CACHE_ID, $payload, $priority, $permutationCount);
+
+                    $permutationCount++;
                 }
-
-                //Build WhereAnd string from collected WhereOr strings
-                $queryCache = HotstatusResponse::buildCacheKey($queryCacheValues);
-                $querySql = HotstatusResponse::buildQuery_WhereAnd_String($querySqlValues, TRUE);
-
-                //Determine Cache Id
-                $CACHE_ID = "$_ID:rankings".((strlen($queryCache) > 0) ? (":" . md5($queryCache)) : (""));
-
-                //Define Payload
-                $payload = [
-                    "querySeason" => $querySeason,
-                    "queryGameType" => $queryGameType,
-                    "queryRegion" => $queryRegion,
-                    "querySql" => $querySql,
-                ];
-
-                //Queue Cache Request
-                queueCacheRequest($_ID, $CACHE_ID, $payload, $priority, $permutationCount);
-
-                $permutationCount++;
             }
         }
     }
