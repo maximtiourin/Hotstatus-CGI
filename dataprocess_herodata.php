@@ -129,6 +129,7 @@ $heromodsDataNames = [
     "auriel" => TRUE,
     "chogall" => TRUE,
     "chromie" => TRUE,
+    "deckard" => TRUE,
     "dehaka" => TRUE,
     "dva" => TRUE,
     "fenix" => TRUE,
@@ -210,7 +211,10 @@ $actorImageMappings = [
     ],
     "HeroMedivh" => [
         "hero" => "ui_targetportrait_hero_medivh"
-    ]
+    ],
+    "HeroFenix" => [
+        "hero" => "ui_targetportrait_hero_fenix"
+    ],
 ];
 
 /*
@@ -278,6 +282,7 @@ $heroCustomRoleMappings = [
     "Cho" => CROLE_TANK,
     "Chromie" => CROLE_DMG_BURST,
     "DVa" => CROLE_TANK, //D.Va
+    "Deckard" => CROLE_HEALER,
     "Dehaka" => CROLE_BRUISER,
     "Diablo" => CROLE_TANK,
     "L90ETC" => CROLE_TANK, //E.T.C.

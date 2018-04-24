@@ -22,7 +22,7 @@ const E = PHP_EOL;
 
 //Targeted generation
 $target_date_range = "Last 7 Days";
-$target_patch_range = "2.31.2 (Balance)";
+$target_patch_range = "2.32.0 (Deckard)";
 
 //Prepare statements
 $db->prepare("GetPipelineConfig",

@@ -66,8 +66,14 @@ class HotstatusPipeline {
     const PATCH_CURRENT = "CURRENT";
     public static $PATCHES = [
         self::PATCH_CURRENT => [
-            "start" => "2018-04-12 00:10:00",
+            "start" => "2018-04-24 15:00:00",
             "end" => null,
+            "version" => "2.32.0",
+            "type" => "Deckard",
+        ],
+        "2.31.2" => [
+            "start" => "2018-04-12 00:10:00",
+            "end" => "2018-04-24 14:59:59",
             "version" => "2.31.2",
             "type" => "Balance",
         ],
@@ -77,12 +83,12 @@ class HotstatusPipeline {
             "version" => "2.31.0",
             "type" => "Fenix",
         ],
-        "2.30.6" => [
+        /*"2.30.6" => [
             "start" => "2018-03-21 18:00:00",
             "end" => "2018-03-27 16:59:59",
             "version" => "2.30.6",
             "type" => "Balance",
-        ],
+        ],*/
         /*"2.30.5" => [
             "start" => "2018-03-10 01:05:00",
             "end" => "2018-03-21 17:59:59",
@@ -897,16 +903,15 @@ class HotstatusPipeline {
          *      "image_minimap" => HeroImageMinimapNameWithoutExtension
          * ]
          */
-        self::FILTER_KEY_HERO => [
-            "Abathur" => [
-                "name_sort" => "Abathur",
-                "name_attribute" => "Abat",
-                "image_hero" => "ui_targetportrait_hero_abathur",
-                "image_minimap" => "storm_ui_minimapicon_heros_infestor",
-                "role_blizzard" => "Specialist",
-                "role_specific" => "Utility",
-                "selected" => false
-            ],
+        self::FILTER_KEY_HERO => ["Abathur" => [
+            "name_sort" => "Abathur",
+            "name_attribute" => "Abat",
+            "image_hero" => "ui_targetportrait_hero_abathur",
+            "image_minimap" => "storm_ui_minimapicon_heros_infestor",
+            "role_blizzard" => "Specialist",
+            "role_specific" => "Utility",
+            "selected" => false
+        ],
             "Alarak" => [
                 "name_sort" => "Alarak",
                 "name_attribute" => "Alar",
@@ -1042,6 +1047,15 @@ class HotstatusPipeline {
                 "role_specific" => "Burst Damage",
                 "selected" => false
             ],
+            "Deckard" => [
+                "name_sort" => "Deckard",
+                "name_attribute" => "DECK",
+                "image_hero" => "ui_targetportrait_hero_deckard",
+                "image_minimap" => "storm_ui_minimapicon_deckard",
+                "role_blizzard" => "Support",
+                "role_specific" => "Healer",
+                "selected" => false
+            ],
             "Dehaka" => [
                 "name_sort" => "Dehaka",
                 "name_attribute" => "Deha",
@@ -1090,7 +1104,7 @@ class HotstatusPipeline {
             "Fenix" => [
                 "name_sort" => "Fenix",
                 "name_attribute" => "FENX",
-                "image_hero" => "storm_ui_ingame_hero_leaderboard_fenix",
+                "image_hero" => "ui_targetportrait_hero_fenix",
                 "image_minimap" => "storm_ui_minimapicon_fenix",
                 "role_blizzard" => "Assassin",
                 "role_specific" => "Sustained Damage",
