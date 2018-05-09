@@ -33,7 +33,7 @@ function log($str) {
 //Mininum Date Inclusive for replays to process
 //$replaymindate = HotstatusPipeline::$SEASONS[HotstatusPipeline::SEASON_UNKNOWN]["end"];
 
-$replaymindate = "2018-01-01 00:00:00";
+$replaymindate = "2018-03-01 00:00:00";
 
 //Purge old data
 //$db->transaction_begin();

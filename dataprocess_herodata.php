@@ -660,7 +660,8 @@ function extractHero_xmlToJson($filepath, &$file_strings) {
             //Prep the xml string to be properly used by simple xml
             $s = $xmlres;
             $s = str_replace(array("\n", "\r", "\t"), '', $s);
-            $s = trim(str_replace('"', "'", $s));
+            $s = trim(str_replace("'", "&#39;", $s)); //Replace all internal single quotes with escape, because in patch 2.32.2 Blizzard interns named one of Kael'thas's talents with a ' in it.
+            $s = str_replace('"', "'", $s);
 
             //Create simple xml object from xml string
             $xmlobj = simplexml_load_string($s);
