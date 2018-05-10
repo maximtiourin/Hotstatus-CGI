@@ -119,7 +119,7 @@ $actionMap = [
         $CACHE_ID = $cache_id;
 
         $redis = new RedisDatabase();
-        $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusCache::CACHE_PLAYERSEARCH_DATABASE_INDEX);
+        $redis->connect($creds[Credentials::KEY_REDIS_URI], HotstatusCache::CACHE_DEFAULT_DATABASE_INDEX);
 
         //Store value in cache
         $encoded = json_encode($payload);
