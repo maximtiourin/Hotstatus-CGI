@@ -909,15 +909,16 @@ class HotstatusPipeline {
          *      "image_minimap" => HeroImageMinimapNameWithoutExtension
          * ]
          */
-        self::FILTER_KEY_HERO => ["Abathur" => [
-            "name_sort" => "Abathur",
-            "name_attribute" => "Abat",
-            "image_hero" => "ui_targetportrait_hero_abathur",
-            "image_minimap" => "storm_ui_minimapicon_heros_infestor",
-            "role_blizzard" => "Specialist",
-            "role_specific" => "Utility",
-            "selected" => false
-        ],
+        self::FILTER_KEY_HERO => [
+            "Abathur" => [
+                "name_sort" => "Abathur",
+                "name_attribute" => "Abat",
+                "image_hero" => "ui_targetportrait_hero_abathur",
+                "image_minimap" => "storm_ui_minimapicon_heros_infestor",
+                "role_blizzard" => "Specialist",
+                "role_specific" => "Utility",
+                "selected" => false
+            ],
             "Alarak" => [
                 "name_sort" => "Alarak",
                 "name_attribute" => "Alar",
