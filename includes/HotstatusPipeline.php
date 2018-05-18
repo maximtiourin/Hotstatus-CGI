@@ -33,7 +33,7 @@ class HotstatusPipeline {
      */
     const SEASON_UNKNOWN = "Legacy"; //This is the season to use when no season dates are defined for a given date time
     const SEASON_NONE = "None"; //This is the value of NO previous season
-    const SEASON_OVERRIDE = "2018 Season 1"; //Season override - If override is set (null for unset), then select the overrided season instead of the current. Useful for when a new season begins and there is not enough data for current season
+    const SEASON_OVERRIDE = "2018 Season 2"; //Season override - If override is set (null for unset), then select the overrided season instead of the current. Useful for when a new season begins and there is not enough data for current season
     const SEASON_CURRENT = "2018 Season 2";
     public static $SEASONS = [
         "2018 Season 2" => [
