@@ -460,6 +460,7 @@ class HotstatusPipeline {
          * Date filter must be generated at runtime, so call filter_generate_date before referencing
          */
         self::FILTER_KEY_DATE => [],
+
         /*
          * Filter Regions
          */
