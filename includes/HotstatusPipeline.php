@@ -66,17 +66,23 @@ class HotstatusPipeline {
     const PATCH_CURRENT = "CURRENT";
     public static $PATCHES = [
         self::PATCH_CURRENT => [
-            "start" => "2018-05-09 17:00:00",
+            "start" => "2018-05-22 17:00:00",
             "end" => null,
+            "version" => "2.33.0",
+            "type" => "Rework",
+        ],
+        "2.32.2" => [
+            "start" => "2018-05-09 17:00:00",
+            "end" => "2018-05-22 16:59:59",
             "version" => "2.32.2",
             "type" => "Balance",
         ],
-        "2.32.0" => [
+        /*"2.32.0" => [
             "start" => "2018-04-24 15:00:00",
             "end" => "2018-05-09 16:59:59",
             "version" => "2.32.0",
             "type" => "Deckard",
-        ],
+        ],*/
         /*"2.31.2" => [
             "start" => "2018-04-12 00:10:00",
             "end" => "2018-04-24 14:59:59",
@@ -675,16 +681,20 @@ class HotstatusPipeline {
                     "Diamond,".
                     "Master",
                 "selected" => TRUE,
+                "enableHeroes" => TRUE,
+                "enableHero" => TRUE,
             ],
-            /*"Low Ranks" => [
+            "Low Ranks" => [
                 "aggregate" => TRUE,
                 "selectable" => TRUE,
                 "image_key" => "LowRanks",
                 "value" => "Bronze,".
                     "Silver,".
                     "Gold",
-                "selected" => TRUE,
-            ],*/
+                "selected" => FALSE,
+                "enableHeroes" => TRUE,
+                "enableHero" => FALSE,
+            ],
             "High Ranks" => [
                 "aggregate" => TRUE,
                 "selectable" => TRUE,
@@ -692,7 +702,9 @@ class HotstatusPipeline {
                 "value" => "Platinum,".
                     "Diamond,".
                     "Master",
-                "selected" => TRUE,
+                "selected" => FALSE,
+                "enableHeroes" => TRUE,
+                "enableHero" => TRUE,
             ],
             "Bronze" => [
                 "aggregate" => FALSE,
@@ -715,7 +727,9 @@ class HotstatusPipeline {
                         "max" => 0,
                     ],
                 ],
-                "selected" => FALSE
+                "selected" => FALSE,
+                "enableHeroes" => FALSE,
+                "enableHero" => FALSE,
             ],
             "Silver" => [
                 "aggregate" => FALSE,
@@ -738,7 +752,9 @@ class HotstatusPipeline {
                         "max" => 191,
                     ],
                 ],
-                "selected" => FALSE
+                "selected" => FALSE,
+                "enableHeroes" => FALSE,
+                "enableHero" => FALSE,
             ],
             "Gold" => [
                 "aggregate" => FALSE,
@@ -761,7 +777,9 @@ class HotstatusPipeline {
                         "max" => 630,
                     ],
                 ],
-                "selected" => FALSE
+                "selected" => FALSE,
+                "enableHeroes" => FALSE,
+                "enableHero" => FALSE,
             ],
             "Platinum" => [
                 "aggregate" => FALSE,
@@ -784,7 +802,9 @@ class HotstatusPipeline {
                         "max" => 1054,
                     ],
                 ],
-                "selected" => FALSE
+                "selected" => FALSE,
+                "enableHeroes" => FALSE,
+                "enableHero" => FALSE,
             ],
             "Diamond" => [
                 "aggregate" => FALSE,
@@ -807,7 +827,9 @@ class HotstatusPipeline {
                         "max" => 1706,
                     ],
                 ],
-                "selected" => FALSE
+                "selected" => FALSE,
+                "enableHeroes" => FALSE,
+                "enableHero" => FALSE,
             ],
             "Master" => [
                 "aggregate" => FALSE,
@@ -830,7 +852,9 @@ class HotstatusPipeline {
                         "max" => PHP_INT_MAX,
                     ],
                 ],
-                "selected" => FALSE
+                "selected" => FALSE,
+                "enableHeroes" => TRUE,
+                "enableHero" => TRUE,
             ]
         ],
         /*

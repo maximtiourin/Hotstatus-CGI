@@ -168,7 +168,8 @@ $ignoreNames = [
     "Random" => TRUE,
     "TestHero" => TRUE,
     "GreymaneWorgen" => TRUE,
-    "ChoGallBundleProduct" => TRUE
+    "ChoGallBundleProduct" => TRUE,
+    "Nexomania" => TRUE
 ];
 
 //Some abilities have button keys that map to incorrect ability names, one easy example is 'TassadarArchon' mapping to 'Phase Shift', when it should be 'Archon'

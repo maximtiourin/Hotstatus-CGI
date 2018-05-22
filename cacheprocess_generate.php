@@ -317,7 +317,8 @@ function generate_getDataTableHeroesStatsListAction() {
     foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_GAMETYPE] as $gameTypeSelection) {
         foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_MAP] as $mapSelection) {
             foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_RANK] as $rankSelection) {
-                if (HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_RANK][$rankSelection]['selectable'] === TRUE) {
+                if (HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_RANK][$rankSelection]['selectable'] === TRUE
+                    && HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_RANK][$rankSelection]['enableHeroes'] === TRUE) {
                     foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_DATE] as $dateSelection) {
                         if (($target_date_range === null && $target_patch_range === null) || $target_date_range === $dateSelection || $target_patch_range === $dateSelection) {
                             //Calculate priority (Higher number has higher priority)
@@ -441,7 +442,8 @@ function generate_getPageDataHeroAction() {
     foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_GAMETYPE] as $gameTypeSelection) {
         foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_MAP] as $mapSelection) {
             foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_RANK] as $rankSelection) {
-                if (HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_RANK][$rankSelection]['selectable'] === TRUE) {
+                if (HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_RANK][$rankSelection]['selectable'] === TRUE
+                    && HotstatusPipeline::$filter[HotstatusPipeline::FILTER_KEY_RANK][$rankSelection]['enableHero'] === TRUE) {
                     foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_DATE] as $dateSelection) {
                         if (($target_date_range === null && $target_patch_range === null) || $target_date_range === $dateSelection || $target_patch_range === $dateSelection) {
                             foreach ($filterKeyArray[HotstatusPipeline::FILTER_KEY_HERO] as $heroSelection) {
