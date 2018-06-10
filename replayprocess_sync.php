@@ -314,45 +314,48 @@ while (true) {
         }
 
         //Scheduling: Cache Generation
-        $cache_generate = getVarInt("cache_generate");
-        if ($cache_generate === 0 || $cache_generate === 1) {
-            $date = new \DateTime("now");
+        $cache_generate_enabled = getVarInt("cache_generate_enabled");
+        if ($cache_generate_enabled === 1) {
+            $cache_generate = getVarInt("cache_generate");
+            if ($cache_generate === 0 || $cache_generate === 1) {
+                $date = new \DateTime("now");
 
-            $yearOfWeek = intval($date->format("o"));
-            $weekOfYear = intval($date->format("W"));
-            $dayOfWeek = intval($date->format("N"));
+                $yearOfWeek = intval($date->format("o"));
+                $weekOfYear = intval($date->format("W"));
+                $dayOfWeek = intval($date->format("N"));
 
-            $dayBeginDate = new \DateTime();
-            $dayBeginDate->setISODate($yearOfWeek, $weekOfYear, $dayOfWeek);
-            $dayBeginDate->setTime(7, 0, 0);
+                $dayBeginDate = new \DateTime();
+                $dayBeginDate->setISODate($yearOfWeek, $weekOfYear, $dayOfWeek);
+                $dayBeginDate->setTime(7, 0, 0);
 
-            $dayCutoffDate = new \DateTime();
-            $dayCutoffDate->setISODate($yearOfWeek, $weekOfYear, $dayOfWeek);
-            $dayCutoffDate->setTime(10, 0, 0);
+                $dayCutoffDate = new \DateTime();
+                $dayCutoffDate->setISODate($yearOfWeek, $weekOfYear, $dayOfWeek);
+                $dayCutoffDate->setTime(10, 0, 0);
 
-            if ($date > $dayBeginDate && $date < $dayCutoffDate) {
-                if ($cache_generate === 1) {
-                    //Reset Flag
-                    setVarInt("cache_generate", 0);
+                if ($date > $dayBeginDate && $date < $dayCutoffDate) {
+                    if ($cache_generate === 1) {
+                        //Reset Flag
+                        setVarInt("cache_generate", 0);
+                    }
                 }
-            }
-            elseif ($cache_generate === 0) {
-                //Process
-                //execInBackground("php cacheprocess_generate.php");
-                $execResult = liveExecuteCommand("php cacheprocess_generate.php");
+                elseif ($cache_generate === 0) {
+                    //Process
+                    //execInBackground("php cacheprocess_generate.php");
+                    $execResult = liveExecuteCommand("php cacheprocess_generate.php");
 
-                $now = (new \DateTime("now"))->format(HotstatusPipeline::FORMAT_DATETIME);
+                    $now = (new \DateTime("now"))->format(HotstatusPipeline::FORMAT_DATETIME);
 
-                if ($execResult['exit_status'] !== 0) {
-                    log("ERROR: Cache Generation Failed.");
+                    if ($execResult['exit_status'] !== 0) {
+                        log("ERROR: Cache Generation Failed.");
 
-                    setVarString("cache_generate", "ERROR: $now");
+                        setVarString("cache_generate", "ERROR: $now");
+                    }
+                    else {
+                        setVarString("cache_generate", $now);
+                    }
+
+                    setVarInt("cache_generate", 1);
                 }
-                else {
-                    setVarString("cache_generate", $now);
-                }
-
-                setVarInt("cache_generate", 1);
             }
         }
 

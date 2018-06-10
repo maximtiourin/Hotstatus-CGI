@@ -71,6 +71,12 @@ class HotstatusPipeline {
             "version" => "2.33.1",
             "type" => "Balance",
         ],
+        /*self::PATCH_CURRENT => [ //-------------------------------------
+            "start" => "2018-06-06 17:00:00",
+            "end" => null,
+            "version" => "2.33.1",
+            "type" => "Balance",
+        ],*/ //-----------------------------------------------------------
         "2.33.0" => [
             "start" => "2018-05-22 17:00:00",
             "end" => "2018-06-06 16:59:59",
@@ -1694,7 +1700,7 @@ class HotstatusPipeline {
         $date_offset = "now";
 
         //Last 7 Days
-        $last7days = self::getMinMaxRangeForLastISODaysInclusive(7, $date_offset);
+        /*$last7days = self::getMinMaxRangeForLastISODaysInclusive(7, $date_offset);
         self::$filter[self::FILTER_KEY_DATE]['Last 7 Days'] = [
             "min" => $last7days['date_start'],
             "max" => $last7days['date_end'],
@@ -1704,7 +1710,7 @@ class HotstatusPipeline {
                 "priority" => 99,
             ],
             "selected" => TRUE
-        ];
+        ];*/ //TODO - Renable by uncommenting
 
         //Last 30 Days
         /*$last30days = self::getMinMaxRangeForLastISODaysInclusive(30, $date_offset);
@@ -1733,7 +1739,7 @@ class HotstatusPipeline {
         ];*/
 
         //Current Build
-        $cpatch = self::$PATCHES[self::PATCH_CURRENT];
+        /*$cpatch = self::$PATCHES[self::PATCH_CURRENT];
         $rangeoffset = "now";
         $rangelength = self::getLengthInISODaysForDateTimeRange($cpatch['start'], $rangeoffset);
         $range = self::getMinMaxRangeForLastISODaysInclusive($rangelength, $rangeoffset);
@@ -1746,7 +1752,7 @@ class HotstatusPipeline {
                 "priority" => 90,
             ],
             "selected" => FALSE,
-        ];
+        ];*/ //TODO - Renable by uncommenting
 
         //Add non-current patches
         $priorityDecrement = 30;
@@ -1767,7 +1773,7 @@ class HotstatusPipeline {
                     "generation" => [
                         "priority" => $priorityDecrement--,
                     ],
-                    "selected" => FALSE
+                    "selected" => TRUE //TODO - Renable my setting FALSE
                 ];
             }
         }

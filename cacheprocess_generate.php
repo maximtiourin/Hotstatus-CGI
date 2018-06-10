@@ -21,11 +21,12 @@ const MAX_GAMETYPE_SIZE = 4;
 const E = PHP_EOL;
 
 //Targeted generation
-$target_date_range = "Last 7 Days";
+//$target_date_range = "Last 7 Days"; //TODO - Renable by uncommenting
+$target_date_range = null;
 
-//$target_patch_range = "2.32.2 (Balance)";
-$target_patch = HotstatusPipeline::$PATCHES[HotstatusPipeline::PATCH_CURRENT];
-$target_patch_range = $target_patch['version']." (".$target_patch['type'].")";
+$target_patch_range = "2.33.0 (Rework)";
+//$target_patch = HotstatusPipeline::$PATCHES[HotstatusPipeline::PATCH_CURRENT];
+//$target_patch_range = $target_patch['version']." (".$target_patch['type'].")";
 
 //Prepare statements
 $db->prepare("GetPipelineConfig",
